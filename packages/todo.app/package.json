@@ -1,0 +1,56 @@
+{
+  "name": "@todo/app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.14.6",
+    "@mui/material": "^5.14.6",
+    "@todo/core": "0.0.1",
+    "@vitejs/plugin-basic-ssl": "^1.0.1",
+    "add": "^2.0.6",
+    "i18next": "^23.7.6",
+    "i18next-browser-languagedetector": "^7.2.0",
+    "inversify": "^6.0.1",
+    "inversify-binding-decorators": "^4.0.0",
+    "mobx": "^6.11.0",
+    "mobx-react-lite": "^4.0.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^13.5.0",
+    "react-router5": "^8.0.1",
+    "reflect-metadata": "0.1.13",
+    "router5": "^8.0.1",
+    "router5-plugin-browser": "^8.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^14.1.2",
+    "@types/js-cookie": "^3.0.3",
+    "@types/node": "20.5.6",
+    "@types/react": "18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@typescript-eslint/eslint-plugin": "6.3.0",
+    "@typescript-eslint/parser": "6.3.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "@vitest/coverage-v8": "^0.34.6",
+    "eslint": "8.46.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "msw": "^2.0.8",
+    "typescript": "5.3.2",
+    "vite": "4.5.0",
+    "vite-plugin-svgr": "^4.2.0",
+    "vitest": "^0.34.6"
+  },
+  "msw": {
+    "workerDirectory": "public"
+  }
+}

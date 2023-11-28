@@ -1,0 +1,23 @@
+{
+  "name": "todo-example",
+  "workspaces": {
+    "packages": [
+      "libs/*",
+      "packages/*"
+    ]
+  },
+  "private": "true",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Vyacheslav Krasnyanskiy",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "scripts": {
+    "dev": "yarn workspace @todo/app dev",
+    "buildlib": "yarn workspace @todo/core build",
+    "test:app": "yarn workspace @todo/app vitest",
+    "test:lib": "yarn workspace @todo/core test"
+  }
+}

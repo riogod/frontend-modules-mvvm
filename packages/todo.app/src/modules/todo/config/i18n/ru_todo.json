@@ -1,0 +1,21 @@
+{
+  "actions": {
+    "inputHelper": "Напишите что нужно сделать и нажмите CTRL+Enter для сохранения"
+  },
+  "menu": {
+    "todo": "Список задач"
+  },
+  "item": {
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "add": "Добавленно",
+    "update": "Обновлено"
+  },
+  "item-list": {
+    "show-completed": "Показать выполненные",
+    "tasks-todo_zero": "задач не осталось",
+    "tasks-todo_one": "{{count}} задача осталась",
+    "tasks-todo_few": "{{count}} задачи осталось",
+    "tasks-todo_many": "{{count}} задач осталось"
+  }
+}

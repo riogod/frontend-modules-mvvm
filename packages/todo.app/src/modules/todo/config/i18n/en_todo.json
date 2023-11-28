@@ -1,0 +1,20 @@
+{
+  "actions": {
+    "inputHelper": "Enter a new task and press CTRL+Enter to add it"
+  },
+  "menu": {
+    "todo": "Todo List"
+  },
+  "item": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "add": "Added",
+    "update": "Updated"
+  },
+  "item-list": {
+    "show-completed": "Show completed",
+    "tasks-todo_zero": "no tasks left",
+    "tasks-todo_one": "{{count}} task left",
+    "tasks-todo_other": "{{count}} tasks left"
+  }
+}

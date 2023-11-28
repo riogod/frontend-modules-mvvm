@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "allowJs": true,
+
+    // Transpilation settings.
+    "module": "esnext",
+    "target": "ES6",
+
+    // Output settings.
+    "newLine": "LF",
+    "sourceMap": true,
+
+    // Type declaration settings.
+    "declaration": true,
+    "declarationDir": "types/",
+    "declarationMap": true
+  },
+  "exclude": ["./src/**/*.test.ts", "./src/**/*.test.tsx"]
+}

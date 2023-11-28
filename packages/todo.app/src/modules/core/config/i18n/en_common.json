@@ -1,0 +1,37 @@
+{
+  "actions": {
+    "ACCEPT": "Accept",
+    "ADD": "Add",
+    "BACK": "Back",
+    "CANCEL": "Cancel",
+    "CLEAR": "Clear",
+    "CLOSE": "Close",
+    "CONFIRM": "Confirm",
+    "CONTINUE": "Continue",
+    "REFUSE": "Refuse",
+    "SAVE": "Save",
+    "SELECT": "Select",
+    "SEND": "Send",
+    "VIEW": "View"
+  },
+  "settings": {
+    "NAME": "Settings",
+    "aria": {
+      "theme-mode": "Theme mode",
+      "theme-dark": "Dark theme",
+      "theme-light": "Light theme",
+      "theme-system": "System theme"
+    },
+    "OPEN": "Application settings",
+    "MODE": {
+      "NAME": "Theme mode",
+      "LIGHT": "Light",
+      "DARK": "Dark",
+      "SYSTEM": "System"
+    },
+    "LANGUAGE": {
+      "select.language": "Application language"
+    }
+
+  }
+}
