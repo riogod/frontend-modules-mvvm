@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "es6", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "types": ["reflect-metadata", "node", "vite/client", "vitest/globals"],
     "module": "ESNext",
     "skipLibCheck": true,
@@ -24,7 +24,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src",
-    ".eslintrc.js"
+    ".eslintrc.cjs"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
