@@ -1,6 +1,6 @@
-type TAllKeys<T> = T extends unknown ? keyof T : never;
+type TAllKeys<T> = T extends any ? keyof T : never;
 
-type TIndexValue<T, K extends PropertyKey, D = never> = T extends unknown
+type TIndexValue<T, K extends PropertyKey, D = never> = T extends any
   ? K extends keyof T
     ? T[K]
     : D
@@ -11,7 +11,7 @@ type TPartialKeys<T, K extends keyof T> = Omit<T, K> &
   ? { [P in keyof O]: O[P] }
   : never;
 
-type TFunction = (...a: unknown[]) => unknown;
+type TFunction = (...a: any[]) => any;
 
 type TPrimitives =
   | string
@@ -22,7 +22,7 @@ type TPrimitives =
   | Date
   | TFunction;
 
-type TMerged<T> = [T] extends [Array<unknown>]
+type TMerged<T> = [T] extends [Array<any>]
   ? { [K in keyof T]: TMerged<T[K]> }
   : [T] extends [TPrimitives]
   ? T
@@ -30,10 +30,10 @@ type TMerged<T> = [T] extends [Array<unknown>]
   ? TPartialKeys<{ [K in TAllKeys<T>]: TMerged<TIndexValue<T, K>> }, never>
   : T;
 
-const isObject = (obj: unknown): boolean => {
+const isObject = (obj: any): boolean => {
   if (typeof obj === 'object' && obj !== null) {
     if (typeof Object.getPrototypeOf === 'function') {
-      const prototype = Object.getPrototypeOf(obj) as unknown;
+      const prototype = Object.getPrototypeOf(obj);
       return prototype === Object.prototype || prototype === null;
     }
 
@@ -44,7 +44,7 @@ const isObject = (obj: unknown): boolean => {
 };
 
 interface IObject {
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 /**
@@ -60,7 +60,6 @@ interface IObject {
  * @return {TMerged} - Результат слияния
  */
 const merge = <T extends IObject[]>(...objects: T): TMerged<T[number]> =>
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   objects.reduce((result, current) => {
     if (Array.isArray(current)) {
       throw new TypeError(
@@ -79,7 +78,7 @@ const merge = <T extends IObject[]>(...objects: T): TMerged<T[number]> =>
             ? Array.from(
                 new Set((result[key] as unknown[]).concat(current[key])),
               )
-            : [...(<[]>result[key]), ...(<[]>current[key])]
+            : [...result[key], ...current[key]]
           : current[key];
       } else if (isObject(result[key]) && isObject(current[key])) {
         result[key] = merge(result[key] as IObject, current[key] as IObject);
@@ -108,7 +107,7 @@ interface IOptions {
   /**
    * По умолчанию: `true`
    *
-   * При включенной опции: при слиянии  будут объединены массивы.
+   * При включенной опции: при слиянии будут объединены массивы.
    * При выключенной опции: при слиянии будут заменены массивы на последнее значение.
    */
   mergeArrays: boolean;

@@ -12,6 +12,5 @@ const darkThemeSettings: ThemeOptions = {
   },
 };
 export const themeDark: ThemeOptions = createTheme(
-  // @ts-ignore
   merge(theme, darkThemeSettings),
 );

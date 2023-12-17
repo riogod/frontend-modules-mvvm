@@ -8,6 +8,5 @@ const lightThemeSettings: ThemeOptions = {
   },
 };
 export const themeLight: ThemeOptions = createTheme(
-  // @ts-ignore
   merge(theme, lightThemeSettings),
 );
