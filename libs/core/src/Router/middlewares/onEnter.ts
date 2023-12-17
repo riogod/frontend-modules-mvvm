@@ -9,7 +9,7 @@ export interface IOnEnterMiddlewareConfig {
     router: Router<RouterDependencies>,
     toStateParams: Params,
     fromStateParams: Params,
-  ) => void;
+  ) => Promise<void>;
 }
 
 export const onEnterMiddlewareFactory =

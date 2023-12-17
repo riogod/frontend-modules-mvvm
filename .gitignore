@@ -41,3 +41,5 @@ dist-ssr
 
 .data
 /files
+
+.nx/cache
