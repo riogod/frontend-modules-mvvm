@@ -1,20 +1,7 @@
-# Библиотека базовой функциональности приложения
+# core
 
-Содержит наборы функций и классов для работы:
+This library was generated with [Nx](https://nx.dev).
 
-- Api
-- Роутинг приложения
+## Running unit tests
 
-## Установка
-Библиотека автоматически установиться из корня проекта.
-
-## Сборка
-
-``` bash
-# Для разработки
-yarn run dev
-
-# Единоразовая сборка
-yarn run build
-
-```
+Run `nx test core` to execute the unit tests via [Vitest](https://vitest.dev/).

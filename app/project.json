@@ -11,7 +11,6 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "config": "{projectRoot}/vite.config.ts",
         "outputPath": "dist/app"
       },
       "configurations": {
@@ -61,25 +60,14 @@
         "{options.reportsDirectory}"
       ],
       "options": {
-        "passWithNoTests": true,
         "reportsDirectory": "../../coverage/app"
-      },
-      "configurations": {
-        "watch": {
-          "watch": true
-        }
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "app/**/*.{ts,tsx,js,jsx}"
-        ]
-      }
+      ]
     }
   },
   "tags": []

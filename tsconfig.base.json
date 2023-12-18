@@ -3,23 +3,28 @@
   "compilerOptions": {
     "rootDir": ".",
     "sourceMap": true,
-    "declaration": false,
-    "importHelpers": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "strict": true,
+    "outDir": "build",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "forceConsistentCasingInFileNames": true,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "target": "ESNext",
-    "lib": [
-      "ES2022",
-      "es6",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    //    "moduleResolution": "bundler",
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "paths": {
+      "@todo/core": [
+        "libs/core/src/index.ts"
+      ]
+    }
   },
   "exclude": [
     "node_modules",

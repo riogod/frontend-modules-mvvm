@@ -3,13 +3,8 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     },
     "lint": {
       "cache": true,
@@ -20,66 +15,39 @@
         "{workspaceRoot}/eslint.config.js"
       ]
     },
-    "e2e": {
-      "cache": true
-    },
     "@nx/vite:test": {
       "cache": true,
-      "inputs": [
-        "default",
-        "^production"
-      ]
-    },
-    "@nx/jest:jest": {
-      "cache": true,
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.js"
-      ],
-      "options": {
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
-      }
+      "inputs": ["default", "^production"]
     }
   },
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/.eslintrc.json",
-      "!{projectRoot}/eslint.config.js",
-      "!{projectRoot}/jest.config.[jt]s",
-      "!{projectRoot}/src/test-setup.[jt]s",
-      "!{projectRoot}/test-setup.[jt]s"
+      "!{projectRoot}/eslint.config.js"
     ],
     "sharedGlobals": []
   },
   "generators": {
     "@nx/react": {
       "application": {
-        "style": "css",
+        "style": "@emotion/styled",
         "linter": "eslint",
         "bundler": "vite",
         "babel": true
       },
       "component": {
-        "style": "css"
+        "style": "@emotion/styled"
       },
       "library": {
-        "style": "css",
-        "linter": "eslint"
+        "style": "@emotion/styled",
+        "linter": "eslint",
+        "unitTestRunner": "vitest"
       }
     }
-  }
+  },
+  "nxCloudAccessToken": "MzUwY2VhYjAtNmNiNS00N2ExLThkMjItZGM1Yjg4N2RlYzg3fHJlYWQtd3JpdGU="
 }

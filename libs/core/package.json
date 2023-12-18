@@ -1,32 +1,12 @@
 {
   "name": "@todo/core",
   "version": "0.0.1",
-  "private": true,
-  "description": "",
-  "main": "dist/index.js",
-  "types": "types/index.d.ts",
-  "module": "dist/index.esm.js",
-  "files": [
-    "dist"
-  ],
-  "devDependencies": {
-
-  },
-  "scripts": {
-    "test": "jest",
-    "lint": "eslint \"*/**/*.{ts,js,json}\"",
-    "lint:fix": "eslint \"*/**/*.{ts,js,json}\" --fix",
-    "build": "rollup --config ./rollup.config.mjs",
-    "dev": "rollup -c -w",
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
-    "postinstall": "yarn build"
-  },
-  "license": "MIT",
-  "dependencies": {
-
-  },
-  "peerDependencies": {
-    "router5": "^8.0.1",
-    "router5-plugin-browser": "^8.0.1"
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
   }
 }

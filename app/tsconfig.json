@@ -1,27 +1,28 @@
 {
-  "types": [
-    "reflect-metadata",
-    "node",
-    "vite/client",
-    "vitest"
-  ],
   "compilerOptions": {
+    "jsx": "react-jsx",
     "allowJs": false,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
+    "strict": true,
     "useDefineForClassFields": true,
     /* Bundler mode */
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    /* Linting */
-    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "reflect-metadata",
+      "node",
+      "vite/client",
+      "vitest"
+    ]
   },
+  "files": [],
+  "include": [],
   "references": [
     {
       "path": "./tsconfig.app.json"
