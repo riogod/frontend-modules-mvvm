@@ -23,6 +23,11 @@ const config: ViteConfig = {
     }),
   ],
 
+  // Uncomment this if you are using workers.
+  // worker: {
+  //  plugins: [ nxViteTsPaths() ],
+  // },
+
   // Configuration for building your library.
   // See: https://vitejs.dev/guide/build.html#library-mode
   build: {
@@ -38,7 +43,7 @@ const config: ViteConfig = {
       fileName: 'index',
       // Change this to the formats you want to support.
       // Don't forget to update your package.json as well.
-      formats: ['es', 'cjs'],
+      formats: ['es'],
     },
     rollupOptions: {
       // External packages that should not be bundled into your library.
@@ -61,4 +66,5 @@ const config: ViteConfig = {
     },
   },
 };
+
 export default defineConfig(config);

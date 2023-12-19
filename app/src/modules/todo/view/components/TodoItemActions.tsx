@@ -1,20 +1,20 @@
-import { FC, memo } from "react";
-import Box from "@mui/material/Box";
-import { IActions } from "./interface.ts";
-import IconButton from "../../../../ui/components/IconButton";
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
-import { useTranslation } from "react-i18next";
+import { FC, memo } from 'react';
+import Box from '@mui/material/Box';
+import { IActions } from './interface.ts';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import { useTranslation } from 'react-i18next';
+import { IconButton } from '@todo/ui';
 
 const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {
-  const { t } = useTranslation("todo");
+  const { t } = useTranslation('todo');
   return (
     <Box
       className="actionIcon"
       sx={{
         height: 1,
-        display: "none",
+        display: 'none',
         opacity: 0,
-        transition: "0.1s ease-out",
+        transition: '0.1s ease-out',
       }}
     >
       <IconButton
@@ -22,8 +22,8 @@ const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {
         color="error"
         size="small"
         variant="outlined"
-        aria-label={t("item.delete")}
-        title={t("item.delete")}
+        aria-label={t('item.delete')}
+        title={t('item.delete')}
         onClick={removeItemHandler}
       />
     </Box>

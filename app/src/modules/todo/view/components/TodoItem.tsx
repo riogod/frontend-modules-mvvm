@@ -1,13 +1,13 @@
-import { FC, memo } from "react";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import { IProps } from "./interface.ts";
-import TodoItemActions from "./TodoItemActions.tsx";
-import TodoItemActionComplete from "./TodoItemComplete.tsx";
-import { useVM } from "../../../../ui/hooks/useVM.ts";
-import { TodoListViewModel } from "../../viewmodels/todo_list.vm.ts";
-import TodoItemDescription from "./TodoItemDescription";
-import TodoItemDate from "./TodoItemDate";
+import { FC, memo } from 'react';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import { IProps } from './interface.ts';
+import TodoItemActions from './TodoItemActions.tsx';
+import TodoItemActionComplete from './TodoItemComplete.tsx';
+import { useVM } from '@todo/ui';
+import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
+import TodoItemDescription from './TodoItemDescription';
+import TodoItemDate from './TodoItemDate';
 
 const TodoItem: FC<IProps> = ({ item }) => {
   const listViewModel = useVM<TodoListViewModel>(TodoListViewModel);
@@ -30,29 +30,29 @@ const TodoItem: FC<IProps> = ({ item }) => {
       sx={{
         p: 1,
         m: 1,
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        position: "relative",
-        "&:hover": {
-          "& .actionIcon": {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'relative',
+        '&:hover': {
+          '& .actionIcon': {
             opacity: 1,
-            display: "flex",
+            display: 'flex',
           },
         },
       }}
     >
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
         }}
       >
         <TodoItemActionComplete item={item} setComplete={handleComplete} />
-        <Box sx={{ display: "flex", flexDirection: "column", ml: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', ml: 1 }}>
           <TodoItemDescription item={item} />
           <TodoItemDate item={item} />
         </Box>

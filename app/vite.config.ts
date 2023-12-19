@@ -3,14 +3,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import type { UserConfig as VitestUserConfig } from 'vitest/config';
+import type { InlineConfig } from 'vitest';
+import type { UserConfig } from 'vite';
 
-declare module 'vite' {
-  export interface UserConfig {
-    test: VitestUserConfig['test'];
-  }
-}
-export default defineConfig({
+type ViteConfig = UserConfig & { test: InlineConfig };
+const config: ViteConfig = {
   root: __dirname,
   cacheDir: '../../node_modules/.vite/app',
 
@@ -46,6 +43,7 @@ export default defineConfig({
           inversify: ['inversify', 'inversify-binding-decorators'],
           mobx: ['mobx', 'mobx-react-lite'],
           'lib-core': ['@todo/core'],
+          'lib-ui': ['@todo/ui'],
         },
       },
     },
@@ -65,4 +63,6 @@ export default defineConfig({
       provider: 'v8',
     },
   },
-});
+};
+
+export default defineConfig(config);

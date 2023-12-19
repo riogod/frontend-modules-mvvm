@@ -1,6 +1,6 @@
 import { FC } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useVM } from '../../../../ui/hooks/useVM.ts';
+import { useVM } from '@todo/ui';
 import { JokeViewModel } from '../../viewmodels/joke.vm.ts';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';

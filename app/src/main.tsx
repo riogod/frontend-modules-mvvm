@@ -6,7 +6,7 @@ import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';
 import { app_modules } from './modules/modules';
 import { RouterProvider } from 'react-router5';
-import { DIProvider } from './ui/providers/DIProvider';
+import { DIProvider } from '@todo/ui';
 import { configure } from 'mobx';
 import ThemeSchema from './modules/core/view/ThemeSchema';
 import { Layout } from './modules/core/view/Layout';
@@ -27,7 +27,7 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
               </ThemeSchema>
             </I18nextProvider>
           </DIProvider>
-        </RouterProvider>,
+        </RouterProvider>
       );
     });
   })

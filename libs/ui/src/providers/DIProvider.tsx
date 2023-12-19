@@ -1,8 +1,8 @@
-import { FC } from 'react';
+import { FC, PropsWithChildren } from 'react';
 import { DIContext } from '../contexts';
 import { Container } from 'inversify';
 
-interface IProps extends React.PropsWithChildren {
+interface IProps extends PropsWithChildren {
   container: Container;
 }
 
