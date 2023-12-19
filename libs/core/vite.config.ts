@@ -28,6 +28,11 @@ const config: ViteConfig = {
   build: {
     outDir: '../../dist/libs/core',
     reportCompressedSize: true,
+    target: 'esnext',
+    modulePreload: false,
+    cssCodeSplit: false,
+    minify: true,
+    emptyOutDir: true,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
