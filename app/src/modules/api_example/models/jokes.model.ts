@@ -1,7 +1,7 @@
-import { makeAutoObservable } from "mobx";
-import { inject, injectable } from "inversify";
-import { JokesRepository } from "../data/jokes.repository.ts";
-import { Joke } from "./jokes.interface.ts";
+import { makeAutoObservable } from 'mobx';
+import { inject, injectable } from 'inversify';
+import { JokesRepository } from '../data/jokes.repository.ts';
+import { Joke } from './jokes.interface.ts';
 
 @injectable()
 export class JokesModel {
@@ -12,13 +12,14 @@ export class JokesModel {
     return this._loading;
   }
 
+  set loading(loading: boolean) {
+    this._loading = loading;
+  }
+
   get joke() {
     return this._joke;
   }
 
-  set loading(loading: boolean) {
-    this._loading = loading;
-  }
   constructor(
     @inject(JokesRepository)
     private jokesRepository: JokesRepository,
