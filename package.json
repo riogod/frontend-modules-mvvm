@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "nx serve app",
-    "buld:app": "nx build app",
+    "build:app": "nx build app",
     "test:app": "nx test app",
     "lint:app": "nx lint app",
     "buildlib": "yarn workspace @todo/core build",
