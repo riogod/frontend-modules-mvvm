@@ -1,7 +1,7 @@
-import axios from "axios";
-import type { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
-import type { IRequestOption } from "./interfaces";
-import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import axios from 'axios';
+import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { IRequestOption } from './interfaces';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 /**
  * Класс для работы с вызовом API.
@@ -52,13 +52,13 @@ export class APIClient {
    * @returns {Promise<Resp>} Ответ от сервера
    */
   public async request<Req, Resp>(option: IRequestOption<Req>): Promise<Resp> {
-    const DeviceUUID = localStorage.getItem("D_UUID");
+    const DeviceUUID = localStorage.getItem('D_UUID');
     const requestConfig: AxiosRequestConfig<Req> = {
-      responseType: "json",
+      responseType: 'json',
       method: option.method,
       url: option.route,
       headers: {
-        "Device-Id": DeviceUUID,
+        'Device-Id': DeviceUUID,
         ...option.headers,
       },
     };
@@ -71,7 +71,7 @@ export class APIClient {
       const response = await this.api.request<Resp>(requestConfig);
 
       return response.data;
-    } catch (error: any | AxiosError) {
+    } catch (error: unknown) {
       if (
         axios.isAxiosError(error) &&
         error.response &&
