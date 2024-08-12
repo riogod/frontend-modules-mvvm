@@ -27,6 +27,7 @@ const config: ViteConfig = {
     outDir: "../../dist/app",
     reportCompressedSize: true,
     target: "esnext",
+    chunkSizeWarningLimit: 1000,
     modulePreload: false,
     cssCodeSplit: false,
     minify: true,
@@ -38,12 +39,6 @@ const config: ViteConfig = {
       output: {
         manualChunks: {
           react: ["react", "react-dom"],
-          mui: [
-            "@mui/material",
-            "@mui/icons-material",
-            "@emotion/react",
-            "@emotion/styled"
-          ],
           i18next: ["i18next", "i18next-browser-languagedetector"],
           inversify: ["inversify", "inversify-binding-decorators"],
           mobx: ["mobx", "mobx-react-lite"],

@@ -20,7 +20,7 @@ export const onSyncPathMiddlewareFactory =
   (toState, fromState): boolean => {
     const segmentsArray = toState.name.split('.');
 
-    segmentsArray
+    void segmentsArray
       .map(
         (
           (acc) =>
@@ -33,6 +33,7 @@ export const onSyncPathMiddlewareFactory =
 
         if (segment && (segment as any).onSyncPath) {
           result = result.then(() =>
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             (segment as any).onSyncPath(
               router,
               toState.params,

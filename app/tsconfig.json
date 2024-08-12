@@ -21,7 +21,8 @@
       "vitest"
     ]
   },
-  "files": [],
+  "files": [
+  ],
   "include": [],
   "references": [
     {

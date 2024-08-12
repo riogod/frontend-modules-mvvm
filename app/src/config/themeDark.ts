@@ -1,4 +1,5 @@
-import { createTheme, ThemeOptions } from '@mui/material';
+import createTheme from '@mui/material/styles/createTheme';
+import { ThemeOptions } from '@mui/material/styles/createTheme';
 import { theme } from './theme.ts';
 import merge from '../utils/merge.ts';
 
@@ -12,5 +13,5 @@ const darkThemeSettings: ThemeOptions = {
   },
 };
 export const themeDark: ThemeOptions = createTheme(
-  merge(theme, darkThemeSettings),
+  merge(theme, darkThemeSettings) as ThemeOptions,
 );

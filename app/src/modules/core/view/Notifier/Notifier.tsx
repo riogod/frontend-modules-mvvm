@@ -1,9 +1,10 @@
 import { FC } from 'react';
 import { observer } from 'mobx-react-lite';
 import Snackbar from '@mui/material/Snackbar';
-import { Alert, Slide } from '@mui/material';
 import { AppSettingsViewModel } from '../../viewmodels/appSettings.vm.ts';
 import { useVM } from '@todo/ui';
+import Alert from '@mui/material/Alert';
+import Slide from '@mui/material/Slide';
 
 const Notifier: FC = () => {
   const appViewModel = useVM<AppSettingsViewModel>(AppSettingsViewModel);

@@ -4,7 +4,9 @@
     "../../.eslintrc.json"
   ],
   "ignorePatterns": [
-    "!**/*"
+    "!**/*",
+    "node_modules",
+    ".storybook/*"
   ],
   "env": {
     "browser": true,
