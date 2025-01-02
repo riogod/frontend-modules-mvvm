@@ -1,14 +1,14 @@
-import { createElement, FC, Suspense } from "react";
-import { useRoute } from "react-router5";
-import { IMenuItem } from "@todo/core";
-import { findSegment } from "./util.ts";
-import NotFoundPage from "../NotFoundPage.tsx";
-import { observer } from "mobx-react-lite";
+import { createElement, FC, Suspense } from 'react';
+import { useRoute } from 'react-router5';
+import { IMenuItem } from '@todo/core';
+import { findSegment } from './util.ts';
+import NotFoundPage from '../NotFoundPage.tsx';
+import { observer } from 'mobx-react-lite';
 
-const ContentContainer: FC = () => {
+const ContentContainer = () => {
   const route = useRoute();
 
-  const segmentsArray = route.route.name.split(".");
+  const segmentsArray = route.route.name.split('.');
 
   const appRoutes = route.router.getDependencies().menu as IMenuItem[];
 
@@ -21,4 +21,4 @@ const ContentContainer: FC = () => {
   );
 };
 
-export default observer(ContentContainer);
+export default observer(ContentContainer as FC);

@@ -51,7 +51,7 @@ const MobileMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
           vertical: 'bottom',
           horizontal: 'left',
         }}
-        keepMounted
+        keepMounted={false}
         transformOrigin={{
           vertical: 'top',
           horizontal: 'left',
