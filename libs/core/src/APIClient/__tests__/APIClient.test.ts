@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APIClient } from '../index';
 import { HttpMethod } from '../enums';
 import MockAdapter from 'axios-mock-adapter';

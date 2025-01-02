@@ -2,25 +2,15 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": [
-      "vitest/globals",
-      "vitest/importMeta",
-      "vite/client",
-      "node",
-      "vitest"
-    ]
+    "module": "commonjs",
+    "types": ["jest", "node"]
   },
   "include": [
-    "vite.config.cjs",
-    "vitest.config.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
     "src/**/*.test.tsx",
     "src/**/*.spec.tsx",
-    "src/**/*.test.js",
-    "src/**/*.spec.js",
-    "src/**/*.test.jsx",
-    "src/**/*.spec.jsx",
-    "src/**/*.d.ts"
+    "src/**/__tests__/**/*.ts",
+    "src/**/__tests__/**/*.tsx"
   ]
 }

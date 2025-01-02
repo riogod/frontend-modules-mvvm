@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createRouter } from 'router5';
 import { IRoutes, RouterDependencies } from '../../interfaces';
 import { onEnterMiddlewareFactory } from '../onEnter';

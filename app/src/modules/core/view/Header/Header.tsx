@@ -23,14 +23,14 @@ const Header: FC<IProps> = ({ open, handleAppSettingsOpen }) => {
         </Box>
         <Box>
           <IconButton
-            icon={<SettingsIcon fontSize="small" />}
             color="primary"
             size="small"
-            variant="outlined"
             aria-label={t('settings.OPEN')}
             title={t('settings.OPEN')}
             onClick={handleAppSettingsOpen}
-          />
+          >
+            <SettingsIcon fontSize="small" />
+          </IconButton>
         </Box>
       </Toolbar>
       <Divider />

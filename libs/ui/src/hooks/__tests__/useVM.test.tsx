@@ -4,8 +4,8 @@ import { renderHook } from '@testing-library/react';
 import { DIProvider } from '../../providers/DIProvider';
 
 const container: any = {
-  get: (_diInstance: string) => {
-    return 'someVM';
+  get: (diInstance: string) => {
+    return diInstance;
   },
 };
 describe('useVM', () => {

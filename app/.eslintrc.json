@@ -27,7 +27,26 @@
       ],
       "rules": {
         "@typescript-eslint/no-for-in-array": "off",
-        "@typescript-eslint/ban-ts-comment": "off"
+        "@typescript-eslint/ban-ts-comment": "off",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@app/modules/*/!(interface|types)"],
+                "message": "Direct imports from other modules are not allowed. Only types and interfaces can be imported."
+              },
+              {
+                "group": [
+                  "../modules/*/!(interface|types)",
+                  "../../modules/*/!(interface|types)",
+                  "../../../modules/*/!(interface|types)"
+                ],
+                "message": "Relative imports from other modules are not allowed. Only types and interfaces can be imported."
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -75,6 +94,26 @@
         "*.jsx"
       ],
       "rules": {}
+    },
+    {
+      "files": ["src/modules/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@app/modules/*/!(interface|types)"],
+                "message": "Direct imports from other modules are not allowed. Only types and interfaces can be imported."
+              },
+              {
+                "group": ["../../*/**/!(*.interface|*.types).{ts,tsx}"],
+                "message": "Relative imports from other modules are not allowed. Only interfaces and types can be imported."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

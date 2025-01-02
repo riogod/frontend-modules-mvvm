@@ -1,16 +1,31 @@
-import { FC } from 'react';
-import { IProps } from './interfaces';
-import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
+import { FC, ReactNode } from 'react';
+import { IconButton as MuiIconButton } from '@mui/material';
 
-const IconButton: FC<IProps> = ({ icon, title, ...props }) => {
+export interface IconButtonProps {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  size?: 'small' | 'medium' | 'large';
+  color?: 'inherit' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+  title?: string;
+  'aria-label'?: string;
+}
+
+export const IconButton: FC<IconButtonProps> = ({
+  children,
+  onClick,
+  disabled = false,
+  size = 'medium',
+  color = 'primary'
+}) => {
   return (
-    <Tooltip title={title}>
-      <Button {...props} sx={{ ml: 1, padding: '8px 8px', minWidth: 'unset' }}>
-        {icon}
-      </Button>
-    </Tooltip>
+    <MuiIconButton
+      onClick={onClick}
+      disabled={disabled}
+      size={size}
+      color={color}
+    >
+      {children}
+    </MuiIconButton>
   );
 };
-
-export default IconButton;

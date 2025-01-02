@@ -12,23 +12,15 @@
     "build": {
       "executor": "@nx/vite:build",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/libs/core"
-      },
-      "configurations": {
-        "development": {
-          "mode": "development"
-        },
-        "production": {
-          "mode": "production"
-        }
       }
     },
     "test": {
       "executor": "@nx/vite:test",
       "outputs": ["{options.reportsDirectory}"],
       "options": {
+        "config": "libs/core/vitest.config.ts",
         "reportsDirectory": "../../coverage/libs/core"
       }
     }

@@ -18,14 +18,14 @@ const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {
       }}
     >
       <IconButton
-        icon={<DeleteForeverIcon fontSize="small" />}
         color="error"
         size="small"
-        variant="outlined"
         aria-label={t('item.delete')}
         title={t('item.delete')}
         onClick={removeItemHandler}
-      />
+      >
+        <DeleteForeverIcon fontSize="small" />
+      </IconButton>
     </Box>
   );
 };

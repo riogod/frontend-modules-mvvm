@@ -7,20 +7,14 @@
     "strict": true,
     "jsxImportSource": "@emotion/react",
     "types": ["vite/client", "vitest"],
-    "composite": true
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "../../dist/out-tsc",
+    "baseUrl": "."
   },
-  "files": [],
-  "include": [],
-  "references": [
-    {
-      "path": "./tsconfig.lib.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    },
-    {
-      "path": "./tsconfig.storybook.json"
-    }
-  ],
+  "files": ["src/index.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["jest.config.ts"],
   "extends": "../../tsconfig.base.json"
 }
