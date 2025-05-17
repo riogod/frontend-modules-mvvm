@@ -7,8 +7,8 @@ import {
   onSyncPathMiddlewareFactory,
   titleMiddlewareFactory,
 } from '@todo/core';
-import { createRouter, Router } from 'router5';
-import browserPlugin from 'router5-plugin-browser';
+import { createRouter, Router } from '@riogz/router';
+import browserPlugin from '@riogz/router-plugin-browser';
 import { findSegment } from '../utils.ts';
 
 /**

@@ -1,5 +1,5 @@
-import type { Route } from "router5/dist/types/router";
-import type { Router } from "router5";
+import type { Route } from "@riogz/router";
+import type { Router } from "@riogz/router";
 import type { IOnEnterMiddlewareConfig } from "./middlewares/onEnter";
 import type { IOnPathMiddlewareConfig } from "./middlewares/onPath";
 import type { IOnSyncPathMiddlewareConfig } from "./middlewares/onSyncPath";

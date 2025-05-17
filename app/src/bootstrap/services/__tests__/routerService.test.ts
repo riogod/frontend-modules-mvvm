@@ -1,5 +1,5 @@
 import { BootstrapRouterService } from '../routerService.ts';
-import { Router } from 'router5';
+import { Router } from '@riogz/router';
 import { IMenuItem, IRoutes } from '@todo/core';
 
 const routes = [{ path: 'test_path', name: 'test_name' }];

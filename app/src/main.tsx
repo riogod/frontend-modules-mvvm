@@ -5,7 +5,7 @@ import './main.css';
 import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';
 import { app_modules } from './modules/modules';
-import { RouterProvider } from 'react-router5';
+import { RouterProvider } from '@riogz/react-router';
 import { DIProvider } from '@todo/ui';
 import { configure } from 'mobx';
 import ThemeSchema from './modules/core/view/ThemeSchema';

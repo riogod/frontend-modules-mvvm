@@ -1,5 +1,5 @@
 import { createElement, FC, Suspense } from 'react';
-import { useRoute } from 'react-router5';
+import { useRoute } from '@riogz/react-router';
 import { IMenuItem } from '@todo/core';
 import { findSegment } from './util.ts';
 import NotFoundPage from '../NotFoundPage.tsx';

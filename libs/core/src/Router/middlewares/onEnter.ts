@@ -1,8 +1,8 @@
-import type { MiddlewareFactory, Route } from 'router5/dist/types/router';
+import type { MiddlewareFactory, Route } from '@riogz/router/dist/types/router';
 import { findSegment } from './libs/findSegment';
 import type { RouterDependencies } from '../interfaces';
-import type { Router } from 'router5';
-import type { Params } from 'router5/dist/types/base';
+import type { Router } from '@riogz/router';
+import type { Params } from '@riogz/router/dist/types/base';
 
 export interface IOnEnterMiddlewareConfig {
   onEnter?: (

@@ -2,7 +2,7 @@ import type {
   Middleware,
   MiddlewareFactory,
   Route,
-} from 'router5/dist/types/router';
+} from '@riogz/router/dist/types/router';
 import { findSegment } from './libs/findSegment';
 import type { RouterDependencies } from '../interfaces';
 

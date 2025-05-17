@@ -1,5 +1,5 @@
 import { FC, memo } from 'react';
-import { useRouter } from 'react-router5';
+import { useRouter } from '@riogz/react-router';
 import { IMenuItem } from '@todo/core';
 import { useTranslation } from 'react-i18next';
 import FullMenuView from './components/FullMenuView';

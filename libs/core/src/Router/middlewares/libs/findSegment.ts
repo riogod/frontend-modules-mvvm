@@ -1,4 +1,4 @@
-import { Route } from 'router5';
+import { Route } from '@riogz/router';
 
 export const findSegment = (
   toStateName: string,

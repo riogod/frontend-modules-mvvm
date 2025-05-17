@@ -1,5 +1,5 @@
 import type { IRoute, IRoutes, RouterDependencies } from "../interfaces";
-import type { ActivationFnFactory, Router } from "router5";
+import type { ActivationFnFactory, Router } from "@riogz/router";
 import type { Container } from "inversify";
 
 export interface IOnExitSearchUtilConfig {

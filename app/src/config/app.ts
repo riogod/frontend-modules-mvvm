@@ -1,4 +1,4 @@
-import { Router } from 'router5';
+import { Router } from '@riogz/router';
 import { i18nOptions } from './i18n.ts';
 import { InitOptions } from 'i18next';
 import { IRoutes } from '@todo/core';

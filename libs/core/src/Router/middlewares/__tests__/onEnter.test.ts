@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createRouter } from 'router5';
+import { createRouter } from '@riogz/router';
 import { IRoutes, RouterDependencies } from '../../interfaces';
 import { onEnterMiddlewareFactory } from '../onEnter';
-import { Middleware, MiddlewareFactory } from 'router5/dist/types/router';
+import { Middleware, MiddlewareFactory } from '@riogz/router/dist/types/router';
 
-const router5 = createRouter([], {
+const router = createRouter([], {
   allowNotFound: false,
   autoCleanUp: false,
   defaultRoute: '404',
@@ -22,7 +22,7 @@ describe('onEnterMiddlewareFactory', () => {
     ];
 
     middlewareFactory = onEnterMiddlewareFactory(routes);
-    middleware = middlewareFactory(router5, []);
+    middleware = middlewareFactory(router, []);
   });
 
   it('should call onEnter function if segment is found', () => {
@@ -68,7 +68,7 @@ describe('onEnterMiddlewareFactory', () => {
     ];
 
     middlewareFactory = onEnterMiddlewareFactory(routes);
-    middleware = middlewareFactory(router5, []);
+    middleware = middlewareFactory(router, []);
 
     const toState = {
       name: 'segment1',
