@@ -2843,30 +2843,29 @@
   resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
-"@riogz/react-router@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@riogz/react-router/-/react-router-0.0.3.tgz#cfe13da6a269c8ec1dd868f3ae431b461f420d88"
-  integrity sha512-vaJynQ7Mxd0cZR184RrgvFFuxC3+tu0ALzxgfS/vbPE8FJPiKsvMpMTSp87OKNvUfiaZ+pyljLyjFQlUk2ntXg==
+"@riogz/react-router@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@riogz/react-router/-/react-router-1.0.1.tgz#d8f1287b8d5ab1de4d5f712db81289a12817ddb8"
+  integrity sha512-EGS673oS+avXaX3hz+6TwSKil2lCqcjpLhLDINTI/wLDe02Pvz6ba9GfVRM8Lf89IYb12NiDMJxxNq+2g7kF1A==
   dependencies:
-    "@riogz/router-transition-path" "^0.0.3"
+    "@riogz/router-transition-path" "^1.0.1"
 
-"@riogz/router-plugin-browser@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@riogz/router-plugin-browser/-/router-plugin-browser-0.0.3.tgz#c3b973e2b75bc61d837271b63994c94d8584f799"
-  integrity sha512-NGndW/13DbxPqb0U3mp8GZVnxEP8KBxqe39ZaIPV/4Sf1G+HIVPDdrYRXsuSdbepi4ng3N/orwDKu0eqHO1wpQ==
+"@riogz/router-plugin-browser@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@riogz/router-plugin-browser/-/router-plugin-browser-1.0.1.tgz#32e257b0d2f7d9679a1c58ed3f50e121a9aae428"
+  integrity sha512-rgb/WnuBBHV+twHAS/4QMwkGWMRlYZkfteVHGiKswotj75gf4foKvka00WWzxMvjSOX1fYXrSxHwoLaijCxyeQ==
 
-"@riogz/router-transition-path@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@riogz/router-transition-path/-/router-transition-path-0.0.3.tgz#f657c23c1cc493d5c100ebcff48588094a225026"
-  integrity sha512-vZuc0poTeAiNp6Pbt3DFhpjqAoOeRscryDRC9DedTttxpG/Pdst1RLAEP4UkcSXc3MMC8VueYlqfth2zzIUL3A==
+"@riogz/router-transition-path@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@riogz/router-transition-path/-/router-transition-path-1.0.1.tgz#7d70882a37300067eee62d83d1f7227b39ff16a2"
+  integrity sha512-2ucwpvgBZhPZvbA3nHP7dBlQXjniCV7k+aNcSxk6GGjsaaR0UPWr/3AAfMu7I0O90dsA2VTZNd1Vli+00xnFig==
 
-"@riogz/router@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@riogz/router/-/router-0.0.3.tgz#1a01fd65739b4814f1ba2543d6b809bc7787e108"
-  integrity sha512-wv2B2Rvpq9k3f/eQcEOWf9aAtejQf71UdgubeFrvagFnW09dnMO2Yf8tT5e+j/Mey1N0DYr4W9vvxacxnukwmQ==
+"@riogz/router@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@riogz/router/-/router-1.0.1.tgz#4b21e52f3decdc11cd6b84e81fa1cd515a6a71c9"
+  integrity sha512-nPNEZAx2wPi1DMcabFi2OhAq6OP3XSmxBKg4knfTYE8qXGjboSat4m+4hjMZl9OLs5/HXYH8THfR6TcdxlN1cA==
   dependencies:
-    "@riogz/router-transition-path" "^0.0.3"
-    route-node "4.1.1"
+    "@riogz/router-transition-path" "^1.0.1"
     symbol-observable "4.0.0"
 
 "@rollup/pluginutils@^5.0.2":
@@ -10090,14 +10089,6 @@ path-parse@^1.0.7:
   resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.7.tgz#fbc114b60ca42b30d9daf5858e4bd68bbedb6735"
   integrity sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==
 
-path-parser@6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/path-parser/-/path-parser-6.1.0.tgz#ee8a1dd7b1ffaf4069f2ddd1c20d1867c8fd3a08"
-  integrity sha512-nAB6J73z2rFcQP+870OHhpkHFj5kO4rPLc2Ol4Y3Ale7F6Hk1/cPKp7cQ8RznKF8FOSvu+YR9Xc6Gafk7DlpYA==
-  dependencies:
-    search-params "3.0.0"
-    tslib "^1.10.0"
-
 path-to-regexp@0.1.7:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/path-to-regexp/-/path-to-regexp-0.1.7.tgz#df604178005f522f15eb4490e7247a1bfaa67f8c"
@@ -10779,15 +10770,6 @@ rollup@^4.23.0:
     "@rollup/rollup-win32-x64-msvc" "4.29.1"
     fsevents "~2.3.2"
 
-route-node@4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/route-node/-/route-node-4.1.1.tgz#9006600160982db0b19d2f093d4271f9fd7548ea"
-  integrity sha512-bJVDVEQvXYqTC/LQ/2ohNZ2gPRO4+3ZvHeafuCyRZAd63qH17yspVfxOBzasE/t7SmSO30sT/yPSEMuPDGHhSQ==
-  dependencies:
-    path-parser "6.1.0"
-    search-params "3.0.0"
-    tslib "^1.10.0"
-
 rrweb-cssom@^0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/rrweb-cssom/-/rrweb-cssom-0.7.1.tgz#c73451a484b86dd7cfb1e0b2898df4b703183e4b"
@@ -10878,11 +10860,6 @@ schema-utils@^4.3.0:
     ajv "^8.9.0"
     ajv-formats "^2.1.1"
     ajv-keywords "^5.1.0"
-
-search-params@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/search-params/-/search-params-3.0.0.tgz#dbc7c243058e5a33ae1e9870be91f5aced4100d8"
-  integrity sha512-8CYNl/bjkEhXWbDTU/K7c2jQtrnqEffIPyOLMqygW/7/b+ym8UtQumcAZjOfMLjZKR6AxK5tOr9fChbQZCzPqg==
 
 secure-compare@3.0.1:
   version "3.0.1"
@@ -11720,7 +11697,7 @@ tsconfig-paths@^4.1.2, tsconfig-paths@^4.2.0:
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
-tslib@^1.10.0, tslib@^1.8.1:
+tslib@^1.8.1:
   version "1.14.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==

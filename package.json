@@ -28,10 +28,10 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-i18next": "^13.5.0",
-    "@riogz/react-router": "^0.0.3",
+    "@riogz/react-router": "^1.0.1",
     "reflect-metadata": "0.2.2",
-    "@riogz/router": "^0.0.3",
-    "@riogz/router-plugin-browser": "^0.0.3"
+    "@riogz/router": "^1.0.1",
+    "@riogz/router-plugin-browser": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
