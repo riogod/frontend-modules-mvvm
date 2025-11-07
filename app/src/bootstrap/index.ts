@@ -14,16 +14,8 @@ import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
 import { BootstrapMockService } from './services/mockService.ts';
 import { BootstrapRouterService } from './services/routerService.ts';
 import { IAppConfig } from '../config/app.ts';
-// Import all @injectable classes
-import { AppModel } from '../modules/core/models/app.model';
-import { LocalStorageRepository } from '../modules/core/data/localStorage.repository';
-import { UiSettingsViewModel } from '../modules/core/viewmodels/uiSettings.vm';
-import { AppSettingsViewModel } from '../modules/core/viewmodels/appSettings.vm';
-import { TodoListModel } from '../modules/todo/models/todo_list.model';
-import { TodoListViewModel } from '../modules/todo/viewmodels/todo_list.vm';
-import { JokesModel } from '../modules/api_example/models/jokes.model';
-import { JokesRepository } from '../modules/api_example/data/jokes.repository';
-import { JokeViewModel } from '../modules/api_example/viewmodels/joke.vm';
+import { buildProviderModule } from '@inversifyjs/binding-decorators';
+
 
 /**
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
@@ -63,6 +55,7 @@ export class Bootstrap {
 
   private _APIClient: APIClient | null = null;
   private _di: Container = new Container({
+    autobind: true,
     defaultScope: 'Singleton',
   });
 
@@ -108,21 +101,13 @@ export class Bootstrap {
 
   /**
    * Инициализация DI контейнера и биндинг Api клиента в него.
+   * Автоматически регистрирует все классы с @injectable и @provide через buildProviderModule.
    *
    * @return {void}
    */
   initDI(): void {
-    // Inversify 7 requires explicit registration of @injectable classes
-    // Register all @injectable classes
-    this._di.bind(LocalStorageRepository).toSelf().inSingletonScope();
-    this._di.bind(AppModel).toSelf().inSingletonScope();
-    this._di.bind(UiSettingsViewModel).toSelf().inSingletonScope();
-    this._di.bind(AppSettingsViewModel).toSelf().inSingletonScope();
-    this._di.bind(TodoListModel).toSelf().inSingletonScope();
-    this._di.bind(TodoListViewModel).toSelf().inSingletonScope();
-    this._di.bind(JokesRepository).toSelf().inSingletonScope();
-    this._di.bind(JokesModel).toSelf().inSingletonScope();
-    this._di.bind(JokeViewModel).toSelf().inSingletonScope();
+    // Автоматическая регистрация всех классов с @injectable и @provide через @inversifyjs/binding-decorators
+    this._di.load(buildProviderModule());
 
     if (this._APIClient) {
       this._di.bind<APIClient>(APIClient).toConstantValue(this._APIClient);
@@ -136,6 +121,8 @@ export class Bootstrap {
    */
   async initModules(): Promise<void> {
     for (const module of this.modules) {
+      // Классы с @injectable уже зарегистрированы автоматически в initDI()
+
       if (module.config.ROUTES) {
         const routes = module.config.ROUTES();
         this.routerService.router.add(routes);

@@ -21,6 +21,12 @@
     "src/**/*.spec.js",
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.json",
+    "../libs/**/*.ts",
+    "../libs/**/*.tsx",
+    "../libs/**/*.json"
   ]
 }
