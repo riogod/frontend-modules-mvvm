@@ -42,7 +42,7 @@
     "id": 28
   },
   {
-    "type": "programming",
+    "type_wrong": "programming",
     "setup": "If you put a million monkeys at a million keyboards, one of them will eventually write a Java program",
     "punchline": "the rest of them will write Perl",
     "id": 26
@@ -55,7 +55,7 @@
   },
   {
     "type": "programming",
-    "setup": "I was gonna tell you a joke about UDP...",
+    "setup_wrong": "I was gonna tell you a joke about UDP...",
     "punchline": "...but you might not get it.",
     "id": 72
   },

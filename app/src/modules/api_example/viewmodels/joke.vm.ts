@@ -1,6 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { inject, injectable } from "inversify";
 import { JokesModel } from "../models/jokes.model.ts";
+import { GetJokeUsecase } from "../usecases/getJoke.usecase.ts";
 
 @injectable()
 export class JokeViewModel {
@@ -14,12 +15,14 @@ export class JokeViewModel {
   constructor(
     @inject(JokesModel)
     private jokesModel: JokesModel,
+    @inject(GetJokeUsecase)
+    private getJokeUsecase: GetJokeUsecase,
   ) {
     makeAutoObservable(this);
   }
 
   async getJoke() {
-    await this.jokesModel.getJoke();
+    await this.getJokeUsecase.execute();
   }
 
   dispose() {

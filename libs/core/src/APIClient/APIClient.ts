@@ -60,15 +60,30 @@ export class APIClient {
       headers: {
         'Device-Id': DeviceUUID,
         ...option.headers,
-      },
+      }
     };
 
     if (option.requestObj) {
       requestConfig.data = option.requestObj;
     }
 
+    if (option.validationSchema && option.validationSchema.request) {
+      const result = option.validationSchema.request.safeParse(requestConfig.data);
+      if (!result.success) {
+        return Promise.reject<Resp>(result.error);
+      }
+    }
+
     try {
       const response = await this.api.request<Resp>(requestConfig);
+
+      if (option.validationSchema && option.validationSchema.response) {
+        const result = option.validationSchema.response.safeParse(response.data);
+
+        if (!result.success) {
+          return Promise.reject<Resp>(result.error);
+        }
+      }
 
       return response.data;
     } catch (error: unknown) {

@@ -33,7 +33,8 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-i18next": "^16.2.4",
-    "reflect-metadata": "0.2.2"
+    "reflect-metadata": "0.2.2",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",

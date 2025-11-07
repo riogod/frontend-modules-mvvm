@@ -29,25 +29,10 @@ export class JokesModel {
     makeAutoObservable(this);
   }
 
-  async getJoke() {
-
-    this.loading = true;
-
-
-    try {
-      const joke = await this.jokesRepository.getJoke();
-      runInAction(() => {
-        if (joke && joke.length > 0) {
-          this._joke = joke[0];
-        }
-        this.loading = false;
-      });
-    } catch {
-      runInAction(() => {
-        this._joke = null;
-        this.loading = false;
-      });
-    }
+  setJoke(joke: Joke) {
+    runInAction(() => {
+      this._joke = joke;
+    });
   }
 
   dispose() {
