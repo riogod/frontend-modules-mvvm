@@ -2,14 +2,13 @@ import { makeAutoObservable } from "mobx";
 import { inject, injectable } from "inversify";
 import { TodoListModel } from "../models/todo_list.model.ts";
 import { UpdateTodoList } from "../models/todo_list.interface.ts";
+import { AddTaskUsecase, GetTaskListUsecase, RemoveTaskUsecase, UpdateTaskUsecase } from "../usecases/index.ts";
+
 
 @injectable()
 export class TodoListViewModel {
   get items() {
-    if (this.completeFilterStatus) {
-      return this.todoModel.items;
-    }
-    return this.todoModel.items.filter((item) => !item.completed);
+    return this.getTaskListUsecase.execute();
   }
 
   get allItemsLength() {
@@ -26,26 +25,28 @@ export class TodoListViewModel {
   constructor(
     @inject(TodoListModel)
     private todoModel: TodoListModel,
+    @inject(AddTaskUsecase)
+    private addTaskUsecase: AddTaskUsecase,
+    @inject(RemoveTaskUsecase)
+    private removeTaskUsecase: RemoveTaskUsecase,
+    @inject(UpdateTaskUsecase)
+    private updateTaskUsecase: UpdateTaskUsecase,
+    @inject(GetTaskListUsecase)
+    private getTaskListUsecase: GetTaskListUsecase,
   ) {
     makeAutoObservable(this);
   }
 
   setItem(text: string) {
-    this.todoModel.setItem({
-      id: Date.now().toString(),
-      description: text,
-      completed: false,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
+    this.addTaskUsecase.execute(text);
   }
 
   removeItem(id: string) {
-    this.todoModel.removeItem(id);
+    this.removeTaskUsecase.execute(id);
   }
 
   updateItem(item: UpdateTodoList) {
-    this.todoModel.updateItem(item);
+    this.updateTaskUsecase.execute(item);
   }
 
   setCompleteFilter(filter: boolean) {
