@@ -40,15 +40,19 @@ const LanguageSelect: FC = () => {
             disableClearable
             onChange={handleLanguageChange}
             getOptionLabel={(option) => option}
-            renderOption={(props, option) => (
-              <Box
-                component="li"
-                sx={{ '& > img': { mr: 2, flexShrink: 0 } }}
-                {...props}
-              >
-                {option}
-              </Box>
-            )}
+            renderOption={(props, option) => {
+              const { key, ...otherProps } = props;
+              return (
+                <Box
+                  key={key}
+                  component="li"
+                  sx={{ '& > img': { mr: 2, flexShrink: 0 } }}
+                  {...otherProps}
+                >
+                  {option}
+                </Box>
+              );
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}

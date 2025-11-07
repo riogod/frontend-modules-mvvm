@@ -33,7 +33,7 @@ export const initBootstrap = async (
     .setNext(new ClientHashHandler(config))
     .setNext(new RouterHandler(config))
     .setNext(new InitI18nHandler(config))
-    .setNext(new DIHandler(config)) // DI must be initialized before modules use it
+    .setNext(new DIHandler(config))
     .setNext(new ModulesHandler(config))
     .setNext(new MockServiceHandler(config))
     .setNext(new RouterPostHandler(config))

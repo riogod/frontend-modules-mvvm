@@ -1,11 +1,7 @@
 import {
   IMenuItem,
   IRoutes,
-  onEnterMiddlewareFactory,
-  onExitSearch,
-  onPathMiddlewareFactory,
-  onSyncPathMiddlewareFactory,
-  titleMiddlewareFactory,
+  RouterDependencies,
 } from '@todo/core';
 import { createRouter, Router } from '@riogz/router';
 import browserPlugin from '@riogz/router-plugin-browser';
@@ -15,7 +11,7 @@ import { findSegment } from '../utils.ts';
  *  Сервис роутинга приложения.
  */
 export class BootstrapRouterService {
-  router: Router = createRouter();
+  router: Router<RouterDependencies> = createRouter<RouterDependencies>();
   routes: IRoutes = [];
   private isInitialized: boolean = false;
 
@@ -37,7 +33,7 @@ export class BootstrapRouterService {
 
     this.addRoutes(routes);
 
-    this.router = createRouter(this.routes, {
+    this.router = createRouter<RouterDependencies>(this.routes, {
       allowNotFound: false,
       autoCleanUp: false,
       defaultRoute: '404',
@@ -59,18 +55,10 @@ export class BootstrapRouterService {
    */
   routerPostInit(
     cb: (
-      router: Router<Record<string, unknown>>,
-    ) => Router<Record<string, unknown>>,
+      router: Router<RouterDependencies>,
+    ) => Router<RouterDependencies>,
   ): void {
     this.router = cb(this.router);
-
-    onExitSearch(this.routes, this.router);
-    this.router.useMiddleware(
-      titleMiddlewareFactory(this.routes),
-      onEnterMiddlewareFactory(this.routes),
-      onPathMiddlewareFactory(this.routes),
-      onSyncPathMiddlewareFactory(this.routes),
-    );
   }
 
   /**

@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import { inject, injectable } from 'inversify';
 import { JokesRepository } from '../data/jokes.repository.ts';
 import { Joke } from './jokes.interface.ts';
@@ -13,7 +13,9 @@ export class JokesModel {
   }
 
   set loading(loading: boolean) {
-    this._loading = loading;
+    runInAction(() => {
+      this._loading = loading;
+    });
   }
 
   get joke() {
@@ -28,22 +30,30 @@ export class JokesModel {
   }
 
   async getJoke() {
+
     this.loading = true;
+
 
     try {
       const joke = await this.jokesRepository.getJoke();
-      if (joke && joke.length > 0) {
-        this._joke = joke[0];
-      }
+      runInAction(() => {
+        if (joke && joke.length > 0) {
+          this._joke = joke[0];
+        }
+        this.loading = false;
+      });
     } catch {
-      this._joke = null;
-    } finally {
-      this.loading = false;
+      runInAction(() => {
+        this._joke = null;
+        this.loading = false;
+      });
     }
   }
 
   dispose() {
-    this.loading = false;
-    this._joke = null;
+    runInAction(() => {
+      this.loading = false;
+      this._joke = null;
+    });
   }
 }

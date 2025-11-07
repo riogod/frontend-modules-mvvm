@@ -1,6 +1,5 @@
 import { IRoutes } from "@todo/core";
 import { lazy } from "react";
-import { Container } from "inversify";
 import { JokeViewModel } from "../viewmodels/joke.vm.ts";
 
 export const API_ROUTES = {
@@ -14,14 +13,14 @@ export const routes: IRoutes = [
     menu: {
       text: "api:menu.api",
     },
-    title: "API example",
+    browserTitle: "API example",
     pageComponent: lazy(() => import("../view/ApiPage.tsx")),
-    onEnter: async (router) => {
-      const container = router.getDependencies().di as Container;
-
+    onEnterNode: async (_toState, _fromState, deps) => {
+      const container = deps.di;
       await container.get<JokeViewModel>(JokeViewModel).getJoke();
     },
-    onExit: (_router, container) => {
+    onExitNode: async (_toState, _fromState, deps) => {
+      const container = deps.di;
       container.get<JokeViewModel>(JokeViewModel).dispose();
     },
   },
