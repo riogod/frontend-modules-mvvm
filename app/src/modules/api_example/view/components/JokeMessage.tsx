@@ -8,8 +8,10 @@ import Skeleton from '@mui/material/Skeleton';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
+import { useTranslation } from 'react-i18next';
 
 const JokeMessage: FC = () => {
+  const { t } = useTranslation('api');
   const jokeMessage = useVM<JokeViewModel>(JokeViewModel);
 
   const getJoke = () => {
@@ -56,7 +58,7 @@ const JokeMessage: FC = () => {
       </CardContent>
       <CardActions>
         <Button size="small" onClick={getJoke}>
-          Get Joke Again
+          {t('api:button.get-joke')}
         </Button>
       </CardActions>
     </Card>
