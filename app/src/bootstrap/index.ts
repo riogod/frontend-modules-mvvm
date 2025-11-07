@@ -5,7 +5,6 @@ import { APIClient } from '@todo/core';
 import { Module } from '../modules/interface';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
-import { buildProviderModule } from 'inversify-binding-decorators';
 import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
 import { ClientHashHandler } from './handlers/ClientHashHandler';
@@ -15,6 +14,16 @@ import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
 import { BootstrapMockService } from './services/mockService.ts';
 import { BootstrapRouterService } from './services/routerService.ts';
 import { IAppConfig } from '../config/app.ts';
+// Import all @injectable classes
+import { AppModel } from '../modules/core/models/app.model';
+import { LocalStorageRepository } from '../modules/core/data/localStorage.repository';
+import { UiSettingsViewModel } from '../modules/core/viewmodels/uiSettings.vm';
+import { AppSettingsViewModel } from '../modules/core/viewmodels/appSettings.vm';
+import { TodoListModel } from '../modules/todo/models/todo_list.model';
+import { TodoListViewModel } from '../modules/todo/viewmodels/todo_list.vm';
+import { JokesModel } from '../modules/api_example/models/jokes.model';
+import { JokesRepository } from '../modules/api_example/data/jokes.repository';
+import { JokeViewModel } from '../modules/api_example/viewmodels/joke.vm';
 
 /**
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
@@ -32,9 +41,9 @@ export const initBootstrap = async (
     .setNext(new ClientHashHandler(config))
     .setNext(new RouterHandler(config))
     .setNext(new InitI18nHandler(config))
+    .setNext(new DIHandler(config)) // DI must be initialized before modules use it
     .setNext(new ModulesHandler(config))
     .setNext(new MockServiceHandler(config))
-    .setNext(new DIHandler(config))
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
 
@@ -54,7 +63,6 @@ export class Bootstrap {
 
   private _APIClient: APIClient | null = null;
   private _di: Container = new Container({
-    autoBindInjectable: true,
     defaultScope: 'Singleton',
   });
 
@@ -104,7 +112,17 @@ export class Bootstrap {
    * @return {void}
    */
   initDI(): void {
-    this._di.load(buildProviderModule());
+    // Inversify 7 requires explicit registration of @injectable classes
+    // Register all @injectable classes
+    this._di.bind(LocalStorageRepository).toSelf().inSingletonScope();
+    this._di.bind(AppModel).toSelf().inSingletonScope();
+    this._di.bind(UiSettingsViewModel).toSelf().inSingletonScope();
+    this._di.bind(AppSettingsViewModel).toSelf().inSingletonScope();
+    this._di.bind(TodoListModel).toSelf().inSingletonScope();
+    this._di.bind(TodoListViewModel).toSelf().inSingletonScope();
+    this._di.bind(JokesRepository).toSelf().inSingletonScope();
+    this._di.bind(JokesModel).toSelf().inSingletonScope();
+    this._di.bind(JokeViewModel).toSelf().inSingletonScope();
 
     if (this._APIClient) {
       this._di.bind<APIClient>(APIClient).toConstantValue(this._APIClient);

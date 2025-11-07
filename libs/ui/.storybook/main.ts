@@ -1,6 +1,16 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const config = {
   stories: ['../src/**/*.stories.@(js|jsx|ts|tsx|mdx)'],
-  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions'],
+  addons: [
+    '@storybook/addon-essentials',
+    '@storybook/addon-a11y',
+    '@storybook/addon-vitest',
+  ],
   core: {
     builder: '@storybook/builder-vite',
     options: {},
@@ -8,7 +18,7 @@ const config = {
   framework: {
     name: '@storybook/react-vite',
     options: {
-      viteConfigPath: './vite.config.ts',
+      viteConfigPath: path.resolve(__dirname, '../vite.config.ts'),
     },
   },
 };

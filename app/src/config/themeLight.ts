@@ -1,7 +1,6 @@
 import { theme } from './theme.ts';
 import merge from '../utils/merge.ts';
-import createTheme from '@mui/material/styles/createTheme';
-import { ThemeOptions } from '@mui/material/styles/createTheme';
+import { createTheme, ThemeOptions } from '@mui/material/styles';
 
 const lightThemeSettings: ThemeOptions = {
   palette: {

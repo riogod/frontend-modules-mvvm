@@ -43,3 +43,5 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 .cursor
 .vscode
+*storybook.log
+storybook-static

@@ -6,24 +6,24 @@ import { APIClient } from '@todo/core';
 let bootstrap: Bootstrap;
 
 vi.mock('../services/mockService.ts', () => ({
-  BootstrapMockService: vi.fn().mockImplementation(() => ({
-    init: vi.fn(),
-    addHandlers: vi.fn(),
-  })),
+  BootstrapMockService: class {
+    init = vi.fn();
+    addHandlers = vi.fn();
+  },
 }));
 
 const addRoutes = vi.fn();
 vi.mock('../services/routerService.ts', () => ({
-  BootstrapRouterService: vi.fn().mockImplementation(() => ({
-    routes: [],
-    router: {
+  BootstrapRouterService: class {
+    routes: any[] = [];
+    router = {
       add: vi.fn(),
-    },
-    init: vi.fn(),
-    addRoutes,
-    routerPostInit: vi.fn(),
-    buildRoutesMenu: vi.fn(),
-  })),
+    };
+    init = vi.fn();
+    addRoutes = addRoutes;
+    routerPostInit = vi.fn();
+    buildRoutesMenu = vi.fn();
+  },
 }));
 
 const modules: Module[] = [
