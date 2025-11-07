@@ -8,7 +8,7 @@ export const HttpErrorHandler = (bootstrap: Bootstrap) => {
   const appModel = bootstrap.di.get<AppModel>(AppModel);
 
   const errorMap: Record<string, TCallbacks> = {
-    "500": (_err) => {
+    "500": () => {
       appModel.notification = "Service error: 500!";
     },
     "401": (err) => {

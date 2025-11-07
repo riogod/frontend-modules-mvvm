@@ -35,7 +35,7 @@ export class JokesModel {
       if (joke && joke.length > 0) {
         this._joke = joke[0];
       }
-    } catch (error) {
+    } catch {
       this._joke = null;
     } finally {
       this.loading = false;

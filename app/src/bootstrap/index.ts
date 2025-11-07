@@ -107,7 +107,7 @@ export class Bootstrap {
    */
   initDI(): void {
     // Автоматическая регистрация всех классов с @injectable и @provide через @inversifyjs/binding-decorators
-    this._di.load(buildProviderModule());
+    void this._di.load(buildProviderModule());
 
     if (this._APIClient) {
       this._di.bind<APIClient>(APIClient).toConstantValue(this._APIClient);

@@ -23,15 +23,15 @@ const TodoPage: FC = () => {
         }}
       >
         <TodoListFilter />
-        <Observer
-          children={() => (
+        <Observer>
+          {() => (
             <Box sx={{ width: 1 }}>
               {listViewModel.items.map((item) => (
                 <TodoItem key={item.id} item={item} />
               ))}
             </Box>
           )}
-        />
+        </Observer>
         <Box sx={{ minHeight: 124 }} />
       </Container>
       <TodoInput />

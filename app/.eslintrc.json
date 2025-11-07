@@ -11,6 +11,11 @@
     "browser": true,
     "es2022": true
   },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
   "overrides": [
     {
       "parserOptions": {
