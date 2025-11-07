@@ -17,6 +17,7 @@ import { findSegment } from '../utils.ts';
 export class BootstrapRouterService {
   router: Router = createRouter();
   routes: IRoutes = [];
+  private isInitialized: boolean = false;
 
   constructor() {
     return this;
@@ -30,6 +31,10 @@ export class BootstrapRouterService {
    * @return {void} This function does not return anything.
    */
   initRouter(routes: IRoutes, appPrefix: string): void {
+    if (this.isInitialized) {
+      throw new Error('Router has already been initialized');
+    }
+
     this.addRoutes(routes);
 
     this.router = createRouter(this.routes, {
@@ -44,6 +49,8 @@ export class BootstrapRouterService {
         forceDeactivate: false,
       }),
     );
+
+    this.isInitialized = true;
   }
 
   /**

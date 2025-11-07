@@ -1,26 +1,42 @@
 /// <reference types='vitest' />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import dts from "vite-plugin-dts";
 import * as path from "path";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 import type { InlineConfig } from "vitest";
 import type { UserConfig } from "vite";
 
 type ViteConfig = UserConfig & { test: InlineConfig };
+
+// Conditionally import dts plugin only when building, not when running tests
+let dtsPlugin: any = null;
+if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
+  try {
+    const dts = require("vite-plugin-dts");
+    dtsPlugin = dts.default({
+      entryRoot: "src",
+      tsconfigPath: path.join(__dirname, "tsconfig.lib.json")
+    });
+  } catch (e) {
+    // Ignore if dts plugin can't be loaded
+  }
+}
+
+const plugins: any[] = [
+  react(),
+  tsconfigPaths(),
+];
+
+if (dtsPlugin) {
+  plugins.push(dtsPlugin);
+}
+
 const config: ViteConfig = {
   root: __dirname,
   cacheDir: "../../node_modules/.vite/libs/core",
 
-  plugins: [
-    react(),
-    nxViteTsPaths(),
-    dts({
-      entryRoot: "src",
-      tsconfigPath: path.join(__dirname, "tsconfig.lib.json")
-    })
-  ],
+  plugins,
 
   // Configuration for building your library.
   // See: https://vitejs.dev/guide/build.html#library-mode
@@ -62,4 +78,5 @@ const config: ViteConfig = {
     }
   }
 };
+
 export default defineConfig(config);

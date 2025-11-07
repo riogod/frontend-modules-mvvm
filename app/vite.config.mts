@@ -2,7 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
+import tsconfigPaths from "vite-tsconfig-paths";
 import type { InlineConfig } from "vitest";
 import type { UserConfig } from "vite";
 
@@ -21,7 +21,7 @@ const config: ViteConfig = {
     host: "localhost"
   },
 
-  plugins: [react(), nxViteTsPaths(), svgr()],
+  plugins: [react(), tsconfigPaths(), svgr()],
 
   build: {
     outDir: "../../dist/app",
