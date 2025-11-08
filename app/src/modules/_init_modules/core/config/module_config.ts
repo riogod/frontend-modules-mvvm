@@ -1,4 +1,4 @@
-import { ModuleConfig } from '../../../bootstrap/interface';
+import { ModuleConfig } from '../../../../bootstrap/interface';
 import { routes } from './routes';
 import { HttpErrorHandler } from './http_errors.ts';
 import ru_common from './i18n/ru_common.json';

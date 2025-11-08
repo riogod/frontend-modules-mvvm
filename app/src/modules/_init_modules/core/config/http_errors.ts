@@ -1,5 +1,5 @@
 import { AxiosError } from "@todo/core";
-import { Bootstrap } from "../../../bootstrap";
+import { Bootstrap } from "../../../../bootstrap";
 import { AppModel } from "../models/app.model.ts";
 
 type TCallbacks = (error: AxiosError) => void;
