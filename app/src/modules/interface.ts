@@ -32,11 +32,11 @@ export type ModuleLoadType = 'init' | 'lazy' | 'normal';
  */
 export type ModuleLoadCondition = {
   /**
-   * Массив идентификаторов фич-флагов, при их отсутствии модуль не загружается
+   * Массив идентификаторов фич-флагов, при их отсутствии в AccessControlModel модуль не загружается
    */
   featureFlags?: string[];
   /**
-   * Массив идентификаторов прав доступа, при их отсутствии модуль не загружается
+   * Массив идентификаторов прав доступа, при их отсутствии в AccessControlModel модуль не загружается
    */
   accessPermissions?: string[];
   /**
