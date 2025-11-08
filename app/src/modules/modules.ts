@@ -1,4 +1,4 @@
-import { Module } from "./interface";
+import { Module, ModuleLoadType } from "./interface";
 import CoreConfig from "./_init_modules/core/config/module_config";
 import TodoConfig from "./todo/config/module_config";
 import ApiConfig from "./api_example/config/module_config";
@@ -9,14 +9,14 @@ export const app_modules: Module[] = [
     description:
       "Core module - Содержит основной макет приложения и отвечает за базовые функции",
     config: CoreConfig,
-    loadType: 'init',
+    loadType: ModuleLoadType.INIT,
     loadPriority: 0,
   },
   {
     name: "todo",
     description: "Todo module - Показывает пример работы с моделью Todo",
     config: TodoConfig,
-    loadType: 'lazy',
+    loadType: ModuleLoadType.LAZY,
     loadPriority: 2,
   },
   {
@@ -24,7 +24,7 @@ export const app_modules: Module[] = [
     description:
       "API example module - Показывает пример реализации работы с API",
     config: ApiConfig,
-    loadType: 'lazy',
+    loadType: ModuleLoadType.LAZY,
     loadPriority: 3,
     loadCondition: {
       dependencies: ['core'],
