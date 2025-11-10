@@ -9,6 +9,7 @@
     "test:lib-core": "vitest --config libs/core/vite.config.mts",
     "build:app": "vite build --config app/vite.config.mts",
     "buildlib": "vite build --config libs/core/vite.config.mts",
+    "preview": "npm run build:app && vite preview --config app/vite.config.mts",
     "storybook": "storybook dev -p 6006 --config-dir libs/ui/.storybook",
     "build-storybook": "storybook build --config-dir libs/ui/.storybook"
   },

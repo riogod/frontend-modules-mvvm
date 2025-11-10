@@ -109,9 +109,9 @@ export class BootstrapModuleLoader {
      * Получение конфигурации модуля по имени
      *
      * @param {string} name - Имя модуля.
-     * @return {ModuleConfig | undefined} - Конфигурация модуля или undefined, если не найден.
+     * @return {ModuleConfig | Promise<ModuleConfig> | undefined} - Конфигурация модуля или undefined, если не найден.
      */
-    getModuleConfig(name: string): ModuleConfig | undefined {
+    getModuleConfig(name: string): ModuleConfig | Promise<ModuleConfig> | undefined {
         const module = this.registry.getModule(name);
         return module?.config;
     }

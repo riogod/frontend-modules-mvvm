@@ -1,5 +1,4 @@
 import { Module, ModuleLoadType } from "./interface.ts";
-import { loadLazyModuleConfig } from "../bootstrap/services/moduleLoader/ModuleLoaderHelpers/index.ts";
 // Статический импорт только для INIT и NORMAL модулей
 import CoreConfig from "./core/config/module_config";
 
@@ -15,7 +14,7 @@ export const app_modules: Module[] = [
   {
     name: "todo",
     description: "Todo module - Показывает пример работы с моделью Todo",
-    config: loadLazyModuleConfig('../modules/todo/config/module_config'),
+    config: import('./todo/config/module_config').then(m => m.default),
     loadType: ModuleLoadType.LAZY,
     loadPriority: 1,
   },
@@ -23,7 +22,7 @@ export const app_modules: Module[] = [
     name: "api",
     description:
       "API example module - Показывает пример реализации работы с API",
-    config: loadLazyModuleConfig('../modules/api_example/config/module_config'),
+    config: import('./api_example/config/module_config').then(m => m.default),
     loadType: ModuleLoadType.LAZY,
     loadPriority: 2,
     loadCondition: {

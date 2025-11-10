@@ -3,7 +3,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import tsconfigPaths from "vite-tsconfig-paths";
-import type { InlineConfig } from "vitest";
+import type { InlineConfig } from "vitest/node";
 import type { UserConfig } from "vite";
 
 type ViteConfig = UserConfig & { test: InlineConfig };
@@ -24,7 +24,7 @@ const config: ViteConfig = {
   plugins: [react(), tsconfigPaths(), svgr()],
 
   build: {
-    outDir: "../../dist/app",
+    outDir: "../dist/app",
     reportCompressedSize: true,
     target: "esnext",
     chunkSizeWarningLimit: 1000,
@@ -40,25 +40,32 @@ const config: ViteConfig = {
         manualChunks: (id) => {
           // Разделение vendor библиотек
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react';
+            // Router библиотеки
+            if (id.includes('@riogz/router') || id.includes('@riogz/react-router')) {
+              return 'vendor-router';
             }
-            if (id.includes('i18next') || id.includes('i18next-browser-languagedetector')) {
+            // UI библиотеки (MUI и emotion)
+            if (id.includes('@mui/') || id.includes('@emotion/')) {
+              return 'vendor-ui';
+
+            }
+            // Утилиты
+            if (id.includes('axios') || id.includes('zod') || id.includes('@fingerprintjs')) {
+              return 'vendor-utils';
+            }
+            // i18next
+            if (id.includes('i18next') || id.includes('react-i18next')) {
               return 'i18next';
             }
-            if (id.includes('inversify') || id.includes('inversify-binding-decorators')) {
+            // inversify
+            if (id.includes('inversify') || id.includes('@inversifyjs')) {
               return 'inversify';
             }
-            if (id.includes('mobx') || id.includes('mobx-react-lite')) {
+            // mobx
+            if (id.includes('mobx')) {
               return 'mobx';
             }
-            if (id.includes('@todo/core')) {
-              return 'lib-core';
-            }
-            if (id.includes('@todo/ui')) {
-              return 'lib-ui';
-            }
-            // Остальные node_modules в отдельный chunk
+            // Остальные node_modules (включая react и react-dom) в общий vendor
             return 'vendor';
           }
 
@@ -99,3 +106,4 @@ const config: ViteConfig = {
 };
 
 export default defineConfig(config);
+

@@ -94,7 +94,13 @@ export class ModuleRegistry {
         // Для LAZY модулей загружаем конфигурацию, если она еще не загружена
         await this.loadModuleConfig(module);
 
-        if (!module.config || !module.config.ROUTES) {
+        // После loadModuleConfig config гарантированно не является Promise
+        if (!module.config || module.config instanceof Promise) {
+            return undefined;
+        }
+
+        const config = module.config as ModuleConfig;
+        if (!config.ROUTES) {
             return undefined;
         }
 
@@ -104,8 +110,7 @@ export class ModuleRegistry {
         }
 
         // Вызываем ROUTES() только один раз и кешируем результат
-        // После loadModuleConfig config гарантированно не является Promise
-        const routes = (module.config as ModuleConfig).ROUTES();
+        const routes = config.ROUTES();
         this.routesCache.set(module.name, routes);
         return routes;
     }
