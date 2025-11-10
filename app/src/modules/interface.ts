@@ -1,22 +1,56 @@
 import { ModuleConfig } from "../bootstrap/interface";
-export interface Module {
+
+/**
+ * Базовый интерфейс модуля
+ */
+interface BaseModule {
   name: string;
   description?: string;
   config: ModuleConfig;
-
   /**
    * Приоритет загрузки модуля
    */
   loadPriority?: number;
-  /**
-   * Тип загрузки модуля (по умолчанию: normal)
-   */
-  loadType?: ModuleLoadType;
+}
+
+/**
+ * Модуль типа INIT - загружается при инициализации приложения
+ * loadCondition запрещен для INIT модулей
+ */
+export interface InitModule extends BaseModule {
+  loadType: ModuleLoadType.INIT;
+  loadCondition?: never; // Запрещено для INIT модулей
+}
+
+/**
+ * Модуль типа LAZY - загружается при первом обращении к нему
+ */
+export interface LazyModule extends BaseModule {
+  loadType: ModuleLoadType.LAZY;
   /**
    * Условия загрузки модуля
    */
   loadCondition?: ModuleLoadCondition;
 }
+
+/**
+ * Модуль типа NORMAL - загружается в фоновом режиме после инициализации приложения
+ */
+export interface NormalModule extends BaseModule {
+  loadType?: ModuleLoadType.NORMAL;
+  /**
+   * Условия загрузки модуля
+   */
+  loadCondition?: ModuleLoadCondition;
+}
+
+/**
+ * Объединенный тип модуля
+ * Использует discriminated union для обеспечения типобезопасности:
+ * - INIT модули не могут иметь loadCondition
+ * - LAZY и NORMAL модули могут иметь loadCondition
+ */
+export type Module = InitModule | LazyModule | NormalModule;
 
 /**
  * Тип загрузки модуля (по умолчанию: NORMAL)

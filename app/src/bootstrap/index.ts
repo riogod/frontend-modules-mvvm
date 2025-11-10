@@ -1,7 +1,7 @@
 import { APIClientHandler } from './handlers/APIClient';
 import { RouterHandler } from './handlers/RouterHandler';
 import { RouterPostHandler } from './handlers/RouterPostHandler';
-import { APIClient } from '@todo/core';
+import { APIClient, IRoutes } from '@todo/core';
 import { Module } from '../modules/interface';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
@@ -13,6 +13,7 @@ import i18next, { i18n } from 'i18next';
 import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
 import { BootstrapMockService } from './services/mockService.ts';
 import { BootstrapRouterService } from './services/routerService.ts';
+import { BootstrapModuleLoader } from './services/moduleLoader.ts';
 import { IAppConfig } from '../config/app.ts';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
 
@@ -32,8 +33,8 @@ export const initBootstrap = async (
   handler
     .setNext(new ClientHashHandler(config))
     .setNext(new RouterHandler(config))
-    .setNext(new InitI18nHandler(config))
     .setNext(new DIHandler(config))
+    .setNext(new InitI18nHandler(config))
     .setNext(new ModulesHandler(config))
     .setNext(new MockServiceHandler(config))
     .setNext(new RouterPostHandler(config))
@@ -51,6 +52,7 @@ export const initBootstrap = async (
 export class Bootstrap {
   i18n: i18n = i18next;
   routerService = new BootstrapRouterService();
+  moduleLoader = new BootstrapModuleLoader();
   mockService: BootstrapMockService | null = null;
 
   private _APIClient: APIClient | null = null;
@@ -87,6 +89,8 @@ export class Bootstrap {
     if (process.env.NODE_ENV === 'development') {
       this.mockService = new BootstrapMockService();
     }
+    // Инициализация модулей в загрузчик
+    this.moduleLoader.addModules(modules);
   }
 
   /**
@@ -115,35 +119,12 @@ export class Bootstrap {
   }
 
   /**
-   * Инициализация модулей приложения путем обработки их конфигураций.
+   * Инициализация ModuleLoader с зависимостями
+   * Должен быть вызван после инициализации router, i18n и DI
    *
-   * @return {Promise<void>} - Промис зарезолвиться после обработки всех конфигураций модулей.
+   * @return {void}
    */
-  async initModules(): Promise<void> {
-    for (const module of this.modules) {
-      // Классы с @injectable уже зарегистрированы автоматически в initDI()
-
-      if (module.config.ROUTES) {
-        const routes = module.config.ROUTES();
-        this.routerService.router.add(routes);
-        this.routerService.addRoutes(routes);
-      }
-
-      if (module.config.onModuleInit) {
-        await module.config.onModuleInit(this);
-      }
-
-      if (module.config.I18N && this.i18n) {
-        module.config.I18N(this.i18n);
-      }
-
-      if (
-        process.env.NODE_ENV === 'development' &&
-        module.config.mockHandlers &&
-        this.mockService
-      ) {
-        this.mockService.addHandlers(module.config.mockHandlers);
-      }
-    }
+  initModuleLoader(): void {
+    this.moduleLoader.init(this);
   }
 }

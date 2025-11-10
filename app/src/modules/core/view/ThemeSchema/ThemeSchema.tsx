@@ -1,8 +1,8 @@
 import { FC, ReactNode } from 'react';
 import { Observer } from 'mobx-react-lite';
 import { ThemeProvider } from '@mui/material/styles';
-import { themeDark } from '../../../../../config/themeDark.ts';
-import { themeLight } from '../../../../../config/themeLight.ts';
+import { themeDark } from '../../../../config/themeDark.ts';
+import { themeLight } from '../../../../config/themeLight.ts';
 import { useVM } from '@todo/ui';
 import { UiSettingsViewModel } from '../../viewmodels/uiSettings.vm.ts';
 

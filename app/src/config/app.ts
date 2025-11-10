@@ -1,7 +1,7 @@
 import { Router } from '@riogz/router';
 import { i18nOptions } from './i18n.ts';
 import { InitOptions } from 'i18next';
-import { IRoutes } from '@todo/core';
+import { IRoutes, RouterDependencies } from '@todo/core';
 
 export interface IAppConfig {
   apiUrl?: string;
@@ -10,8 +10,8 @@ export interface IAppConfig {
   routes?: IRoutes;
 
   routerPostInit?: (
-    router: Router<Record<string, unknown>>,
-  ) => Router<Record<string, unknown>>;
+    router: Router<RouterDependencies>,
+  ) => Router<RouterDependencies>;
 }
 
 export const appConfig: IAppConfig = {

@@ -6,7 +6,7 @@ import { IProps } from './interfaces.tsx';
 import { AppBarStyled } from './components/AppBarStyled.tsx';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@todo/ui';
-import MenuBuilder from '../MenuBuilder';
+import MenuBuilder from '../MenuBuilder/index.tsx';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 

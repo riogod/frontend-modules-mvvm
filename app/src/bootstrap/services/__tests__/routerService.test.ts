@@ -29,6 +29,53 @@ describe('BootstrapRouterService', () => {
     });
   });
 
+  describe('registerRoutes', () => {
+    test('should register routes without duplicates', () => {
+      const classInstance = new BootstrapRouterService();
+      classInstance.initRouter([], 'my-app');
+
+      const newRoutes = [
+        { path: '/test1', name: 'test1' },
+        { path: '/test2', name: 'test2' },
+      ];
+
+      classInstance.registerRoutes(newRoutes);
+
+      expect(classInstance.routes).toHaveLength(2);
+      expect(classInstance.routes).toContainEqual(newRoutes[0]);
+      expect(classInstance.routes).toContainEqual(newRoutes[1]);
+    });
+
+    test('should not register duplicate routes', () => {
+      const classInstance = new BootstrapRouterService();
+      const initialRoutes = [{ path: '/test1', name: 'test1' }];
+      classInstance.initRouter(initialRoutes, 'my-app');
+
+      const duplicateRoutes = [
+        { path: '/test1', name: 'test1' },
+        { path: '/test2', name: 'test2' },
+      ];
+
+      classInstance.registerRoutes(duplicateRoutes);
+
+      expect(classInstance.routes).toHaveLength(2);
+      expect(classInstance.routes.filter((r) => r.name === 'test1')).toHaveLength(1);
+    });
+
+    test('should do nothing if all routes are duplicates', () => {
+      const classInstance = new BootstrapRouterService();
+      const initialRoutes = [
+        { path: '/test1', name: 'test1' },
+        { path: '/test2', name: 'test2' },
+      ];
+      classInstance.initRouter(initialRoutes, 'my-app');
+
+      classInstance.registerRoutes(initialRoutes);
+
+      expect(classInstance.routes).toHaveLength(2);
+    });
+  });
+
   describe('routerPostInit', () => {
     test('should call routerPostInit method', () => {
       const classInstance = new BootstrapRouterService();

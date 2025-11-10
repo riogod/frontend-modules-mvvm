@@ -1,5 +1,5 @@
 import { IRoutes } from "@todo/core";
-import { TODO_ROUTES } from "../../../todo/config/routes.ts";
+import { TODO_ROUTES } from "../../todo/config/routes.ts";
 
 export const CORE_ROUTES = {
   HOME: "home",

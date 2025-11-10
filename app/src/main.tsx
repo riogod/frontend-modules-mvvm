@@ -8,8 +8,8 @@ import { app_modules } from './modules/modules';
 import { RouterProvider } from '@riogz/react-router';
 import { DIProvider } from '@todo/ui';
 import { configure } from 'mobx';
-import ThemeSchema from './modules/_init_modules/core/view/ThemeSchema';
-import { Layout } from './modules/_init_modules/core/view/Layout';
+import ThemeSchema from './modules/core/view/ThemeSchema';
+import { Layout } from './modules/core/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
 
@@ -32,6 +32,11 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
           </DIProvider>
         </RouterProvider>,
       );
+
+      // Загрузка NORMAL модулей после старта приложения
+      bootstrap.moduleLoader.loadNormalModules().catch((error: unknown) => {
+        console.error('Error loading normal modules:', error);
+      });
     });
   })
   .catch((error: unknown) => {

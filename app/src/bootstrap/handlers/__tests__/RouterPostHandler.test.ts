@@ -2,6 +2,7 @@ import { Bootstrap } from '../../index.ts';
 import { RouterPostHandler } from '../RouterPostHandler.ts';
 
 describe('RouterPostHandler', () => {
+  const preloadRoutes = vi.fn();
   const bootstrapMock: Bootstrap = {
     routerService: {
       routerPostInit: vi.fn(),
@@ -10,6 +11,9 @@ describe('RouterPostHandler', () => {
       router: {
         setDependencies: vi.fn(),
       },
+    },
+    moduleLoader: {
+      preloadRoutes,
     },
   } as any;
 
@@ -27,6 +31,7 @@ describe('RouterPostHandler', () => {
 
     await handler.handle(bootstrapMock);
 
+    expect(preloadRoutes).toBeCalled();
     expect(bootstrapMock.routerService.routerPostInit).toBeCalledWith(
       routerPostInit,
     );

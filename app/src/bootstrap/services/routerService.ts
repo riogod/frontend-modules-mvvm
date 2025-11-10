@@ -62,11 +62,43 @@ export class BootstrapRouterService {
   }
 
   /**
-   * Добавление маршрутов в роутер
+   * Регистрирует маршруты в роутере и в массиве routes
+   * Единая точка входа для регистрации маршрутов
+   * Защищена от дублирования маршрутов
+   * 
+   * @param {IRoutes} routes - Маршруты для регистрации.
+   * @return {void}
+   */
+  registerRoutes(routes: IRoutes): void {
+    // Фильтруем только новые маршруты (которых еще нет в routes)
+    const newRoutes = routes.filter((route) => {
+      return !this.routes.some((r) => r.name === route.name);
+    });
+
+    if (newRoutes.length === 0) {
+      return;
+    }
+
+    // Добавляем в массив routes
+    this.addRoutes(newRoutes);
+
+    // Добавляем в роутер
+    this.router.add(newRoutes);
+  }
+
+  /**
+   * Добавление маршрутов в массив routes
+   * Проверяет на дубликаты по имени маршрута перед добавлением
    * @param nodes
    */
   addRoutes(nodes: IRoutes): void {
-    this.routes.push(...nodes);
+    for (const route of nodes) {
+      // Проверяем, не добавлен ли уже маршрут с таким именем
+      const existingRoute = this.routes.find((r) => r.name === route.name);
+      if (!existingRoute) {
+        this.routes.push(route);
+      }
+    }
   }
 
   /**

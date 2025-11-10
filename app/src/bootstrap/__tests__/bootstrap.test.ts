@@ -1,5 +1,5 @@
 import { Bootstrap } from '../index.ts';
-import { Module } from '../../modules/interface.ts';
+import { Module, ModuleLoadType } from '../../modules/interface.ts';
 import { Container } from 'inversify';
 import { APIClient } from '@todo/core';
 
@@ -13,6 +13,7 @@ vi.mock('../services/mockService.ts', () => ({
 }));
 
 const addRoutes = vi.fn();
+const registerRoutes = vi.fn();
 vi.mock('../services/routerService.ts', () => ({
   BootstrapRouterService: class {
     routes: any[] = [];
@@ -21,6 +22,7 @@ vi.mock('../services/routerService.ts', () => ({
     };
     init = vi.fn();
     addRoutes = addRoutes;
+    registerRoutes = registerRoutes;
     routerPostInit = vi.fn();
     buildRoutesMenu = vi.fn();
   },
@@ -29,7 +31,7 @@ vi.mock('../services/routerService.ts', () => ({
 const modules: Module[] = [
   {
     name: 'core',
-    path: 'core',
+    loadType: ModuleLoadType.INIT,
     config: {
       ROUTES: () => [
         {
@@ -47,7 +49,6 @@ const modules: Module[] = [
   },
   {
     name: 'todo',
-    path: 'todo',
     config: {
       ROUTES: () => [
         {
@@ -60,7 +61,6 @@ const modules: Module[] = [
   },
   {
     name: 'api',
-    path: 'api_example',
     config: {
       ROUTES: () => [
         {
@@ -72,7 +72,6 @@ const modules: Module[] = [
   },
   {
     name: 'demo',
-    path: 'demo',
     config: {
       ROUTES: () => [],
       mockHandlers: [],
@@ -160,11 +159,12 @@ describe('bootstrap', () => {
     beforeEach(async () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      await bootstrap.initModules();
+      bootstrap.initModuleLoader();
+      await bootstrap.moduleLoader.initInitModules();
     });
 
     test('should initialize module routes if routes are defined', () => {
-      expect(addRoutes).toBeCalledWith(modules[0].config.ROUTES());
+      expect(registerRoutes).toBeCalledWith(modules[0].config.ROUTES());
     });
 
     test('should call onModuleInit if onModuleInit is defined', () => {
@@ -181,7 +181,8 @@ describe('bootstrap', () => {
       bootstrap = new Bootstrap(modules);
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      await bootstrap.initModules();
+      bootstrap.initModuleLoader();
+      await bootstrap.moduleLoader.initInitModules();
 
       expect(bootstrap.mockService).not.toBeNull();
     });
