@@ -636,11 +636,15 @@ export class BootstrapModuleLoader {
         }
 
         const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-        if (loadType !== ModuleLoadType.LAZY || this.isModuleLoaded(module.name)) {
+        if (loadType !== ModuleLoadType.LAZY) {
             return;
         }
 
-        await this.loadLazyModule(module.name);
+        // Проверяем, был ли вызван onModuleInit
+        // Если модуль не загружен полностью (onModuleInit не вызван), загружаем его
+        if (!this.isModuleLoaded(module.name)) {
+            await this.loadLazyModule(module.name);
+        }
     }
 }
 

@@ -12,8 +12,10 @@ import ThemeSchema from './modules/core/view/ThemeSchema';
 import { Layout } from './modules/core/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
+import { LogLevel, log } from '@todo/core';
 
 configure({ enforceActions: 'observed', useProxies: 'always' });
+log.setConfig({ level: LogLevel.INFO, prefix: 'App', enableInProduction: false });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
