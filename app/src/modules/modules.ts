@@ -1,7 +1,7 @@
-import { Module, ModuleLoadType } from "./interface";
+import { Module, ModuleLoadType } from "./interface.ts";
+import { loadLazyModuleConfig } from "../bootstrap/services/moduleLoader/ModuleLoaderHelpers/index.ts";
+// Статический импорт только для INIT и NORMAL модулей
 import CoreConfig from "./core/config/module_config";
-import TodoConfig from "./todo/config/module_config";
-import ApiConfig from "./api_example/config/module_config";
 
 export const app_modules: Module[] = [
   {
@@ -15,7 +15,7 @@ export const app_modules: Module[] = [
   {
     name: "todo",
     description: "Todo module - Показывает пример работы с моделью Todo",
-    config: TodoConfig,
+    config: loadLazyModuleConfig('../modules/todo/config/module_config'),
     loadType: ModuleLoadType.LAZY,
     loadPriority: 1,
   },
@@ -23,7 +23,7 @@ export const app_modules: Module[] = [
     name: "api",
     description:
       "API example module - Показывает пример реализации работы с API",
-    config: ApiConfig,
+    config: loadLazyModuleConfig('../modules/api_example/config/module_config'),
     loadType: ModuleLoadType.LAZY,
     loadPriority: 2,
     loadCondition: {

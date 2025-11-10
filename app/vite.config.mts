@@ -37,13 +37,49 @@ const config: ViteConfig = {
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ["react", "react-dom"],
-          i18next: ["i18next", "i18next-browser-languagedetector"],
-          inversify: ["inversify", "inversify-binding-decorators"],
-          mobx: ["mobx", "mobx-react-lite"],
-          "lib-core": ["@todo/core"],
-          "lib-ui": ["@todo/ui"]
+        manualChunks: (id) => {
+          // Разделение vendor библиотек
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'react';
+            }
+            if (id.includes('i18next') || id.includes('i18next-browser-languagedetector')) {
+              return 'i18next';
+            }
+            if (id.includes('inversify') || id.includes('inversify-binding-decorators')) {
+              return 'inversify';
+            }
+            if (id.includes('mobx') || id.includes('mobx-react-lite')) {
+              return 'mobx';
+            }
+            if (id.includes('@todo/core')) {
+              return 'lib-core';
+            }
+            if (id.includes('@todo/ui')) {
+              return 'lib-ui';
+            }
+            // Остальные node_modules в отдельный chunk
+            return 'vendor';
+          }
+
+          // Разделение модулей на отдельные chunks для LAZY модулей
+          if (id.includes('/modules/')) {
+            // Извлекаем имя модуля из пути
+            const moduleMatch = id.match(/\/modules\/([^/]+)\//);
+            if (moduleMatch) {
+              const moduleName = moduleMatch[1];
+              // Создаем отдельный chunk для каждого LAZY модуля
+              if (moduleName === 'todo' || moduleName === 'api_example') {
+                return `module-${moduleName}`;
+              }
+              // INIT модули (core) остаются в основном бандле
+              if (moduleName === 'core') {
+                return undefined; // Включаем в основной бандл
+              }
+            }
+          }
+
+          return undefined;
         }
       }
     }

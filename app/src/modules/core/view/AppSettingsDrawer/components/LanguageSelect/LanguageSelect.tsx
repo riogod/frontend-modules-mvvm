@@ -41,13 +41,14 @@ const LanguageSelect: FC = () => {
             onChange={handleLanguageChange}
             getOptionLabel={(option) => option}
             renderOption={(props, option) => {
+              // eslint-disable-next-line react/prop-types
               const { key, ...otherProps } = props;
               return (
                 <Box
+                  {...otherProps}
                   key={key}
                   component="li"
                   sx={{ '& > img': { mr: 2, flexShrink: 0 } }}
-                  {...otherProps}
                 >
                   {option}
                 </Box>

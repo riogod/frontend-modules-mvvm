@@ -13,7 +13,7 @@ import { Layout } from './modules/core/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
 
-configure({ enforceActions: 'observed', useProxies: 'ifavailable' });
+configure({ enforceActions: 'observed', useProxies: 'always' });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {

@@ -13,16 +13,12 @@ export class JokesRepository {
   ) { }
 
   async getJoke(): Promise<JokeResponseDTO[]> {
-    try {
-      return await this.apiClient.request<null, JokeResponseDTO[]>({
-        route: EAPIExampleEndpoints.JOKES_DATA,
-        method: HttpMethod.GET,
-        validationSchema: {
-          response: jokesResponseSchema,
-        },
-      });
-    } catch (error) {
-      throw error;
-    }
+    return await this.apiClient.request<null, JokeResponseDTO[]>({
+      route: EAPIExampleEndpoints.JOKES_DATA,
+      method: HttpMethod.GET,
+      validationSchema: {
+        response: jokesResponseSchema,
+      },
+    });
   }
 }

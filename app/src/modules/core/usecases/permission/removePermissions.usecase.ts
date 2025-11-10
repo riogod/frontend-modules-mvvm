@@ -1,7 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import { inject, injectable } from "inversify";
 import { AccessControlModel } from "../../models/accessControl.model";
-import { AccessControlsType } from "../../models/app.interface";
 
 @injectable()
 export class RemovePermissionsUsecase {

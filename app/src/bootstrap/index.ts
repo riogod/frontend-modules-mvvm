@@ -1,8 +1,7 @@
 import { APIClientHandler } from './handlers/APIClient';
 import { RouterHandler } from './handlers/RouterHandler';
 import { RouterPostHandler } from './handlers/RouterPostHandler';
-import { APIClient, IRoutes } from '@todo/core';
-import { Module } from '../modules/interface';
+import { APIClient } from '@todo/core';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
@@ -13,9 +12,10 @@ import i18next, { i18n } from 'i18next';
 import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
 import { BootstrapMockService } from './services/mockService.ts';
 import { BootstrapRouterService } from './services/routerService.ts';
-import { BootstrapModuleLoader } from './services/moduleLoader.ts';
+import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { IAppConfig } from '../config/app.ts';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
+import { Module } from '../modules/interface.ts';
 
 
 /**
@@ -89,8 +89,12 @@ export class Bootstrap {
     if (process.env.NODE_ENV === 'development') {
       this.mockService = new BootstrapMockService();
     }
-    // Инициализация модулей в загрузчик
-    this.moduleLoader.addModules(modules);
+    // Инициализация модулей в загрузчик (асинхронно)
+    // Для INIT модулей конфигурация загружается сразу
+    // Для LAZY модулей конфигурация будет загружена динамически при необходимости
+    this.moduleLoader.addModules(modules).catch((error) => {
+      console.error('Error adding modules:', error);
+    });
   }
 
   /**

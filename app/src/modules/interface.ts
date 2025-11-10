@@ -6,7 +6,7 @@ import { ModuleConfig } from "../bootstrap/interface";
 interface BaseModule {
   name: string;
   description?: string;
-  config: ModuleConfig;
+
   /**
    * Приоритет загрузки модуля
    */
@@ -20,6 +20,7 @@ interface BaseModule {
 export interface InitModule extends BaseModule {
   loadType: ModuleLoadType.INIT;
   loadCondition?: never; // Запрещено для INIT модулей
+  config: ModuleConfig;
 }
 
 /**
@@ -31,6 +32,7 @@ export interface LazyModule extends BaseModule {
    * Условия загрузки модуля
    */
   loadCondition?: ModuleLoadCondition;
+  config: Promise<ModuleConfig>;
 }
 
 /**
@@ -42,6 +44,7 @@ export interface NormalModule extends BaseModule {
    * Условия загрузки модуля
    */
   loadCondition?: ModuleLoadCondition;
+  config: ModuleConfig;
 }
 
 /**
