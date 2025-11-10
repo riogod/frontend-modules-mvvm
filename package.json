@@ -8,16 +8,16 @@
     "test:app": "vitest --config app/vite.config.mts",
     "test:lib-core": "vitest --config libs/core/vite.config.mts",
     "build:app": "vite build --config app/vite.config.mts",
-    "buildlib": "vite build --config libs/core/vite.config.mts",
+    "build:app:analyze": "vite build --config app/vite.config.mts --mode analyze",
     "preview": "npm run build:app && vite preview --config app/vite.config.mts",
     "storybook": "storybook dev -p 6006 --config-dir libs/ui/.storybook",
-    "build-storybook": "storybook build --config-dir libs/ui/.storybook"
+    "build-storybook": "storybook build --config-dir libs/ui/.storybook",
+    "analyze:bundle": "npm run build:app:analyze && (open dist/app/stats.html || xdg-open dist/app/stats.html || echo 'Откройте dist/app/stats.html в браузере')"
   },
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@inversifyjs/binding-decorators": "^1.1.5",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
@@ -75,6 +75,7 @@
     "jsonc-eslint-parser": "^2.4.1",
     "msw": "^2.12.0",
     "prettier": "3.6.2",
+    "rollup-plugin-visualizer": "^5.12.0",
     "storybook": "9.1.5",
     "ts-node": "10.9.2",
     "typescript": "~5.9.3",

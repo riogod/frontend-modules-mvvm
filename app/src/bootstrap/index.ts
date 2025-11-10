@@ -6,7 +6,6 @@ import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
-import { ClientHashHandler } from './handlers/ClientHashHandler';
 import { InitI18nHandler } from './handlers/InitI18nHandler.ts';
 import i18next, { i18n } from 'i18next';
 import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
@@ -31,7 +30,6 @@ export const initBootstrap = async (
 ): Promise<Bootstrap> => {
   const handler = new APIClientHandler(config);
   handler
-    .setNext(new ClientHashHandler(config))
     .setNext(new RouterHandler(config))
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))

@@ -1,13 +1,23 @@
 {
   "name": "@todo/ui",
   "version": "0.0.1",
-  "main": "./index.js",
   "type": "module",
+  "sideEffects": false,
+  "main": "./index.js",
+  "module": "./index.mjs",
   "types": "./index.d.ts",
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "import": "./index.mjs",
       "require": "./index.js"
-    }
-  }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "index.d.ts.map"
+  ]
 }

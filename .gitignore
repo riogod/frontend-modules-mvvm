@@ -45,3 +45,7 @@ Thumbs.db
 .vscode
 *storybook.log
 storybook-static
+
+# Bundle analysis files
+stats.html
+dist/app/stats.html

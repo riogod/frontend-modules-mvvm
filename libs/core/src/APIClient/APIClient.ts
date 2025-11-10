@@ -1,7 +1,6 @@
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import type { IRequestOption } from './interfaces';
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 /**
  * Класс для работы с вызовом API.
@@ -30,16 +29,6 @@ export class APIClient {
     this.errorCb.set(id, cb);
   }
 
-  /**
-   * Генерирует уникальный идентификатор устройства
-   *
-   * @return {Promise<string>} Уникальный идентификатор
-   */
-  public async genearateDeviceId(): Promise<string> {
-    const fp = await FingerprintJS.load();
-    const result = await fp.get();
-    return result.visitorId;
-  }
 
   /**
    * Отправляет запрос к серверу и возвращает ответ.
@@ -52,13 +41,11 @@ export class APIClient {
    * @returns {Promise<Resp>} Ответ от сервера
    */
   public async request<Req, Resp>(option: IRequestOption<Req>): Promise<Resp> {
-    const DeviceUUID = localStorage.getItem('D_UUID');
     const requestConfig: AxiosRequestConfig<Req> = {
       responseType: 'json',
       method: option.method,
       url: option.route,
       headers: {
-        'Device-Id': DeviceUUID,
         ...option.headers,
       }
     };

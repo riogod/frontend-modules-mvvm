@@ -29,20 +29,6 @@ describe('APIClient', () => {
     mock.reset();
   });
 
-  describe('genearateDeviceId function', () => {
-    it('should generate a device ID', async () => {
-      // Testing the successful generation of a device ID
-      const deviceId = await apiClient.genearateDeviceId();
-      expect(deviceId).toBeTruthy();
-      expect(typeof deviceId).toBe('string');
-    });
-
-    it('should not throw any errors', async () => {
-      // Testing that the function does not throw any errors
-      await expect(apiClient.genearateDeviceId()).resolves.not.toThrow();
-    });
-  });
-
   describe('addErrorCb', () => {
     it('should add an error callback to the errorCb map', () => {
       const id = '500';
