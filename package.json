@@ -19,7 +19,7 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@inversifyjs/binding-decorators": "^1.1.5",
-    "@mui/icons-material": "^7.3.5",
+    "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.5",
     "@riogz/react-router": "^1.0.3",
     "@riogz/router": "^1.0.3",
@@ -43,14 +43,14 @@
     "@chromatic-com/storybook": "^4.1.2",
     "@emotion/babel-plugin": "11.13.5",
     "@originjs/vite-plugin-federation": "^1.4.1",
-    "@storybook/addon-a11y": "9.1.5",
-    "@storybook/addon-docs": "9.1.5",
-    "@storybook/addon-onboarding": "9.1.5",
-    "@storybook/builder-vite": "9.1.5",
-    "@storybook/react-vite": "9.1.5",
-    "@storybook/test-runner": "^0.15.0",
+    "@storybook/addon-a11y": "9.1.7",
+    "@storybook/addon-docs": "9.1.7",
+    "@storybook/addon-onboarding": "9.1.8",
+    "@storybook/builder-vite": "9.1.8",
+    "@storybook/react-vite": "9.1.15",
+    "@storybook/test-runner": "^0.22.1",
     "@swc-node/register": "~1.11.1",
-    "@swc/cli": "~0.7.9",
+    "@swc/cli": "~0.7.8",
     "@swc/core": "~1.15.0",
     "@swc/types": "^0.1.25",
     "@testing-library/dom": "^10.4.1",
@@ -70,7 +70,7 @@
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
-    "eslint-plugin-storybook": "9.1.5",
+    "eslint-plugin-storybook": "9.1.7",
     "jsdom": "~27.1.0",
     "jsonc-eslint-parser": "^2.4.1",
     "msw": "^2.12.0",
@@ -90,5 +90,8 @@
     "workerDirectory": [
       "app/public"
     ]
+  },
+  "overrides": {
+    "@rolldown/pluginutils": "1.0.0-beta.44"
   }
 }
