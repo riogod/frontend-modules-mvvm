@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { createRoot } from 'react-dom/client';
-import CssBaseline from '@mui/material/CssBaseline';
+import { CssBaseline } from '@todo/ui';
 import './main.css';
 import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';

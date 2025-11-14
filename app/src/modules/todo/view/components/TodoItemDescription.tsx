@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { IProps } from "./interface.ts";
-import Typography from "@mui/material/Typography";
+import { Typography } from "@todo/ui";
 import { observer } from "mobx-react-lite";
 
 const TodoItemDescription: FC<IProps> = ({ item }) => {

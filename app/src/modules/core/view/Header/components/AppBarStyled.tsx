@@ -1,9 +1,8 @@
-import { styled } from '@mui/material/styles';
-import MuiAppBar from '@mui/material/AppBar';
+import { styled, AppBar } from '@todo/ui';
 import { AppBarProps } from '../interfaces.tsx';
 
 export const AppBarStyled = styled(
-  MuiAppBar,
+  AppBar,
   {},
 )<AppBarProps>(() => ({
   boxShadow: 'none',

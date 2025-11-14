@@ -1,17 +1,9 @@
 import React, { FC } from 'react';
 import { Observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { useVM } from '@todo/ui';
 import { ThemeMode } from '../../../../models/app.interface.ts';
 import { UiSettingsViewModel } from '../../../../viewmodels/uiSettings.vm.ts';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import ToggleButton from '@mui/material/ToggleButton';
-import Tooltip from '@mui/material/Tooltip';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import { useVM, Box, Typography, ToggleButtonGroup, ToggleButton, Tooltip, LightModeOutlinedIcon, SettingsBrightnessOutlinedIcon, DarkModeOutlinedIcon } from '@todo/ui';
 
 const ThemeModeToggle: FC = () => {
   const { t } = useTranslation();

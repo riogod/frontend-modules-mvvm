@@ -49,3 +49,5 @@ storybook-static
 # Bundle analysis files
 stats.html
 dist/app/stats.html
+
+storybook-static

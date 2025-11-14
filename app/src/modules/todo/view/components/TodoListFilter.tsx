@@ -1,10 +1,7 @@
 import { FC } from 'react';
-import { useVM } from '@todo/ui';
+import { useVM, Box, Typography, Switch } from '@todo/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { observer } from 'mobx-react-lite';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Switch from '@mui/material/Switch';
 import { useTranslation } from 'react-i18next';
 
 const TodoListFilter: FC = () => {

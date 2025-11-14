@@ -1,9 +1,6 @@
 import { FC } from "react";
 import { ICompleteActions } from "./interface.ts";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import IconButton from "@mui/material/IconButton";
-import { IconButtonProps } from "@mui/material/IconButton/IconButton";
+import { RadioButtonUncheckedIcon, CheckCircleIcon, MuiIconButton, IconButtonProps } from "@todo/ui";
 import { observer } from "mobx-react-lite";
 
 const TodoItemActionComplete: FC<ICompleteActions> = ({
@@ -21,7 +18,7 @@ const TodoItemActionComplete: FC<ICompleteActions> = ({
     <RadioButtonUncheckedIcon fontSize="medium" />
   );
 
-  return <IconButton {...iconButtonProps}>{icon}</IconButton>;
+  return <MuiIconButton {...iconButtonProps}>{icon}</MuiIconButton>;
 };
 
 export default observer(TodoItemActionComplete);

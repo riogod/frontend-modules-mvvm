@@ -1,5 +1,5 @@
 import { FC } from "react";
-import Container from "@mui/material/Container";
+import { Container } from "@todo/ui";
 import NotFoundImage from "../assets/NotFound.svg?react";
 
 const NotFoundPage: FC = () => {

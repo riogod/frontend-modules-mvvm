@@ -1,13 +1,7 @@
 import { ChangeEvent, FC, useState, KeyboardEvent } from 'react';
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Fab from '@mui/material/Fab';
-import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField';
-import { useVM } from '@todo/ui';
+import { useVM, Box, Container, Fab, Paper, TextField, AddIcon } from '@todo/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { useTranslation } from 'react-i18next';
-import AddIcon from '@mui/icons-material/Add';
 
 const TodoInput: FC = () => {
   const listViewModel = useVM<TodoListViewModel>(TodoListViewModel);

@@ -3,8 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Header } from "../Header";
 import AppSettingsDrawer from "../AppSettingsDrawer";
 import ContentContainer from "../ContentContainer";
-import Container from "@mui/material/Container";
-import Toolbar from "@mui/material/Toolbar";
+import { Container, Toolbar } from "@todo/ui";
 import { Notifier } from "../Notifier";
 
 const Layout: FC = () => {

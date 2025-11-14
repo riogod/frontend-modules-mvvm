@@ -1,11 +1,6 @@
 import { FC, memo, useState, MouseEvent } from 'react';
 import { IMenuItem } from '@todo/core';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+import { MuiIconButton, MenuIcon, Typography, Box, MuiMenu, MenuItem } from '@todo/ui';
 
 interface IProps {
   menuList: IMenuItem[];
@@ -34,7 +29,7 @@ const MobileMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
 
   return (
     <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
-      <IconButton
+      <MuiIconButton
         size="large"
         aria-label="account of current user"
         aria-controls="menu-appbar"
@@ -43,8 +38,8 @@ const MobileMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
         color="inherit"
       >
         <MenuIcon />
-      </IconButton>
-      <Menu
+      </MuiIconButton>
+      <MuiMenu
         id="menu-appbar"
         anchorEl={anchorElNav}
         anchorOrigin={{
@@ -67,7 +62,7 @@ const MobileMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
             <Typography textAlign="center"> {t(page.text)}</Typography>
           </MenuItem>
         ))}
-      </Menu>
+      </MuiMenu>
     </Box>
   );
 };

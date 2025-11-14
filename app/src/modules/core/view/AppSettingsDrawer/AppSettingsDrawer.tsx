@@ -1,14 +1,9 @@
 import { FC } from "react";
 import { IProps } from "./interfaces.tsx";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import CloseIcon from "@mui/icons-material/Close";
+import { Typography, MuiIconButton, CloseIcon, Divider, Box, Drawer } from "@todo/ui";
 import ThemeModeToggle from "./components/ThemeModeToggle/index.tsx";
 import { useTranslation } from "react-i18next";
 import LanguageSelect from "./components/LanguageSelect/index.tsx";
-import Drawer from "@mui/material/Drawer";
-import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 
 const AppSettingsDrawer: FC<IProps> = ({ drawerWidth, open, closeHandler }) => {
   const { t } = useTranslation("common");
@@ -40,14 +35,14 @@ const AppSettingsDrawer: FC<IProps> = ({ drawerWidth, open, closeHandler }) => {
         }}
       >
         <Typography variant="h6">{t("settings.NAME")}</Typography>
-        <IconButton
+        <MuiIconButton
           color="primary"
           aria-label={t("actions.CLOSE")}
           onClick={closeHandler}
           edge="start"
         >
           <CloseIcon />
-        </IconButton>
+        </MuiIconButton>
       </Box>
       <Divider />
       <Box

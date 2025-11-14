@@ -1,13 +1,7 @@
 import { FC } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useVM } from '@todo/ui';
+import { useVM, Typography, Button, Skeleton, Card, CardContent, CardActions } from '@todo/ui';
 import { JokeViewModel } from '../../viewmodels/joke.vm.ts';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
 import { useTranslation } from 'react-i18next';
 
 const JokeMessage: FC = () => {

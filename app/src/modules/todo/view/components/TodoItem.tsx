@@ -1,10 +1,8 @@
 import { FC, memo } from 'react';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
+import { useVM, Box, Card } from '@todo/ui';
 import { IProps } from './interface.ts';
 import TodoItemActions from './TodoItemActions.tsx';
 import TodoItemActionComplete from './TodoItemComplete.tsx';
-import { useVM } from '@todo/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import TodoItemDescription from './TodoItemDescription';
 import TodoItemDate from './TodoItemDate';

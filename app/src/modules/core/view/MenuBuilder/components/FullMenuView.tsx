@@ -1,7 +1,6 @@
 import { FC, memo } from "react";
 import { IMenuItem } from "@todo/core";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
+import { Button, Box } from "@todo/ui";
 
 interface IProps {
   menuList: IMenuItem[];
