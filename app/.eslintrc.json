@@ -37,9 +37,33 @@
         "no-restricted-imports": [
           "error",
           {
+            "paths": [
+              {
+                "name": "@mui/material",
+                "message": "Direct imports from @mui/material are not allowed. Use @todo/ui instead for tree shaking support."
+              },
+              {
+                "name": "@mui/icons-material",
+                "message": "Direct imports from @mui/icons-material are not allowed. Use @todo/ui instead for tree shaking support."
+              }
+            ],
             "patterns": [
               {
-                "group": ["@app/modules/*/!(interface|types)"],
+                "group": [
+                  "@mui/material/*"
+                ],
+                "message": "Direct imports from @mui/material/* are not allowed. Use @todo/ui instead for tree shaking support."
+              },
+              {
+                "group": [
+                  "@mui/icons-material/*"
+                ],
+                "message": "Direct imports from @mui/icons-material/* are not allowed. Use @todo/ui instead for tree shaking support."
+              },
+              {
+                "group": [
+                  "@app/modules/*/!(interface|types)"
+                ],
                 "message": "Direct imports from other modules are not allowed. Only types and interfaces can be imported."
               },
               {
@@ -102,18 +126,24 @@
       "rules": {}
     },
     {
-      "files": ["src/modules/**/*.{ts,tsx,js,jsx}"],
+      "files": [
+        "src/modules/**/*.{ts,tsx,js,jsx}"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["@app/modules/*/!(interface|types)"],
+                "group": [
+                  "@app/modules/*/!(interface|types)"
+                ],
                 "message": "Direct imports from other modules are not allowed. Only types and interfaces can be imported."
               },
               {
-                "group": ["../../*/**/!(*.interface|*.types).{ts,tsx}"],
+                "group": [
+                  "../../*/**/!(*.interface|*.types).{ts,tsx}"
+                ],
                 "message": "Relative imports from other modules are not allowed. Only interfaces and types can be imported."
               }
             ]
