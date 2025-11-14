@@ -1,6 +1,5 @@
 import { Module, ModuleLoadType } from '../../../modules/interface';
 import { IRoutes } from '@todo/core';
-import { ModuleConfig } from '../../../bootstrap/interface';
 
 /**
  * Реестр модулей - управление списком модулей
@@ -99,7 +98,7 @@ export class ModuleRegistry {
             return undefined;
         }
 
-        const config = module.config as ModuleConfig;
+        const config = module.config;
         if (!config.ROUTES) {
             return undefined;
         }

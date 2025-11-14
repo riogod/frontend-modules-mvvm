@@ -19,7 +19,7 @@ export const routes: IRoutes = [
       const container = deps.di;
       await container.get<JokeViewModel>(JokeViewModel).getJoke();
     },
-    onExitNode: async (_toState, _fromState, deps) => {
+    onExitNode: (_toState, _fromState, deps) => {
       const container = deps.di;
       container.get<JokeViewModel>(JokeViewModel).dispose();
     },

@@ -8,7 +8,7 @@ import { log } from "@todo/core";
 export default {
   ROUTES: () => routes,
 
-  onModuleInit: async (bootstrap) => {
+  onModuleInit: () => {
     log.info('module todo initialized');
     log.error('module todo initialized');
   },
