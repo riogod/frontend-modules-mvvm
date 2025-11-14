@@ -1,6 +1,6 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
-import { theme } from './theme.ts';
-import merge from '../utils/merge.ts';
+import { theme } from './theme';
+import merge from '../utils/merge';
 
 const darkThemeSettings: ThemeOptions = {
   palette: {

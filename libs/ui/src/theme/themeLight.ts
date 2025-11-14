@@ -1,5 +1,5 @@
-import { theme } from './theme.ts';
-import merge from '../utils/merge.ts';
+import { theme } from './theme';
+import merge from '../utils/merge';
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
 const lightThemeSettings: ThemeOptions = {
