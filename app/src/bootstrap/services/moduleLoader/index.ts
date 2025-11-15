@@ -6,6 +6,7 @@ import { ModuleDependencyResolver } from './ModuleDependencyResolver';
 import { ModuleConditionValidator } from './ModuleConditionValidator';
 import { ModuleLifecycleManager } from './ModuleLifecycleManager';
 import { ModuleLoadStatus, LoadedModule } from './types';
+import { log } from '@todo/core';
 
 /**
  * Сервис загрузки и управления модулями приложения.
@@ -59,8 +60,10 @@ export class BootstrapModuleLoader {
      * @return {Promise<void>}
      */
     async addModule(module: Module): Promise<void> {
+        log.debug(`Adding module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
         await this.registry.addModule(module);
         this.modules = this.registry.getModules();
+        log.debug(`Module ${module.name} added successfully`, { prefix: 'bootstrap.moduleLoader' });
     }
 
     /**
@@ -70,10 +73,12 @@ export class BootstrapModuleLoader {
      * @return {Promise<void>}
      */
     async addModules(modules: Module[]): Promise<void> {
+        log.debug(`Adding ${modules.length} modules to loader`, { prefix: 'bootstrap.moduleLoader' });
         for (const module of modules) {
             await this.registry.addModule(module);
         }
         this.modules = this.registry.getModules();
+        log.debug(`All ${modules.length} modules added successfully`, { prefix: 'bootstrap.moduleLoader' });
     }
 
     /**
@@ -157,20 +162,26 @@ export class BootstrapModuleLoader {
     async preloadRoutes(): Promise<void> {
         const bootstrap = this.getBootstrap();
 
+        log.debug('Starting preloadRoutes', { prefix: 'bootstrap.moduleLoader' });
         // Фильтруем модули, которые нужно обработать
         const modulesToProcess = this.registry
             .getModules()
             .filter((module) => !this.shouldSkipModuleInPreload(module));
 
+        log.debug(`Preloading routes from ${modulesToProcess.length} modules`, { prefix: 'bootstrap.moduleLoader' });
         // Группируем модули по уровням зависимостей для параллельной обработки
         const dependencyLevels = this.groupModulesByDependencyLevels(modulesToProcess);
+        log.debug(`Grouped modules into ${dependencyLevels.length} dependency levels`, { prefix: 'bootstrap.moduleLoader' });
 
         // Обрабатываем каждый уровень последовательно, модули внутри уровня - параллельно
-        for (const levelModules of dependencyLevels) {
+        for (let i = 0; i < dependencyLevels.length; i++) {
+            const levelModules = dependencyLevels[i];
+            log.debug(`Processing dependency level ${i + 1}/${dependencyLevels.length} with ${levelModules.length} modules`, { prefix: 'bootstrap.moduleLoader' });
             await Promise.all(
                 levelModules.map((module) => this.preloadModuleRoutes(module, bootstrap)),
             );
         }
+        log.debug('Routes preloaded successfully', { prefix: 'bootstrap.moduleLoader' });
     }
 
     /**
@@ -181,8 +192,10 @@ export class BootstrapModuleLoader {
      * @return {Promise<void>}
      */
     private async preloadModuleRoutes(module: Module, bootstrap: Bootstrap): Promise<void> {
+        log.debug(`Preloading routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
         // Для модулей с условиями проверяем условия и загружаем зависимости
         if (await this.shouldSkipModuleByConditions(module, bootstrap)) {
+            log.debug(`Module ${module.name} skipped (conditions not met)`, { prefix: 'bootstrap.moduleLoader' });
             return;
         }
 
@@ -206,6 +219,7 @@ export class BootstrapModuleLoader {
         // Это важно для модулей с динамическим конфигом, чтобы моки были доступны до загрузки модуля
         // Пропускаем onModuleInit, так как это предзагрузка маршрутов
         await this.lifecycleManager.initializeModule(module, bootstrap, true);
+        log.debug(`Routes preloaded for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
     }
 
     /**
@@ -394,13 +408,16 @@ export class BootstrapModuleLoader {
      */
     private async loadModule(module: Module, bootstrap: Bootstrap): Promise<void> {
         if (this.isModuleAlreadyLoadedOrLoading(module.name)) {
+            log.debug(`Module ${module.name} already loaded or loading, skipping`, { prefix: 'bootstrap.moduleLoader' });
             return;
         }
 
         if (!(await this.validateLoadConditions(module, bootstrap))) {
+            log.debug(`Module ${module.name} load conditions not met, skipping`, { prefix: 'bootstrap.moduleLoader' });
             return;
         }
 
+        log.debug(`Loading module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
         this.markModuleAsLoading(module);
 
         try {
@@ -413,8 +430,10 @@ export class BootstrapModuleLoader {
             );
             await this.lifecycleManager.initializeModule(module, bootstrap);
             this.markModuleAsLoaded(module);
+            log.debug(`Module ${module.name} loaded successfully`, { prefix: 'bootstrap.moduleLoader' });
         } catch (error) {
             this.markModuleAsFailed(module, error);
+            log.error(`Failed to load module ${module.name}`, { prefix: 'bootstrap.moduleLoader' }, error);
             throw error;
         }
     }
@@ -520,12 +539,16 @@ export class BootstrapModuleLoader {
             this.registry.getModulesByType(ModuleLoadType.INIT),
         );
 
+        log.debug(`Loading ${initModules.length} INIT modules`, { prefix: 'bootstrap.moduleLoader' });
         for (const module of initModules) {
+            log.debug(`Loading INIT module: ${module.name} (priority: ${module.loadPriority ?? 0})`, { prefix: 'bootstrap.moduleLoader' });
             await this.loadModule(module, bootstrap);
+            log.debug(`INIT module ${module.name} loaded successfully`, { prefix: 'bootstrap.moduleLoader' });
         }
 
         this.registry.setInitModulesLoaded(true);
         this.isInitialized = true;
+        log.debug('All INIT modules loaded', { prefix: 'bootstrap.moduleLoader' });
     }
 
     /**
@@ -543,7 +566,9 @@ export class BootstrapModuleLoader {
             this.registry.getModulesByType(ModuleLoadType.NORMAL),
         );
 
+        log.debug(`Loading ${normalModules.length} NORMAL modules`, { prefix: 'bootstrap.moduleLoader' });
         for (const module of normalModules) {
+            log.debug(`Processing NORMAL module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
             await this.dependencyResolver.loadDependencies(
                 module,
                 bootstrap,
@@ -559,8 +584,12 @@ export class BootstrapModuleLoader {
             );
             if (canLoad) {
                 await this.loadModule(module, bootstrap);
+                log.debug(`NORMAL module ${module.name} loaded successfully`, { prefix: 'bootstrap.moduleLoader' });
+            } else {
+                log.debug(`NORMAL module ${module.name} skipped (conditions not met)`, { prefix: 'bootstrap.moduleLoader' });
             }
         }
+        log.debug('All NORMAL modules processed', { prefix: 'bootstrap.moduleLoader' });
     }
 
     /**

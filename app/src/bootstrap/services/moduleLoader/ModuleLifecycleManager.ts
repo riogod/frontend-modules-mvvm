@@ -1,6 +1,6 @@
 import { Module } from '../../../modules/interface.ts';
 import { Bootstrap } from '../../index';
-import { IRoutes } from '@todo/core';
+import { IRoutes, log } from '@todo/core';
 import { RouteState, RouteFromState, RouteDependencies } from './types';
 import { ModuleRegistry } from './ModuleRegistry';
 
@@ -23,20 +23,24 @@ export class ModuleLifecycleManager {
         bootstrap: Bootstrap,
         autoLoadHandler?: (routeName: string) => Promise<void>,
     ): Promise<void> {
+        log.debug(`Registering routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         // Используем кешированные маршруты для оптимизации
         // Для модулей с динамическим конфигом автоматически загружает конфигурацию
         const routes = await this.registry.getModuleRoutes(module);
         if (!routes) {
+            log.debug(`Module ${module.name} has no routes to register`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
             return;
         }
 
         // Для модулей с динамическим конфигом (Promise) оборачиваем маршруты с авто-загрузкой
         if (module.config instanceof Promise && autoLoadHandler) {
+            log.debug(`Wrapping routes with auto-load for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
             const routesWithAutoLoad = this.wrapRoutesWithAutoLoad(routes, autoLoadHandler);
             bootstrap.routerService.registerRoutes(routesWithAutoLoad);
         } else {
             bootstrap.routerService.registerRoutes(routes);
         }
+        log.debug(`Registered ${routes.length} routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
     }
 
     /**
@@ -86,9 +90,11 @@ export class ModuleLifecycleManager {
         isModuleLoadedFn: (name: string) => boolean,
     ): Promise<void> {
         if (isModuleLoadedFn(module.name)) {
+            log.debug(`Module ${module.name} already loaded, skipping i18n registration`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
             return;
         }
 
+        log.debug(`Registering i18n for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         // Для модулей с динамическим конфигом загружаем конфигурацию, если она еще не загружена
         await this.registry.loadModuleConfig(module);
 
@@ -96,6 +102,9 @@ export class ModuleLifecycleManager {
         const config = module.config;
         if (config && 'I18N' in config && config.I18N && bootstrap.i18n) {
             config.I18N(bootstrap.i18n);
+            log.debug(`i18n registered for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+        } else {
+            log.debug(`Module ${module.name} has no i18n to register`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         }
     }
 
@@ -135,30 +144,36 @@ export class ModuleLifecycleManager {
         bootstrap: Bootstrap,
         skipOnModuleInit: boolean = false,
     ): Promise<void> {
+        log.debug(`Initializing module: ${module.name}${skipOnModuleInit ? ' (skipping onModuleInit)' : ''}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         // Убеждаемся, что конфигурация загружена (для модулей с динамическим конфигом)
         await this.registry.loadModuleConfig(module);
 
         // После загрузки config уже не является Promise
         const config = module.config;
         if (!config || config instanceof Promise) {
+            log.debug(`Module ${module.name} has no valid config, skipping initialization`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
             return;
         }
 
         // Вызываем onModuleInit только при полной загрузке модуля
         // Поддерживаем как синхронные, так и асинхронные функции
         if (!skipOnModuleInit && config.onModuleInit) {
+            log.debug(`Calling onModuleInit for: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
             const result = config.onModuleInit(bootstrap);
             if (result instanceof Promise) {
                 await result;
             }
+            log.debug(`onModuleInit completed for: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         }
 
         // Добавляем мок-обработчики только в development
         if (process.env.NODE_ENV === 'development' && config.mockHandlers) {
             if (bootstrap.mockService) {
+                log.debug(`Adding mock handlers for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
                 bootstrap.mockService.addHandlers(config.mockHandlers);
             }
         }
+        log.debug(`Module ${module.name} initialized`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
     }
 }
 

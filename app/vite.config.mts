@@ -28,8 +28,8 @@ const config: ViteConfig = {
   plugins: [react(), tsconfigPaths(), svgr()],
 
   define: {
-    // Делаем переменную окружения DEBUG доступной в коде
-    'import.meta.env.DEBUG': JSON.stringify(process.env.DEBUG || ''),
+    // Делаем переменную окружения LOG_LEVEL доступной в коде
+    'import.meta.env.LOG_LEVEL': JSON.stringify(process.env.LOG_LEVEL || ''),
   },
 
     optimizeDeps: {

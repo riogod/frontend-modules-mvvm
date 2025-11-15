@@ -11,7 +11,7 @@ declare module '*.svg?react' {
 }
 
 interface ImportMetaEnv {
-  readonly DEBUG?: string;
+  readonly LOG_LEVEL?: string;
 }
 
 interface ImportMeta {

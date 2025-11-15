@@ -1,5 +1,5 @@
 import { Module, ModuleLoadType } from '../../../modules/interface';
-import { IRoutes } from '@todo/core';
+import { IRoutes, log } from '@todo/core';
 
 /**
  * Реестр модулей - управление списком модулей
@@ -28,14 +28,17 @@ export class ModuleRegistry {
             throw new Error(`Module with name "${module.name}" already exists`);
         }
 
+        log.debug(`Adding module to registry: ${module.name} (type: ${module.loadType ?? ModuleLoadType.NORMAL})`, { prefix: 'bootstrap.moduleLoader.registry' });
         this.modules.push(module);
 
         // Для INIT модулей кешируем маршруты сразу
         // Для модулей с динамическим конфигом (Promise) маршруты будут закешированы при первом обращении
         const loadType = module.loadType ?? ModuleLoadType.NORMAL;
         if (loadType === ModuleLoadType.INIT) {
+            log.debug(`Caching routes for INIT module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
             await this.cacheModuleRoutes(module);
         }
+        log.debug(`Module ${module.name} added to registry`, { prefix: 'bootstrap.moduleLoader.registry' });
     }
 
     /**
@@ -64,11 +67,14 @@ export class ModuleRegistry {
     async loadModuleConfig(module: Module): Promise<void> {
         // Если config - это Promise, ждем его разрешения
         if (module.config instanceof Promise) {
+            log.debug(`Loading dynamic config for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
             try {
                 const config = await module.config;
                 // Заменяем Promise на загруженную конфигурацию
                 (module as any).config = config;
+                log.debug(`Dynamic config loaded for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
             } catch (error) {
+                log.error(`Failed to load config for module "${module.name}"`, { prefix: 'bootstrap.moduleLoader.registry' }, error);
                 throw new Error(
                     `Failed to load config for module "${module.name}": ${error instanceof Error ? error.message : String(error)}`,
                 );
@@ -100,12 +106,15 @@ export class ModuleRegistry {
 
         // Проверяем кеш
         if (this.routesCache.has(module.name)) {
+            log.debug(`Using cached routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
             return this.routesCache.get(module.name)!;
         }
 
         // Вызываем ROUTES() только один раз и кешируем результат
+        log.debug(`Getting routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
         const routes = config.ROUTES();
         this.routesCache.set(module.name, routes);
+        log.debug(`Cached ${routes.length} routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
         return routes;
     }
 
@@ -120,9 +129,11 @@ export class ModuleRegistry {
     private async cacheModuleRoutes(module: Module): Promise<void> {
         const routes = await this.getModuleRoutes(module);
         if (!routes) {
+            log.debug(`Module ${module.name} has no routes to cache`, { prefix: 'bootstrap.moduleLoader.registry' });
             return;
         }
 
+        log.debug(`Caching route-to-module mapping for module: ${module.name} (${routes.length} routes)`, { prefix: 'bootstrap.moduleLoader.registry' });
         for (const route of routes) {
             this.routeToModuleCache.set(route.name, module);
             // Также кешируем первый сегмент для обратной совместимости
@@ -131,6 +142,7 @@ export class ModuleRegistry {
                 this.routeToModuleCache.set(firstSegment, module);
             }
         }
+        log.debug(`Route-to-module mapping cached for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.registry' });
     }
 
     /**

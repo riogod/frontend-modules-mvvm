@@ -2,6 +2,7 @@ import {
   IMenuItem,
   IRoutes,
   RouterDependencies,
+  log,
 } from '@todo/core';
 import { createRouter, Router } from '@riogz/router';
 import browserPlugin from '@riogz/router-plugin-browser';
@@ -27,7 +28,9 @@ export class BootstrapRouterService {
    * @return {void} This function does not return anything.
    */
   initRouter(routes: IRoutes, appPrefix: string): void {
+    log.debug(`Initializing router with ${routes.length} routes, prefix: ${appPrefix}`, { prefix: 'bootstrap.routerService' });
     if (this.isInitialized) {
+      log.error('Router has already been initialized', { prefix: 'bootstrap.routerService' });
       throw new Error('Router has already been initialized');
     }
 
@@ -47,6 +50,7 @@ export class BootstrapRouterService {
     );
 
     this.isInitialized = true;
+    log.debug(`Router initialized with ${this.routes.length} total routes`, { prefix: 'bootstrap.routerService' });
   }
 
   /**
@@ -58,7 +62,9 @@ export class BootstrapRouterService {
       router: Router<RouterDependencies>,
     ) => Router<RouterDependencies>,
   ): void {
+    log.debug('Running router post-init callback', { prefix: 'bootstrap.routerService' });
     this.router = cb(this.router);
+    log.debug('Router post-init completed', { prefix: 'bootstrap.routerService' });
   }
 
   /**
@@ -70,20 +76,24 @@ export class BootstrapRouterService {
    * @return {void}
    */
   registerRoutes(routes: IRoutes): void {
+    log.debug(`Registering ${routes.length} routes`, { prefix: 'bootstrap.routerService' });
     // Фильтруем только новые маршруты (которых еще нет в routes)
     const newRoutes = routes.filter((route) => {
       return !this.routes.some((r) => r.name === route.name);
     });
 
     if (newRoutes.length === 0) {
+      log.debug('All routes already registered, skipping', { prefix: 'bootstrap.routerService' });
       return;
     }
 
+    log.debug(`Adding ${newRoutes.length} new routes (${routes.length - newRoutes.length} duplicates skipped)`, { prefix: 'bootstrap.routerService' });
     // Добавляем в массив routes
     this.addRoutes(newRoutes);
 
     // Добавляем в роутер
     this.router.add(newRoutes);
+    log.debug(`Routes registered, total routes: ${this.routes.length}`, { prefix: 'bootstrap.routerService' });
   }
 
   /**
@@ -92,13 +102,21 @@ export class BootstrapRouterService {
    * @param nodes
    */
   addRoutes(nodes: IRoutes): void {
+    log.debug(`Adding ${nodes.length} routes to routes array`, { prefix: 'bootstrap.routerService' });
+    let addedCount = 0;
+    let skippedCount = 0;
     for (const route of nodes) {
       // Проверяем, не добавлен ли уже маршрут с таким именем
       const existingRoute = this.routes.find((r) => r.name === route.name);
       if (!existingRoute) {
         this.routes.push(route);
+        addedCount++;
+      } else {
+        skippedCount++;
+        log.debug(`Route "${route.name}" already exists, skipping`, { prefix: 'bootstrap.routerService' });
       }
     }
+    log.debug(`Routes added: ${addedCount}, skipped (duplicates): ${skippedCount}`, { prefix: 'bootstrap.routerService' });
   }
 
   /**
@@ -106,12 +124,15 @@ export class BootstrapRouterService {
    * @param routesConfig
    */
   buildRoutesMenu(routesConfig: IRoutes, lastid: number = 0): IMenuItem[] {
+    log.debug(`Building menu from ${routesConfig.length} routes`, { prefix: 'bootstrap.routerService' });
     const menuConfig: IMenuItem[] = [];
+    let menuItemsCount = 0;
 
     for (const route of routesConfig) {
       if (!route.menu) {
         continue;
       }
+      menuItemsCount++;
 
       const routePath = route.name.split('.');
       routePath.pop();
@@ -154,6 +175,7 @@ export class BootstrapRouterService {
       lastid++;
     }
 
+    log.debug(`Menu built with ${menuItemsCount} items from ${routesConfig.length} routes`, { prefix: 'bootstrap.routerService' });
     return menuConfig;
   }
 }

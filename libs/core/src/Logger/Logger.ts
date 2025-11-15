@@ -145,7 +145,8 @@ const logInternal = (level: LogLevel, message: string, prefix: string | undefine
             console.info(formattedMessage, ...args);
             break;
         case LogLevel.DEBUG:
-            console.debug(formattedMessage, ...args);
+            // Используем console.log вместо console.debug, так как многие браузеры скрывают debug по умолчанию
+            console.log(formattedMessage, ...args);
             break;
         case LogLevel.TRACE:
             console.trace(formattedMessage, ...args);
@@ -200,7 +201,7 @@ export const createLogger = (config?: ILoggerConfig) => {
                 console.info(formattedMessage, ...args);
                 break;
             case LogLevel.DEBUG:
-                console.debug(formattedMessage, ...args);
+                console.log(formattedMessage, ...args);
                 break;
             case LogLevel.TRACE:
                 console.trace(formattedMessage, ...args);

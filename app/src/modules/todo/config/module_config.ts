@@ -9,8 +9,8 @@ export default {
   ROUTES: () => routes,
 
   onModuleInit: () => {
-    log.info('module todo initialized', { prefix: 'todo_onInit' });
-    log.error('module todo initialized', { prefix: 'todo_onInit' });
+    log.debug('module todo initialized', { prefix: 'module todo.config' });
+    
   },
   I18N: (i18n) => {
     i18n.addResourceBundle("en", "todo", en_todo);

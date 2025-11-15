@@ -1,7 +1,7 @@
 import { APIClientHandler } from './handlers/APIClient';
 import { RouterHandler } from './handlers/RouterHandler';
 import { RouterPostHandler } from './handlers/RouterPostHandler';
-import { APIClient } from '@todo/core';
+import { APIClient, log } from '@todo/core';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
@@ -28,6 +28,8 @@ export const initBootstrap = async (
   bootstrap: Bootstrap,
   config: IAppConfig,
 ): Promise<Bootstrap> => {
+  log.debug('Bootstrap initialization started', { prefix: 'bootstrap' });
+
   const handler = new APIClientHandler(config);
   handler
     .setNext(new RouterHandler(config))
@@ -38,7 +40,11 @@ export const initBootstrap = async (
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
 
-  return await handler.handle(bootstrap);
+  const result = await handler.handle(bootstrap);
+
+  log.debug('Bootstrap initialization completed', { prefix: 'bootstrap' });
+
+  return result;
 };
 
 /**
@@ -98,7 +104,9 @@ export class Bootstrap {
    * @return {void}
    */
   initAPIClient(baseURL: string): void {
+    log.debug(`Initializing APIClient with baseURL: ${baseURL}`, { prefix: 'bootstrap' });
     this._APIClient = new APIClient(baseURL);
+    log.debug('APIClient initialized', { prefix: 'bootstrap' });
   }
 
   /**
@@ -108,12 +116,15 @@ export class Bootstrap {
    * @return {void}
    */
   initDI(): void {
+    log.debug('Initializing DI container', { prefix: 'bootstrap' });
     // Автоматическая регистрация всех классов с @injectable и @provide через @inversifyjs/binding-decorators
     void this._di.load(buildProviderModule());
 
     if (this._APIClient) {
       this._di.bind<APIClient>(APIClient).toConstantValue(this._APIClient);
+      log.debug('APIClient bound to DI container', { prefix: 'bootstrap' });
     }
+    log.debug('DI container initialized', { prefix: 'bootstrap' });
   }
 
   /**
@@ -124,8 +135,10 @@ export class Bootstrap {
    * @return {Promise<void>}
    */
   async initModuleLoader(): Promise<void> {
+    log.debug(`Initializing ModuleLoader with ${this.modules.length} modules`, { prefix: 'bootstrap' });
     this.moduleLoader.init(this);
     // Ждем завершения добавления модулей, чтобы они были доступны при загрузке INIT модулей
     await this.moduleLoader.addModules(this.modules);
+    log.debug('ModuleLoader initialized and modules added', { prefix: 'bootstrap' });
   }
 }

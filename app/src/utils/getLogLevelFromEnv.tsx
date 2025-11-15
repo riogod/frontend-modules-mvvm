@@ -1,10 +1,10 @@
 import { LogLevel } from "libs/core/src/Logger";
 
-// Получаем уровень логирования из переменной окружения DEBUG
+// Получаем уровень логирования из переменной окружения LOG_LEVEL
 // Поддерживаемые значения: NONE, ERROR, WARN, INFO, DEBUG, TRACE
 export const getLogLevelFromEnv = (): LogLevel => {
-  const debugEnv = (import.meta.env.DEBUG as string | undefined)?.toUpperCase();
-  if (!debugEnv) {
+  const logLevelEnv = import.meta.env.LOG_LEVEL?.toUpperCase();
+  if (!logLevelEnv) {
     return LogLevel.INFO; // Значение по умолчанию
   }
 
@@ -17,6 +17,5 @@ export const getLogLevelFromEnv = (): LogLevel => {
     DEBUG: LogLevel.DEBUG,
     TRACE: LogLevel.TRACE,
   };
-
-  return levelMap[debugEnv] ?? LogLevel.INFO;
+  return levelMap[logLevelEnv] ?? LogLevel.INFO;
 };
