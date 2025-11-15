@@ -11,6 +11,47 @@ let globalConfig: Required<ILoggerConfig>;
 const isProduction = (): boolean => process.env.NODE_ENV === 'production';
 
 /**
+ * Цвета для разных префиксов moduleLoader
+ */
+const getPrefixColor = (prefix?: string): string => {
+    if (!prefix) return '';
+    
+    // Цвета для компонентов moduleLoader
+    const colorMap: Record<string, string> = {
+        'bootstrap.moduleLoader': 'color: #4A90E2; font-weight: bold;', 
+        'bootstrap.moduleLoader.registry': 'color: #50C878; font-weight: bold;',
+        'bootstrap.moduleLoader.conditionValidator': 'color: #FFD700; font-weight: bold;',
+        'bootstrap.moduleLoader.dependencyResolver': 'color: #9B59B6; font-weight: bold;',
+        'bootstrap.moduleLoader.lifecycleManager': 'color: #1ABC9C; font-weight: bold;', 
+        'bootstrap.routerService': 'color: #E74C3C; font-weight: bold;', 
+        'bootstrap.handlers': 'color: #3498DB; font-weight: bold;', 
+        'bootstrap': 'color: #2C3E50; font-weight: bold;', 
+    };
+    
+    return colorMap[prefix] || '';
+};
+
+/**
+ * Цвета для уровней логирования
+ */
+const getLevelColor = (level: LogLevel): string => {
+    switch (level) {
+        case LogLevel.ERROR:
+            return 'color: #E74C3C; font-weight: bold;'; // Красный
+        case LogLevel.WARN:
+            return 'color: #F39C12; font-weight: bold;'; // Оранжевый
+        case LogLevel.INFO:
+            return 'color: #3498DB; font-weight: bold;'; // Синий
+        case LogLevel.DEBUG:
+            return 'color: #95A5A6; font-weight: normal;'; // Серый
+        case LogLevel.TRACE:
+            return 'color: #7F8C8D; font-weight: normal;'; // Темно-серый
+        default:
+            return '';
+    }
+};
+
+/**
  * Форматтер по умолчанию с поддержкой префикса
  */
 const defaultFormatter = (level: LogLevel, message: string, prefix?: string): string => {
@@ -130,26 +171,104 @@ const logInternal = (level: LogLevel, message: string, prefix: string | undefine
     // Форматируем сообщение
     const formattedMessage = globalConfig.formatter(level, message, prefix, ...args);
 
+    // Определяем, нужно ли использовать цветной вывод (для moduleLoader и routerService)
+    const useColors = prefix && (
+        prefix.startsWith('bootstrap.moduleLoader') || 
+        prefix.startsWith('bootstrap.routerService') ||
+        prefix === 'bootstrap.handlers' ||
+        prefix === 'bootstrap'
+    );
+
     // Выводим в консоль в зависимости от уровня
     switch (level) {
         case LogLevel.NONE:
             // NONE не должен достигать этого места, но на всякий случай
             return;
         case LogLevel.ERROR:
-            console.error(formattedMessage, ...args);
+            if (useColors) {
+                const prefixColor = getPrefixColor(prefix);
+                const levelColor = getLevelColor(level);
+                const prefixPart = prefix ? `[${prefix}] ` : '';
+                const levelPart = `[${LogLevel[level]}] `;
+                console.error(
+                    `%c${prefixPart}%c${levelPart}%c${message}`,
+                    prefixColor,
+                    levelColor,
+                    '',
+                    ...args
+                );
+            } else {
+                console.error(formattedMessage, ...args);
+            }
             break;
         case LogLevel.WARN:
-            console.warn(formattedMessage, ...args);
+            if (useColors) {
+                const prefixColor = getPrefixColor(prefix);
+                const levelColor = getLevelColor(level);
+                const prefixPart = prefix ? `[${prefix}] ` : '';
+                const levelPart = `[${LogLevel[level]}] `;
+                console.warn(
+                    `%c${prefixPart}%c${levelPart}%c${message}`,
+                    prefixColor,
+                    levelColor,
+                    '',
+                    ...args
+                );
+            } else {
+                console.warn(formattedMessage, ...args);
+            }
             break;
         case LogLevel.INFO:
-            console.info(formattedMessage, ...args);
+            if (useColors) {
+                const prefixColor = getPrefixColor(prefix);
+                const levelColor = getLevelColor(level);
+                const prefixPart = prefix ? `[${prefix}] ` : '';
+                const levelPart = `[${LogLevel[level]}] `;
+                console.info(
+                    `%c${prefixPart}%c${levelPart}%c${message}`,
+                    prefixColor,
+                    levelColor,
+                    '',
+                    ...args
+                );
+            } else {
+                console.info(formattedMessage, ...args);
+            }
             break;
         case LogLevel.DEBUG:
             // Используем console.log вместо console.debug, так как многие браузеры скрывают debug по умолчанию
-            console.log(formattedMessage, ...args);
+            if (useColors) {
+                const prefixColor = getPrefixColor(prefix);
+                const levelColor = getLevelColor(level);
+                const prefixPart = prefix ? `[${prefix}] ` : '';
+                const levelPart = `[${LogLevel[level]}] `;
+                console.log(
+                    `%c${prefixPart}%c${levelPart}%c${message}`,
+                    prefixColor,
+                    levelColor,
+                    '',
+                    ...args
+                );
+            } else {
+                console.log(formattedMessage, ...args);
+            }
             break;
         case LogLevel.TRACE:
-            console.trace(formattedMessage, ...args);
+            if (useColors) {
+                const prefixColor = getPrefixColor(prefix);
+                const levelColor = getLevelColor(level);
+                const prefixPart = prefix ? `[${prefix}] ` : '';
+                const levelPart = `[${LogLevel[level]}] `;
+                console.trace(
+                    `%c${prefixPart}%c${levelPart}%c${message}`,
+                    prefixColor,
+                    levelColor,
+                    '',
+                    ...args
+                );
+            } else {
+                console.trace(formattedMessage, ...args);
+            }
             break;
     }
 };
@@ -187,24 +306,102 @@ export const createLogger = (config?: ILoggerConfig) => {
 
         const formattedMessage = loggerConfig.formatter(level, message, prefix, ...args);
 
+        // Определяем, нужно ли использовать цветной вывод (для moduleLoader и routerService)
+        const useColors = prefix && (
+            prefix.startsWith('bootstrap.moduleLoader') || 
+            prefix.startsWith('bootstrap.routerService') ||
+            prefix === 'bootstrap.handlers' ||
+            prefix === 'bootstrap'
+        );
+
         switch (level) {
             case LogLevel.NONE:
                 // NONE не должен достигать этого места, но на всякий случай
                 return;
             case LogLevel.ERROR:
-                console.error(formattedMessage, ...args);
+                if (useColors) {
+                    const prefixColor = getPrefixColor(prefix);
+                    const levelColor = getLevelColor(level);
+                    const prefixPart = prefix ? `[${prefix}] ` : '';
+                    const levelPart = `[${LogLevel[level]}] `;
+                    console.error(
+                        `%c${prefixPart}%c${levelPart}%c${message}`,
+                        prefixColor,
+                        levelColor,
+                        '',
+                        ...args
+                    );
+                } else {
+                    console.error(formattedMessage, ...args);
+                }
                 break;
             case LogLevel.WARN:
-                console.warn(formattedMessage, ...args);
+                if (useColors) {
+                    const prefixColor = getPrefixColor(prefix);
+                    const levelColor = getLevelColor(level);
+                    const prefixPart = prefix ? `[${prefix}] ` : '';
+                    const levelPart = `[${LogLevel[level]}] `;
+                    console.warn(
+                        `%c${prefixPart}%c${levelPart}%c${message}`,
+                        prefixColor,
+                        levelColor,
+                        '',
+                        ...args
+                    );
+                } else {
+                    console.warn(formattedMessage, ...args);
+                }
                 break;
             case LogLevel.INFO:
-                console.info(formattedMessage, ...args);
+                if (useColors) {
+                    const prefixColor = getPrefixColor(prefix);
+                    const levelColor = getLevelColor(level);
+                    const prefixPart = prefix ? `[${prefix}] ` : '';
+                    const levelPart = `[${LogLevel[level]}] `;
+                    console.info(
+                        `%c${prefixPart}%c${levelPart}%c${message}`,
+                        prefixColor,
+                        levelColor,
+                        '',
+                        ...args
+                    );
+                } else {
+                    console.info(formattedMessage, ...args);
+                }
                 break;
             case LogLevel.DEBUG:
-                console.log(formattedMessage, ...args);
+                if (useColors) {
+                    const prefixColor = getPrefixColor(prefix);
+                    const levelColor = getLevelColor(level);
+                    const prefixPart = prefix ? `[${prefix}] ` : '';
+                    const levelPart = `[${LogLevel[level]}] `;
+                    console.log(
+                        `%c${prefixPart}%c${levelPart}%c${message}`,
+                        prefixColor,
+                        levelColor,
+                        '',
+                        ...args
+                    );
+                } else {
+                    console.log(formattedMessage, ...args);
+                }
                 break;
             case LogLevel.TRACE:
-                console.trace(formattedMessage, ...args);
+                if (useColors) {
+                    const prefixColor = getPrefixColor(prefix);
+                    const levelColor = getLevelColor(level);
+                    const prefixPart = prefix ? `[${prefix}] ` : '';
+                    const levelPart = `[${LogLevel[level]}] `;
+                    console.trace(
+                        `%c${prefixPart}%c${levelPart}%c${message}`,
+                        prefixColor,
+                        levelColor,
+                        '',
+                        ...args
+                    );
+                } else {
+                    console.trace(formattedMessage, ...args);
+                }
                 break;
         }
     };
