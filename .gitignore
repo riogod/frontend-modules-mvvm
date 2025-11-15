@@ -2,6 +2,7 @@
 
 # compiled output
 dist
+build
 tmp
 /out-tsc
 
@@ -49,5 +50,6 @@ storybook-static
 # Bundle analysis files
 stats.html
 dist/app/stats.html
+
 
 storybook-static
