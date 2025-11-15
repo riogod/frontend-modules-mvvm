@@ -145,8 +145,12 @@ export class ModuleLifecycleManager {
         }
 
         // Вызываем onModuleInit только при полной загрузке модуля
+        // Поддерживаем как синхронные, так и асинхронные функции
         if (!skipOnModuleInit && config.onModuleInit) {
-            await config.onModuleInit(bootstrap);
+            const result = config.onModuleInit(bootstrap);
+            if (result instanceof Promise) {
+                await result;
+            }
         }
 
         // Добавляем мок-обработчики только в development

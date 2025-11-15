@@ -18,7 +18,7 @@ import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
 configure({ enforceActions: 'observed', useProxies: 'always' });
 
 
-log.setConfig({ level: getLogLevelFromEnv(), prefix: 'App', enableInProduction: false });
+log.setConfig({ level: getLogLevelFromEnv(), enableInProduction: false });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {

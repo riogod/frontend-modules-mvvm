@@ -13,6 +13,9 @@ export interface ModuleConfig {
    */
   ROUTES?: () => IRoute[];
   I18N?: (i18n: i18n) => void;
-  onModuleInit?: (bootstrap: Bootstrap) => Promise<void>;
+  /**
+   * Функция инициализации модуля. Может быть как синхронной (void), так и асинхронной (Promise<void>).
+   */
+  onModuleInit?: (bootstrap: Bootstrap) => void | Promise<void>;
   mockHandlers?: RequestHandler[];
 }

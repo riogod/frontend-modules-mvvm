@@ -14,6 +14,16 @@ export enum LogLevel {
 }
 
 /**
+ * Опции для вызова логирования
+ */
+export interface ILogOptions {
+    /**
+     * Префикс для конкретного сообщения
+     */
+    prefix?: string;
+}
+
+/**
  * Конфигурация логгера
  */
 export interface ILoggerConfig {
@@ -23,10 +33,6 @@ export interface ILoggerConfig {
      */
     level?: LogLevel;
     /**
-     * Префикс для всех сообщений
-     */
-    prefix?: string;
-    /**
      * Включить ли логирование в production
      * @default false
      */
@@ -34,7 +40,7 @@ export interface ILoggerConfig {
     /**
      * Кастомный форматтер для сообщений
      */
-    formatter?: (level: LogLevel, message: string, ...args: unknown[]) => string;
+    formatter?: (level: LogLevel, message: string, prefix?: string, ...args: unknown[]) => string;
 }
 
 /**
@@ -42,10 +48,15 @@ export interface ILoggerConfig {
  */
 export interface ILogger {
     error(message: string, ...args: unknown[]): void;
+    error(message: string, options: ILogOptions, ...args: unknown[]): void;
     warn(message: string, ...args: unknown[]): void;
+    warn(message: string, options: ILogOptions, ...args: unknown[]): void;
     info(message: string, ...args: unknown[]): void;
+    info(message: string, options: ILogOptions, ...args: unknown[]): void;
     debug(message: string, ...args: unknown[]): void;
+    debug(message: string, options: ILogOptions, ...args: unknown[]): void;
     trace(message: string, ...args: unknown[]): void;
+    trace(message: string, options: ILogOptions, ...args: unknown[]): void;
     setLevel(level: LogLevel): void;
     setConfig(config: Partial<ILoggerConfig>): void;
 }
