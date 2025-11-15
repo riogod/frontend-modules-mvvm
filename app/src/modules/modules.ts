@@ -1,6 +1,6 @@
 import { Module, ModuleLoadType } from "./interface.ts";
-// Статический импорт только для INIT и NORMAL модулей
 import CoreConfig from "./core/config/module_config";
+import TodoConfig from "./todo/config/module_config";
 
 export const app_modules: Module[] = [
   {
@@ -14,16 +14,17 @@ export const app_modules: Module[] = [
   {
     name: "todo",
     description: "Todo module - Показывает пример работы с моделью Todo",
-    config: import('./todo/config/module_config').then(m => m.default),
-    loadType: ModuleLoadType.LAZY,
+    config: TodoConfig,
+    loadType: ModuleLoadType.NORMAL,
     loadPriority: 1,
   },
   {
     name: "api",
     description:
       "API example module - Показывает пример реализации работы с API",
+    // Динамический импорт конфига - модуль будет вынесен в отдельный чанк
     config: import('./api_example/config/module_config').then(m => m.default),
-    loadType: ModuleLoadType.LAZY,
+    loadType: ModuleLoadType.NORMAL,
     loadPriority: 2,
     loadCondition: {
       dependencies: ['core', 'todo'],

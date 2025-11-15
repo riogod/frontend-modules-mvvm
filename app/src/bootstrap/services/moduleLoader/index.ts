@@ -147,9 +147,10 @@ export class BootstrapModuleLoader {
     }
 
     /**
-     * Предварительная загрузка маршрутов и i18n из всех модулей (включая LAZY)
+     * Предварительная загрузка маршрутов и i18n из всех модулей
      * Используется для регистрации всех маршрутов в роутере и загрузки i18n до старта приложения
      * Оптимизировано для параллельной загрузки независимых модулей
+     * Для модулей с динамическим конфигом (Promise) конфигурация загружается при первом обращении
      *
      * @return {Promise<void>}
      */
@@ -180,20 +181,20 @@ export class BootstrapModuleLoader {
      * @return {Promise<void>}
      */
     private async preloadModuleRoutes(module: Module, bootstrap: Bootstrap): Promise<void> {
-        // Для LAZY модулей проверяем условия и загружаем зависимости
-        if (await this.shouldSkipLazyModule(module, bootstrap)) {
+        // Для модулей с условиями проверяем условия и загружаем зависимости
+        if (await this.shouldSkipModuleByConditions(module, bootstrap)) {
             return;
         }
 
-        // Загружаем зависимости для LAZY модулей
-        await this.preloadLazyModuleDependencies(module, bootstrap);
+        // Загружаем зависимости для модулей с условиями
+        await this.preloadModuleDependencies(module, bootstrap);
 
         // Регистрируем маршруты и i18n
-        // Для LAZY модулей автоматически загружает конфигурацию
+        // Для модулей с динамическим конфигом автоматически загружает конфигурацию
         await this.lifecycleManager.registerModuleRoutes(
             module,
             bootstrap,
-            (routeName) => this.autoLoadLazyModuleByRoute(routeName),
+            (routeName) => this.autoLoadModuleByRoute(routeName),
         );
         await this.lifecycleManager.registerModuleI18n(
             module,
@@ -202,7 +203,7 @@ export class BootstrapModuleLoader {
         );
 
         // Инициализируем модуль для добавления мок-обработчиков
-        // Это важно для LAZY модулей, чтобы моки были доступны до загрузки модуля
+        // Это важно для модулей с динамическим конфигом, чтобы моки были доступны до загрузки модуля
         // Пропускаем onModuleInit, так как это предзагрузка маршрутов
         await this.lifecycleManager.initializeModule(module, bootstrap, true);
     }
@@ -317,15 +318,14 @@ export class BootstrapModuleLoader {
     }
 
     /**
-     * Проверяет, нужно ли пропустить LAZY модуль из-за невыполненных условий
+     * Проверяет, нужно ли пропустить модуль из-за невыполненных условий
      *
      * @param {Module} module - Модуль для проверки.
      * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
      * @return {Promise<boolean>} - true, если модуль нужно пропустить.
      */
-    private async shouldSkipLazyModule(module: Module, bootstrap: Bootstrap): Promise<boolean> {
-        const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-        if (loadType !== ModuleLoadType.LAZY || !module.loadCondition) {
+    private async shouldSkipModuleByConditions(module: Module, bootstrap: Bootstrap): Promise<boolean> {
+        if (!module.loadCondition) {
             return false;
         }
 
@@ -357,18 +357,17 @@ export class BootstrapModuleLoader {
     }
 
     /**
-     * Предзагружает зависимости для LAZY модуля
+     * Предзагружает зависимости для модуля
      *
      * @param {Module} module - Модуль для предзагрузки зависимостей.
      * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
      * @return {Promise<void>}
      */
-    private async preloadLazyModuleDependencies(
+    private async preloadModuleDependencies(
         module: Module,
         bootstrap: Bootstrap,
     ): Promise<void> {
-        const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-        if (loadType !== ModuleLoadType.LAZY || !module.loadCondition?.dependencies) {
+        if (!module.loadCondition?.dependencies) {
             return;
         }
 
@@ -405,12 +404,12 @@ export class BootstrapModuleLoader {
         this.markModuleAsLoading(module);
 
         try {
-            // Для LAZY модулей автоматически загружает конфигурацию
+            // Для модулей с динамическим конфигом автоматически загружает конфигурацию
             await this.lifecycleManager.registerModuleResources(
                 module,
                 bootstrap,
                 (name) => this.isModuleLoaded(name),
-                (routeName) => this.autoLoadLazyModuleByRoute(routeName),
+                (routeName) => this.autoLoadModuleByRoute(routeName),
             );
             await this.lifecycleManager.initializeModule(module, bootstrap);
             this.markModuleAsLoaded(module);
@@ -565,20 +564,20 @@ export class BootstrapModuleLoader {
     }
 
     /**
-     * Загрузка модуля типа LAZY по требованию
+     * Загрузка модуля по требованию (для модулей с динамическим конфигом)
      *
      * @param {string} moduleName - Имя модуля для загрузки.
      * @return {Promise<void>}
      */
-    async loadLazyModule(moduleName: string): Promise<void> {
+    async loadModuleByName(moduleName: string): Promise<void> {
         const module = this.registry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module "${moduleName}" not found`);
         }
 
         const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-        if (loadType !== ModuleLoadType.LAZY) {
-            throw new Error(`Module "${moduleName}" is not a lazy module`);
+        if (loadType === ModuleLoadType.INIT) {
+            throw new Error(`Module "${moduleName}" is an INIT module and cannot be loaded on demand`);
         }
 
         const bootstrap = this.getBootstrap();
@@ -624,26 +623,27 @@ export class BootstrapModuleLoader {
     }
 
     /**
-     * Автоматическая загрузка LAZY модуля по имени маршрута
+     * Автоматическая загрузка модуля по имени маршрута (для модулей с динамическим конфигом)
      *
      * @param {string} routeName - Имя маршрута.
      * @return {Promise<void>}
      */
-    async autoLoadLazyModuleByRoute(routeName: string): Promise<void> {
+    async autoLoadModuleByRoute(routeName: string): Promise<void> {
         const module = this.registry.getModuleByRouteName(routeName);
         if (!module) {
             return;
         }
 
         const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-        if (loadType !== ModuleLoadType.LAZY) {
+        if (loadType === ModuleLoadType.INIT) {
             return;
         }
 
         // Проверяем, был ли вызван onModuleInit
         // Если модуль не загружен полностью (onModuleInit не вызван), загружаем его
+        // Это особенно важно для модулей с динамическим конфигом (Promise)
         if (!this.isModuleLoaded(module.name)) {
-            await this.loadLazyModule(module.name);
+            await this.loadModuleByName(module.name);
         }
     }
 }

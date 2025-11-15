@@ -1,4 +1,4 @@
-import { Module, ModuleLoadType } from '../../../modules/interface.ts';
+import { Module } from '../../../modules/interface.ts';
 import { Bootstrap } from '../../index';
 import { IRoutes } from '@todo/core';
 import { RouteState, RouteFromState, RouteDependencies } from './types';
@@ -24,16 +24,15 @@ export class ModuleLifecycleManager {
         autoLoadHandler?: (routeName: string) => Promise<void>,
     ): Promise<void> {
         // Используем кешированные маршруты для оптимизации
-        // Для LAZY модулей автоматически загружает конфигурацию
+        // Для модулей с динамическим конфигом автоматически загружает конфигурацию
         const routes = await this.registry.getModuleRoutes(module);
         if (!routes) {
             return;
         }
 
-        const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-
-        if (loadType === ModuleLoadType.LAZY && autoLoadHandler) {
-            const routesWithAutoLoad = this.wrapLazyRoutesWithAutoLoad(routes, autoLoadHandler);
+        // Для модулей с динамическим конфигом (Promise) оборачиваем маршруты с авто-загрузкой
+        if (module.config instanceof Promise && autoLoadHandler) {
+            const routesWithAutoLoad = this.wrapRoutesWithAutoLoad(routes, autoLoadHandler);
             bootstrap.routerService.registerRoutes(routesWithAutoLoad);
         } else {
             bootstrap.routerService.registerRoutes(routes);
@@ -41,13 +40,13 @@ export class ModuleLifecycleManager {
     }
 
     /**
-     * Оборачивает маршруты LAZY модуля с автоматической загрузкой
+     * Оборачивает маршруты с автоматической загрузкой (для модулей с динамическим конфигом)
      *
      * @param {IRoutes} routes - Маршруты для обертки.
      * @param {autoLoadHandler} autoLoadHandler - Функция автоматической загрузки модуля.
      * @return {IRoutes} - Маршруты с добавленным onEnterNode.
      */
-    private wrapLazyRoutesWithAutoLoad(
+    private wrapRoutesWithAutoLoad(
         routes: IRoutes,
         autoLoadHandler: (routeName: string) => Promise<void>,
     ): IRoutes {
@@ -74,7 +73,7 @@ export class ModuleLifecycleManager {
 
     /**
      * Регистрирует i18n ресурсы модуля
-     * Для LAZY модулей автоматически загружает конфигурацию перед использованием
+     * Для модулей с динамическим конфигом автоматически загружает конфигурацию перед использованием
      *
      * @param {Module} module - Модуль для регистрации i18n.
      * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
@@ -90,7 +89,7 @@ export class ModuleLifecycleManager {
             return;
         }
 
-        // Для LAZY модулей загружаем конфигурацию, если она еще не загружена
+        // Для модулей с динамическим конфигом загружаем конфигурацию, если она еще не загружена
         await this.registry.loadModuleConfig(module);
 
         // После загрузки config уже не является Promise
@@ -115,11 +114,11 @@ export class ModuleLifecycleManager {
         isModuleLoadedFn: (name: string) => boolean,
         autoLoadHandler?: (routeName: string) => Promise<void>,
     ): Promise<void> {
-        // Используем единый метод для регистрации маршрутов (включая обработку LAZY модулей)
+        // Используем единый метод для регистрации маршрутов (включая обработку модулей с динамическим конфигом)
         await this.registerModuleRoutes(module, bootstrap, autoLoadHandler);
 
         // Регистрируем i18n только если еще не зарегистрирован
-        // Для LAZY модулей автоматически загружает конфигурацию
+        // Для модулей с динамическим конфигом автоматически загружает конфигурацию
         await this.registerModuleI18n(module, bootstrap, isModuleLoadedFn);
     }
 
@@ -136,7 +135,7 @@ export class ModuleLifecycleManager {
         bootstrap: Bootstrap,
         skipOnModuleInit: boolean = false,
     ): Promise<void> {
-        // Убеждаемся, что конфигурация загружена (для LAZY модулей)
+        // Убеждаемся, что конфигурация загружена (для модулей с динамическим конфигом)
         await this.registry.loadModuleConfig(module);
 
         // После загрузки config уже не является Promise

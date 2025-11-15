@@ -13,7 +13,7 @@ export class ModuleRegistry {
     /**
      * Добавление модуля в реестр
      * Для INIT модулей кеширует маршруты сразу
-     * Для LAZY модулей маршруты будут закешированы при первом обращении
+     * Для модулей с динамическим конфигом (Promise) маршруты будут закешированы при первом обращении
      *
      * @param {Module} module - Модуль для добавления.
      * @return {Promise<void>}
@@ -31,7 +31,7 @@ export class ModuleRegistry {
         this.modules.push(module);
 
         // Для INIT модулей кешируем маршруты сразу
-        // Для LAZY модулей маршруты будут закешированы при первом обращении
+        // Для модулей с динамическим конфигом (Promise) маршруты будут закешированы при первом обращении
         const loadType = module.loadType ?? ModuleLoadType.NORMAL;
         if (loadType === ModuleLoadType.INIT) {
             await this.cacheModuleRoutes(module);
@@ -55,28 +55,23 @@ export class ModuleRegistry {
     }
 
     /**
-     * Загружает конфигурацию модуля динамически (для LAZY модулей)
-     * Ожидает разрешения Promise, если config является Promise
+     * Загружает конфигурацию модуля динамически, если config является Promise
+     * Ожидает разрешения Promise и заменяет его на загруженную конфигурацию
      *
      * @param {Module} module - Модуль для загрузки конфигурации.
      * @return {Promise<void>}
      */
     async loadModuleConfig(module: Module): Promise<void> {
-        const loadType = module.loadType ?? ModuleLoadType.NORMAL;
-
-        // Для LAZY модулей загружаем конфигурацию динамически
-        if (loadType === ModuleLoadType.LAZY) {
-            // Если config - это Promise, ждем его разрешения
-            if (module.config instanceof Promise) {
-                try {
-                    const config = await module.config;
-                    // Заменяем Promise на загруженную конфигурацию
-                    (module as any).config = config;
-                } catch (error) {
-                    throw new Error(
-                        `Failed to load config for module "${module.name}": ${error instanceof Error ? error.message : String(error)}`,
-                    );
-                }
+        // Если config - это Promise, ждем его разрешения
+        if (module.config instanceof Promise) {
+            try {
+                const config = await module.config;
+                // Заменяем Promise на загруженную конфигурацию
+                (module as any).config = config;
+            } catch (error) {
+                throw new Error(
+                    `Failed to load config for module "${module.name}": ${error instanceof Error ? error.message : String(error)}`,
+                );
             }
         }
     }
@@ -84,13 +79,13 @@ export class ModuleRegistry {
     /**
      * Получает маршруты модуля с кешированием результата
      * Кеширует результат ROUTES() для избежания повторных вызовов
-     * Для LAZY модулей автоматически загружает конфигурацию при первом обращении
+     * Для модулей с динамическим конфигом автоматически загружает конфигурацию при первом обращении
      *
      * @param {Module} module - Модуль для получения маршрутов.
      * @return {Promise<IRoutes | undefined>} - Массив маршрутов или undefined, если маршруты не определены.
      */
     async getModuleRoutes(module: Module): Promise<IRoutes | undefined> {
-        // Для LAZY модулей загружаем конфигурацию, если она еще не загружена
+        // Для модулей с динамическим конфигом загружаем конфигурацию, если она еще не загружена
         await this.loadModuleConfig(module);
 
         // После loadModuleConfig config гарантированно не является Promise
@@ -117,7 +112,7 @@ export class ModuleRegistry {
     /**
      * Заполняет кеш соответствия маршрутов к модулю
      * Использует кешированный результат ROUTES() для оптимизации
-     * Для LAZY модулей загружает конфигурацию динамически
+     * Для модулей с динамическим конфигом загружает конфигурацию динамически
      *
      * @param {Module} module - Модуль для кеширования маршрутов.
      * @return {Promise<void>}

@@ -24,19 +24,10 @@ export interface InitModule extends BaseModule {
 }
 
 /**
- * Модуль типа LAZY - загружается при первом обращении к нему
- */
-export interface LazyModule extends BaseModule {
-  loadType: ModuleLoadType.LAZY;
-  /**
-   * Условия загрузки модуля
-   */
-  loadCondition?: ModuleLoadCondition;
-  config: Promise<ModuleConfig>;
-}
-
-/**
  * Модуль типа NORMAL - загружается в фоновом режиме после инициализации приложения
+ * Поддерживает как статический, так и динамический импорт конфигурации:
+ * - Статический: config: ModuleConfig (конфиг загружается вместе с основным бандлом)
+ * - Динамический: config: Promise<ModuleConfig> (конфиг выносится в отдельный чанк)
  */
 export interface NormalModule extends BaseModule {
   loadType?: ModuleLoadType.NORMAL;
@@ -44,29 +35,30 @@ export interface NormalModule extends BaseModule {
    * Условия загрузки модуля
    */
   loadCondition?: ModuleLoadCondition;
-  config: ModuleConfig;
+  /**
+   * Конфигурация модуля. Может быть синхронной (ModuleConfig) или асинхронной (Promise<ModuleConfig>).
+   * При использовании Promise конфигурация будет загружена динамически при первом обращении.
+   * Пример динамической загрузки: config: import('./module_config').then(m => m.default)
+   */
+  config: ModuleConfig | Promise<ModuleConfig>;
 }
 
 /**
  * Объединенный тип модуля
  * Использует discriminated union для обеспечения типобезопасности:
- * - INIT модули не могут иметь loadCondition
- * - LAZY и NORMAL модули могут иметь loadCondition
+ * - INIT модули не могут иметь loadCondition и всегда имеют синхронный config
+ * - NORMAL модули могут иметь loadCondition и поддерживают как синхронный, так и асинхронный config
  */
-export type Module = InitModule | LazyModule | NormalModule;
+export type Module = InitModule | NormalModule;
 
 /**
- * Тип загрузки модуля (по умолчанию: NORMAL)
+ * Тип загрузки модуля
  */
 export enum ModuleLoadType {
   /**
    * Модуль загружается при инициализации приложения
    */
   INIT = 'init',
-  /**
-   * Модуль загружается при первом обращении к нему
-   */
-  LAZY = 'lazy',
   /**
    * Модуль загружается в фоновом режиме после инициализации приложения
    */
@@ -86,8 +78,8 @@ export type ModuleLoadCondition = {
    */
   accessPermissions?: string[];
   /**
-   * Массив идентификаторов модулей, от которых зависит текущий модуль. При lazy загрузке модуля,
-   * загрузка зависимых модулей будет происходить перед загрузкой текущего модуля в соответствии 
+   * Массив идентификаторов модулей, от которых зависит текущий модуль.
+   * Загрузка зависимых модулей будет происходить перед загрузкой текущего модуля в соответствии 
    * с их приоритетами загрузки.
    * При их отсутствии модуль не загружается.
    */
