@@ -87,12 +87,8 @@ export class Bootstrap {
     if (process.env.NODE_ENV === 'development') {
       this.mockService = new BootstrapMockService();
     }
-    // Инициализация модулей в загрузчик (асинхронно)
-    // Для INIT модулей конфигурация загружается сразу
-    // Для модулей с динамическим конфигом (Promise) конфигурация будет загружена динамически при необходимости
-    this.moduleLoader.addModules(modules).catch((error) => {
-      console.error('Error adding modules:', error);
-    });
+    // Модули будут добавлены в реестр при вызове initModuleLoader()
+    // Это гарантирует, что все модули будут добавлены до загрузки INIT модулей
   }
 
   /**
@@ -123,10 +119,13 @@ export class Bootstrap {
   /**
    * Инициализация ModuleLoader с зависимостями
    * Должен быть вызван после инициализации router, i18n и DI
+   * Ждет завершения добавления модулей в реестр перед возвратом
    *
-   * @return {void}
+   * @return {Promise<void>}
    */
-  initModuleLoader(): void {
+  async initModuleLoader(): Promise<void> {
     this.moduleLoader.init(this);
+    // Ждем завершения добавления модулей, чтобы они были доступны при загрузке INIT модулей
+    await this.moduleLoader.addModules(this.modules);
   }
 }

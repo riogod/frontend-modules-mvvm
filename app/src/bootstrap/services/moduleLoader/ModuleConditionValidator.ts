@@ -1,6 +1,6 @@
 import { Module } from '../../../modules/interface';
 import { Bootstrap } from '../../index';
-import { AccessControlModel } from '../../../modules/core/models/accessControl.model';
+import { AccessControlModel } from '../../../modules/core.access/models/accessControl.model';
 
 /**
  * Валидатор условий загрузки модулей

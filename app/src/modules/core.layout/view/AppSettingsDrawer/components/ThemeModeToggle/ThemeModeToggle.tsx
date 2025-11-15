@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { Observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ThemeMode } from '../../../../models/app.interface.ts';
-import { UiSettingsViewModel } from '../../../../viewmodels/uiSettings.vm.ts';
+import { ThemeMode } from '../../../../../core/models/app.interface.ts';
+import { UiSettingsViewModel } from '../../../../../core/viewmodels/uiSettings.vm.ts';
 import { useVM, Box, Typography, ToggleButtonGroup, ToggleButton, Tooltip, LightModeOutlinedIcon, SettingsBrightnessOutlinedIcon, DarkModeOutlinedIcon } from '@todo/ui';
 
 const ThemeModeToggle: FC = () => {

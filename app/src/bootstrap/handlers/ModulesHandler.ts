@@ -7,9 +7,9 @@ import { AbstractInitHandler } from "./AbstractInitHandler";
  */
 export class ModulesHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
-    // Инициализируем ModuleLoader с зависимостями
+    // Инициализируем ModuleLoader с зависимостями и ждем добавления всех модулей
     // Должен быть вызван после инициализации router и DI
-    bootstrap.initModuleLoader();
+    await bootstrap.initModuleLoader();
 
     // Загружаем INIT модули перед preloadRoutes() (который вызывается в RouterPostHandler),
     // чтобы они могли установить feature flags и permissions, которые нужны для проверки
