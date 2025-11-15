@@ -563,6 +563,8 @@ export class BootstrapModuleLoader {
      * @return {Promise<void>}
      */
     private async loadModule(module: Module, bootstrap: Bootstrap): Promise<void> {
+        log.debug(`loadModule called for: ${module.name} (status: ${this.getModuleStatus(module.name)})`, { prefix: 'bootstrap.moduleLoader' });
+        
         if (this.isModuleAlreadyLoadedOrLoading(module.name)) {
             log.debug(`Module ${module.name} already loaded or loading, skipping`, { prefix: 'bootstrap.moduleLoader' });
             return;
@@ -592,8 +594,9 @@ export class BootstrapModuleLoader {
         }
 
         try {
+            log.debug(`Calling initializeModule for: ${module.name} (skipOnModuleInit: false)`, { prefix: 'bootstrap.moduleLoader' });
             // Вызываем onModuleInit для завершения инициализации модуля
-            await this.lifecycleManager.initializeModule(module, bootstrap);
+            await this.lifecycleManager.initializeModule(module, bootstrap, false);
             this.markModuleAsLoaded(module);
             log.debug(`Module ${module.name} loaded successfully`, { prefix: 'bootstrap.moduleLoader' });
         } catch (error) {

@@ -157,26 +157,48 @@ export class ModuleLifecycleManager {
             return;
         }
 
+        // Добавляем мок-обработчики ПЕРЕД вызовом onModuleInit
+        // Это важно, чтобы handlers были доступны, когда onModuleInit делает запросы к API
+        if (process.env.NODE_ENV === 'development' && config.mockHandlers) {
+            if (!bootstrap.mockService) {
+                log.warn(`Mock service not available for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+            } else if (this.initializedModules.has(module.name)) {
+                log.debug(`Mock handlers for module ${module.name} already added, skipping`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+            } else {
+                try {
+                    log.debug(`Adding mock handlers for module: ${module.name} (${config.mockHandlers.length} handlers)`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+                    bootstrap.mockService.addHandlers(config.mockHandlers);
+                    this.initializedModules.add(module.name);
+                    log.debug(`Mock handlers added successfully for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+                } catch (error) {
+                    log.error(`Failed to add mock handlers for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' }, error);
+                    // Не прерываем выполнение, продолжаем инициализацию модуля
+                }
+            }
+        } else if (config.mockHandlers && process.env.NODE_ENV !== 'development') {
+            log.debug(`Mock handlers skipped for module: ${module.name} (not in development mode)`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+        } else if (!config.mockHandlers) {
+            log.debug(`Module ${module.name} has no mock handlers`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+        }
+
         // Вызываем onModuleInit только при полной загрузке модуля
         // Поддерживаем как синхронные, так и асинхронные функции
         if (!skipOnModuleInit && config.onModuleInit) {
             log.debug(`Calling onModuleInit for: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
-            const result = config.onModuleInit(bootstrap);
-            if (result instanceof Promise) {
-                await result;
+            try {
+                const result = config.onModuleInit(bootstrap);
+                if (result instanceof Promise) {
+                    await result;
+                }
+                log.debug(`onModuleInit completed for: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+            } catch (error) {
+                log.error(`onModuleInit failed for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' }, error);
+                throw error; // Пробрасываем ошибку дальше
             }
-            log.debug(`onModuleInit completed for: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
-        }
-
-        // Добавляем мок-обработчики только в development и только один раз
-        if (process.env.NODE_ENV === 'development' && config.mockHandlers) {
-            if (bootstrap.mockService && !this.initializedModules.has(module.name)) {
-                log.debug(`Adding mock handlers for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
-                bootstrap.mockService.addHandlers(config.mockHandlers);
-                this.initializedModules.add(module.name);
-            } else if (this.initializedModules.has(module.name)) {
-                log.debug(`Mock handlers for module ${module.name} already added, skipping`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
-            }
+        } else if (skipOnModuleInit) {
+            log.debug(`Skipping onModuleInit for: ${module.name} (skipOnModuleInit=true)`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
+        } else if (!config.onModuleInit) {
+            log.debug(`Module ${module.name} has no onModuleInit callback`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         }
         log.debug(`Module ${module.name} initialized`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
     }

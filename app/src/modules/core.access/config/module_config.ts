@@ -1,20 +1,15 @@
 import { ModuleConfig } from '../../../bootstrap/interface.ts';
 
-import { SetFeatureFlagsUsecase } from '../usecases/featureFlag/setFeatureFlags.usecase.ts';
-import { SetPermissionsUsecase } from '../usecases/permission/setPermissions.usecase.ts';
+import { LoadStartParamUsecase } from '../usecases/loadStartParam.usecase';
+import { handlers } from './mocks';
 
 export default {
-  onModuleInit: (bootstrap) => {
+  onModuleInit: async (bootstrap) => {
 
-    
-    bootstrap.di.get(SetFeatureFlagsUsecase).execute({
-      'api.module.load.feature': true,
-    });
-
-    bootstrap.di.get(SetPermissionsUsecase).execute({
-      'api.module.load.permission': true,
-    });
+    console.log('onModuleInit: core.access');
+    await bootstrap.di.get(LoadStartParamUsecase).execute();
 
 
   },
+  mockHandlers: handlers,
 } as ModuleConfig;

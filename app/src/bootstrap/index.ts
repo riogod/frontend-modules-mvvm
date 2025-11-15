@@ -35,8 +35,8 @@ export const initBootstrap = async (
     .setNext(new RouterHandler(config))
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))
-    .setNext(new ModulesHandler(config))
     .setNext(new MockServiceHandler(config))
+    .setNext(new ModulesHandler(config))
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
 

@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "data": {
+    "features": {
+      "api.module.load.feature": true,
+      "todo.module.load.feature": true
+    },
+    "permissions": {
+      "api.module.load.permission": true,
+      "todo.module.load.permission": true
+    }
+  }
+}

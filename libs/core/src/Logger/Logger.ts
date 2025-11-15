@@ -26,6 +26,7 @@ const getPrefixColor = (prefix?: string): string => {
         'bootstrap.routerService': 'color: #E74C3C; font-weight: bold;', 
         'bootstrap.handlers': 'color: #3498DB; font-weight: bold;', 
         'bootstrap': 'color: #2C3E50; font-weight: bold;', 
+        'bootstrap.mockService': 'color: #9B59B6; font-weight: bold;',
     };
     
     return colorMap[prefix] || '';
