@@ -422,7 +422,7 @@ export class BootstrapModuleLoader {
                     log.debug(`Module ${module.name} was preloaded by another process`, { prefix: 'bootstrap.moduleLoader' });
                     return;
                 }
-            } catch (error) {
+            } catch {
                 // Если предзагрузка завершилась с ошибкой, продолжаем попытку
                 log.debug(`Previous preload attempt for ${module.name} failed, retrying...`, { prefix: 'bootstrap.moduleLoader' });
                 this.preloadingModules.delete(module.name);
@@ -731,6 +731,8 @@ export class BootstrapModuleLoader {
 
     /**
      * Загрузка модулей типа NORMAL после старта приложения
+     * Оптимизировано для параллельной загрузки независимых модулей
+     * Модули группируются по уровням зависимостей для параллельной обработки
      *
      * @return {Promise<void>}
      */
@@ -745,19 +747,32 @@ export class BootstrapModuleLoader {
         );
 
         log.debug(`Loading ${normalModules.length} NORMAL modules`, { prefix: 'bootstrap.moduleLoader' });
-        for (const module of normalModules) {
-            log.debug(`Processing NORMAL module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
-            await this.dependencyResolver.loadDependencies(
-                module,
-                bootstrap,
-                new Set(),
-                (m, b) => this.loadModule(m, b),
-                (name) => this.isModuleLoaded(name),
-            );
+        
+        // Группируем модули по уровням зависимостей для параллельной обработки
+        const dependencyLevels = this.groupModulesByDependencyLevels(normalModules);
+        log.debug(`Grouped NORMAL modules into ${dependencyLevels.length} dependency levels`, { prefix: 'bootstrap.moduleLoader' });
 
-            // Проверка условий выполняется внутри loadModule() через validateLoadConditions(),
-            // поэтому здесь просто вызываем loadModule() без дублирования проверки
-            await this.loadModule(module, bootstrap);
+        // Обрабатываем каждый уровень последовательно, модули внутри уровня - параллельно
+        for (let i = 0; i < dependencyLevels.length; i++) {
+            const levelModules = dependencyLevels[i];
+            log.debug(`Processing NORMAL dependency level ${i + 1}/${dependencyLevels.length} with ${levelModules.length} modules`, { prefix: 'bootstrap.moduleLoader' });
+            
+            await Promise.all(
+                levelModules.map(async (module) => {
+                    log.debug(`Processing NORMAL module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
+                    await this.dependencyResolver.loadDependencies(
+                        module,
+                        bootstrap,
+                        new Set(),
+                        (m, b) => this.loadModule(m, b),
+                        (name) => this.isModuleLoaded(name),
+                    );
+
+                    // Проверка условий выполняется внутри loadModule() через validateLoadConditions(),
+                    // поэтому здесь просто вызываем loadModule() без дублирования проверки
+                    await this.loadModule(module, bootstrap);
+                }),
+            );
         }
         log.debug('All NORMAL modules processed', { prefix: 'bootstrap.moduleLoader' });
     }
