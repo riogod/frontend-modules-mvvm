@@ -18,7 +18,7 @@ const TodoItemActionComplete: FC<ICompleteActions> = ({
     <RadioButtonUncheckedIcon fontSize="medium" />
   );
 
-  return <MuiIconButton {...iconButtonProps}>{icon}</MuiIconButton>;
+  return <MuiIconButton {...iconButtonProps} aria-label={item.completed ? 'Mark as incomplete' : 'Mark as complete'}>{icon}</MuiIconButton>;
 };
 
 export default observer(TodoItemActionComplete);

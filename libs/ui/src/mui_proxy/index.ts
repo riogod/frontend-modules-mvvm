@@ -29,6 +29,7 @@ export { default as Switch } from '@mui/material/Switch';
 export { default as Slider } from '@mui/material/Slider';
 export { default as Select } from '@mui/material/Select';
 export { default as FormControl } from '@mui/material/FormControl';
+export { default as FormControlLabel } from '@mui/material/FormControlLabel';
 export { default as InputLabel } from '@mui/material/InputLabel';
 export { default as Input } from '@mui/material/Input';
 export { default as InputBase } from '@mui/material/InputBase';

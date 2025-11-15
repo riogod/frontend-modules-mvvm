@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { useVM, Box, Typography, Switch } from '@todo/ui';
+import { useVM, Box, Typography, FormControlLabel, Switch } from '@todo/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
@@ -35,14 +35,19 @@ const TodoListFilter: FC = () => {
           count: listViewModel.notCompletedItems.length,
         })}
       </Typography>
-      <Typography variant="body2">
-        {' '}
-        {t('item-list.show-completed')}
-        <Switch
-          checked={listViewModel.completeFilterStatus}
-          onChange={handleCompleteFilter}
-        />
-      </Typography>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={listViewModel.completeFilterStatus}
+            onChange={handleCompleteFilter}
+          />
+        }
+        label={
+          <Typography variant="body2">
+            {t('item-list.show-completed')}
+          </Typography>
+        }
+      />
     </Box>
   );
 };

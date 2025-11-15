@@ -29,6 +29,7 @@ export {
     Slider,
     Select,
     FormControl,
+    FormControlLabel,
     InputLabel,
     Input,
     InputBase,

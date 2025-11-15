@@ -1,11 +1,12 @@
 import { makeAutoObservable } from "mobx";
 import { inject, injectable } from "inversify";
 import { TodoListModel } from "../models/todo_list.model.ts";
-import { LocalStorageRepository } from "../../core/data/localStorage.repository.ts";
 import { TodoList } from "../models/todo_list.interface.ts";
+import { LocalStorageRepository } from "../../core/data/localStorage.repository.ts";
+import { log } from "@todo/core";
 
 @injectable()
-export class AddTaskUsecase {
+export class LoadTaskListUsecase {
 
   constructor(
     @inject(TodoListModel)
@@ -16,31 +17,23 @@ export class AddTaskUsecase {
     makeAutoObservable(this);
   }
 
-  execute(text: string): void {
-    if (!text) return;
-
-    this.todoModel.setItem({
-      id: Date.now().toString(),
-      description: text,
-      completed: false,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-
+  execute(): void {
     const todoList = this.localStorageRepository.getKey<string>('todoList');
     let parsedTodoList: TodoList[] = [];
     
     if (todoList && todoList.trim()) {
       try {
         parsedTodoList = JSON.parse(todoList) as TodoList[];
-      } catch {
-        // Если данные повреждены, начинаем с пустого массива
+      } catch (error) {
+        log.error('Error parsing todoList from localStorage', { prefix: 'usecase.loadTaskList' }, error);
         parsedTodoList = [];
       }
     }
     
-    parsedTodoList.push(this.todoModel.items[this.todoModel.items.length - 1]);
-    this.localStorageRepository.setKey('todoList', JSON.stringify(parsedTodoList));
+    parsedTodoList.forEach((item) => {
+      this.todoModel.setItem(item);
+    });
+    log.info('Task list loaded', { prefix: 'usecase.loadTaskList' });
   }
 
 }
