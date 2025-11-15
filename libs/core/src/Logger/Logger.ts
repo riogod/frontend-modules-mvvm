@@ -100,6 +100,11 @@ const logInternal = (level: LogLevel, message: string, ...args: unknown[]): void
         return;
     }
 
+    // Пропускаем сообщения, если уровень логирования установлен в NONE
+    if (globalConfig.level === LogLevel.NONE) {
+        return;
+    }
+
     // Пропускаем сообщения ниже установленного уровня
     if (level > globalConfig.level) {
         return;
@@ -110,6 +115,9 @@ const logInternal = (level: LogLevel, message: string, ...args: unknown[]): void
 
     // Выводим в консоль в зависимости от уровня
     switch (level) {
+        case LogLevel.NONE:
+            // NONE не должен достигать этого места, но на всякий случай
+            return;
         case LogLevel.ERROR:
             console.error(formattedMessage, ...args);
             break;
@@ -141,14 +149,16 @@ export const createLogger = (config?: ILoggerConfig) => {
     // Создаем форматтер, который использует актуальный loggerConfig
     loggerConfig.formatter = config?.formatter || ((level: LogLevel, message: string) => {
         const levelName = LogLevel[level];
-        const prefix = loggerConfig.prefix ? `[${loggerConfig.prefix}] ` : '';
-        const timestamp = new Date().toISOString();
-        // return `${timestamp} ${prefix}[${levelName}] ${message}`;
         return `[${levelName}] ${message}`;
     });
 
     const loggerLog = (level: LogLevel, message: string, ...args: unknown[]): void => {
         if (isProduction() && !loggerConfig.enableInProduction) {
+            return;
+        }
+
+        // Пропускаем сообщения, если уровень логирования установлен в NONE
+        if (loggerConfig.level === LogLevel.NONE) {
             return;
         }
 
@@ -159,6 +169,9 @@ export const createLogger = (config?: ILoggerConfig) => {
         const formattedMessage = loggerConfig.formatter(level, message, ...args);
 
         switch (level) {
+            case LogLevel.NONE:
+                // NONE не должен достигать этого места, но на всякий случай
+                return;
             case LogLevel.ERROR:
                 console.error(formattedMessage, ...args);
                 break;

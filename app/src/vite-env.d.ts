@@ -10,6 +10,14 @@ declare module '*.svg?react' {
   export default src;
 }
 
+interface ImportMetaEnv {
+  readonly DEBUG?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 declare let process: {
   env: {
     NODE_ENV: string;

@@ -12,10 +12,13 @@ import ThemeSchema from './modules/core.layout/view/ThemeSchema';
 import { Layout } from './modules/core.layout/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
-import { LogLevel, log } from '@todo/core';
+import { log } from '@todo/core';
+import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
 
 configure({ enforceActions: 'observed', useProxies: 'always' });
-log.setConfig({ level: LogLevel.INFO, prefix: 'App', enableInProduction: false });
+
+
+log.setConfig({ level: getLogLevelFromEnv(), prefix: 'App', enableInProduction: false });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {

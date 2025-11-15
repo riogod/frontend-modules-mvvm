@@ -27,6 +27,11 @@ const config: ViteConfig = {
 
   plugins: [react(), tsconfigPaths(), svgr()],
 
+  define: {
+    // Делаем переменную окружения DEBUG доступной в коде
+    'import.meta.env.DEBUG': JSON.stringify(process.env.DEBUG || ''),
+  },
+
     optimizeDeps: {
       // Включаем оптимизацию для локальных библиотек
       include: ['@todo/ui', '@todo/core']

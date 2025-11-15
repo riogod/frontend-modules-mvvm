@@ -68,6 +68,21 @@ describe('Logger', () => {
       expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
       expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('должен отключать все логирование при уровне NONE', () => {
+      log.setLevel(LogLevel.NONE);
+      log.error('This should not be logged');
+      log.warn('This should not be logged');
+      log.info('This should not be logged');
+      log.debug('This should not be logged');
+      log.trace('This should not be logged');
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(consoleInfoSpy).not.toHaveBeenCalled();
+      expect(consoleDebugSpy).not.toHaveBeenCalled();
+      expect(consoleTraceSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('createLogger', () => {
@@ -87,6 +102,21 @@ describe('Logger', () => {
       logger2.info('Should be logged');
 
       expect(consoleInfoSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('должен отключать все логирование при уровне NONE', () => {
+      const logger = createLogger({ level: LogLevel.NONE });
+      logger.error('This should not be logged');
+      logger.warn('This should not be logged');
+      logger.info('This should not be logged');
+      logger.debug('This should not be logged');
+      logger.trace('This should not be logged');
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(consoleInfoSpy).not.toHaveBeenCalled();
+      expect(consoleDebugSpy).not.toHaveBeenCalled();
+      expect(consoleTraceSpy).not.toHaveBeenCalled();
     });
   });
 
