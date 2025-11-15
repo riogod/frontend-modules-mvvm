@@ -1,9 +1,7 @@
 import { FC, memo } from 'react';
-import Box from '@mui/material/Box';
+import { Box, MuiIconButton, DeleteForeverIcon } from '@todo/ui';
 import { IActions } from './interface.ts';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '@todo/ui';
 
 const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {
   const { t } = useTranslation('todo');
@@ -17,7 +15,7 @@ const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {
         transition: '0.1s ease-out',
       }}
     >
-      <IconButton
+      <MuiIconButton
         color="error"
         size="small"
         aria-label={t('item.delete')}
@@ -25,7 +23,7 @@ const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {
         onClick={removeItemHandler}
       >
         <DeleteForeverIcon fontSize="small" />
-      </IconButton>
+      </MuiIconButton>
     </Box>
   );
 };
