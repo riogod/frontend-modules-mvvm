@@ -4,7 +4,7 @@ import { IRoute } from '@todo/core';
 /**
  * Статус загрузки модуля
  */
-export type ModuleLoadStatus = 'pending' | 'loading' | 'loaded' | 'failed';
+export type ModuleLoadStatus = 'pending' | 'loading' | 'preloaded' | 'loaded' | 'failed';
 
 /**
  * Информация о загруженном модуле

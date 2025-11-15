@@ -14,6 +14,7 @@ import { log } from '@todo/core';
 export class BootstrapModuleLoader {
     modules: Module[] = [];
     private loadedModules: Map<string, LoadedModule> = new Map();
+    private preloadingModules: Map<string, Promise<void>> = new Map();
     private isInitialized: boolean = false;
     private bootstrap: Bootstrap | null = null;
 
@@ -142,6 +143,16 @@ export class BootstrapModuleLoader {
     }
 
     /**
+     * Проверка, предзагружен ли модуль
+     *
+     * @param {string} name - Имя модуля.
+     * @return {boolean} - true, если модуль предзагружен.
+     */
+    isModulePreloaded(name: string): boolean {
+        return this.loadedModules.get(name)?.status === 'preloaded';
+    }
+
+    /**
      * Получение модулей по типу загрузки
      *
      * @param {ModuleLoadType} loadType - Тип загрузки.
@@ -186,6 +197,7 @@ export class BootstrapModuleLoader {
 
     /**
      * Предзагружает маршруты и i18n для одного модуля
+     * Использует общий метод preloadModule для единообразия
      *
      * @param {Module} module - Модуль для предзагрузки.
      * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
@@ -193,32 +205,13 @@ export class BootstrapModuleLoader {
      */
     private async preloadModuleRoutes(module: Module, bootstrap: Bootstrap): Promise<void> {
         log.debug(`Preloading routes for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
-        // Для модулей с условиями проверяем условия и загружаем зависимости
-        if (await this.shouldSkipModuleByConditions(module, bootstrap)) {
-            log.debug(`Module ${module.name} skipped (conditions not met)`, { prefix: 'bootstrap.moduleLoader' });
-            return;
-        }
-
-        // Загружаем зависимости для модулей с условиями
+        
+        // Загружаем зависимости для модулей с условиями (использует предзагрузку)
         await this.preloadModuleDependencies(module, bootstrap);
 
-        // Регистрируем маршруты и i18n
-        // Для модулей с динамическим конфигом автоматически загружает конфигурацию
-        await this.lifecycleManager.registerModuleRoutes(
-            module,
-            bootstrap,
-            (routeName) => this.autoLoadModuleByRoute(routeName),
-        );
-        await this.lifecycleManager.registerModuleI18n(
-            module,
-            bootstrap,
-            (name) => this.isModuleLoaded(name),
-        );
-
-        // Инициализируем модуль для добавления мок-обработчиков
-        // Это важно для модулей с динамическим конфигом, чтобы моки были доступны до загрузки модуля
-        // Пропускаем onModuleInit, так как это предзагрузка маршрутов
-        await this.lifecycleManager.initializeModule(module, bootstrap, true);
+        // Используем общий метод предзагрузки модуля
+        await this.preloadModule(module, bootstrap);
+        
         log.debug(`Routes preloaded for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
     }
 
@@ -372,6 +365,7 @@ export class BootstrapModuleLoader {
 
     /**
      * Предзагружает зависимости для модуля
+     * Использует предзагрузку вместо полной загрузки, чтобы избежать вызова onModuleInit
      *
      * @param {Module} module - Модуль для предзагрузки зависимостей.
      * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
@@ -390,13 +384,175 @@ export class BootstrapModuleLoader {
             return;
         }
 
+        // Используем предзагрузку вместо полной загрузки для зависимостей
         await this.dependencyResolver.loadDependencies(
             module,
             bootstrap,
             new Set(),
-            (m, b) => this.loadModule(m, b),
-            (name) => this.isModuleLoaded(name),
+            (m, b) => this.preloadModule(m, b),
+            (name) => this.isModulePreloaded(name) || this.isModuleLoaded(name),
         );
+    }
+
+    /**
+     * Предзагружает один модуль (регистрирует ресурсы без вызова onModuleInit)
+     * Используется для предзагрузки зависимостей и маршрутов
+     * Защищен от параллельной предзагрузки через Promise-синхронизацию
+     *
+     * @param {Module} module - Модуль для предзагрузки.
+     * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
+     * @return {Promise<void>}
+     */
+    private async preloadModule(module: Module, bootstrap: Bootstrap): Promise<void> {
+        // Пропускаем, если модуль уже предзагружен или загружен
+        if (this.isModulePreloaded(module.name) || this.isModuleLoaded(module.name)) {
+            log.debug(`Module ${module.name} already preloaded or loaded, skipping`, { prefix: 'bootstrap.moduleLoader' });
+            return;
+        }
+
+        // Проверяем, не предзагружается ли модуль уже (защита от гонки при параллельной обработке)
+        // Используем атомарную проверку: если Promise уже существует, ждем его
+        let existingPreload = this.preloadingModules.get(module.name);
+        if (existingPreload) {
+            log.debug(`Module ${module.name} is already being preloaded, waiting for completion...`, { prefix: 'bootstrap.moduleLoader' });
+            try {
+                await existingPreload;
+                // После ожидания проверяем результат
+                if (this.isModulePreloaded(module.name) || this.isModuleLoaded(module.name)) {
+                    log.debug(`Module ${module.name} was preloaded by another process`, { prefix: 'bootstrap.moduleLoader' });
+                    return;
+                }
+            } catch (error) {
+                // Если предзагрузка завершилась с ошибкой, продолжаем попытку
+                log.debug(`Previous preload attempt for ${module.name} failed, retrying...`, { prefix: 'bootstrap.moduleLoader' });
+                this.preloadingModules.delete(module.name);
+            }
+        }
+
+        // Проверяем статус loading как дополнительную защиту
+        const currentStatus = this.getModuleStatus(module.name);
+        if (currentStatus === 'loading') {
+            // Модуль уже загружается, ждем завершения через Promise если он есть
+            existingPreload = this.preloadingModules.get(module.name);
+            if (existingPreload) {
+                log.debug(`Module ${module.name} is loading, waiting for existing preload...`, { prefix: 'bootstrap.moduleLoader' });
+                await existingPreload;
+                if (this.isModulePreloaded(module.name) || this.isModuleLoaded(module.name)) {
+                    log.debug(`Module ${module.name} was preloaded/loaded, skipping`, { prefix: 'bootstrap.moduleLoader' });
+                    return;
+                }
+            }
+        }
+
+        // Проверяем условия загрузки
+        if (await this.shouldSkipModuleByConditions(module, bootstrap)) {
+            log.debug(`Module ${module.name} skipped (conditions not met)`, { prefix: 'bootstrap.moduleLoader' });
+            return;
+        }
+
+        // Финальная проверка перед началом предзагрузки
+        if (this.isModulePreloaded(module.name) || this.isModuleLoaded(module.name)) {
+            log.debug(`Module ${module.name} was preloaded/loaded during checks, skipping`, { prefix: 'bootstrap.moduleLoader' });
+            return;
+        }
+
+        // Атомарная проверка и установка Promise (защита от гонки)
+        existingPreload = this.preloadingModules.get(module.name);
+        if (existingPreload) {
+            log.debug(`Module ${module.name} started preloading during checks, waiting...`, { prefix: 'bootstrap.moduleLoader' });
+            await existingPreload;
+            if (this.isModulePreloaded(module.name) || this.isModuleLoaded(module.name)) {
+                log.debug(`Module ${module.name} was preloaded by another process`, { prefix: 'bootstrap.moduleLoader' });
+                return;
+            }
+        }
+
+        // Устанавливаем статус loading синхронно как блокировку (перед созданием Promise)
+        // Это предотвращает параллельную предзагрузку на уровне статуса
+        const wasLoading = this.getModuleStatus(module.name) === 'loading';
+        if (wasLoading) {
+            // Если модуль уже в статусе loading, ждем существующий Promise
+            existingPreload = this.preloadingModules.get(module.name);
+            if (existingPreload) {
+                log.debug(`Module ${module.name} is already loading, waiting for existing preload...`, { prefix: 'bootstrap.moduleLoader' });
+                await existingPreload;
+                if (this.isModulePreloaded(module.name) || this.isModuleLoaded(module.name)) {
+                    log.debug(`Module ${module.name} was preloaded/loaded, skipping`, { prefix: 'bootstrap.moduleLoader' });
+                    return;
+                }
+            }
+        }
+
+        // Помечаем модуль как загружающийся СИНХРОННО (блокировка)
+        this.markModuleAsLoading(module);
+
+        log.debug(`Preloading module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
+        
+        // Создаем Promise для синхронизации параллельных попыток предзагрузки
+        const preloadPromise = (async () => {
+            try {
+                await this.executePreload(module, bootstrap);
+            } catch (error) {
+                // Удаляем Promise при ошибке, чтобы можно было повторить попытку
+                this.preloadingModules.delete(module.name);
+                throw error;
+            } finally {
+                // Удаляем Promise после завершения (успешного или с ошибкой)
+                this.preloadingModules.delete(module.name);
+            }
+        })();
+        
+        // Устанавливаем Promise в Map синхронно
+        // Если другая попытка уже установила Promise между проверками, используем его
+        if (this.preloadingModules.has(module.name)) {
+            const otherPreload = this.preloadingModules.get(module.name);
+            if (otherPreload && otherPreload !== preloadPromise) {
+                log.debug(`Module ${module.name} preload Promise was set by another process, using it`, { prefix: 'bootstrap.moduleLoader' });
+                // Откатываем статус loading, так как используем другой Promise
+                this.loadedModules.delete(module.name);
+                await otherPreload;
+                return;
+            }
+        }
+        
+        this.preloadingModules.set(module.name, preloadPromise);
+        await preloadPromise;
+    }
+
+    /**
+     * Выполняет фактическую предзагрузку модуля
+     *
+     * @param {Module} module - Модуль для предзагрузки.
+     * @param {Bootstrap} bootstrap - Инстанс Bootstrap.
+     * @return {Promise<void>}
+     */
+    private async executePreload(module: Module, bootstrap: Bootstrap): Promise<void> {
+        // Статус loading уже установлен в preloadModule для синхронизации
+
+        try {
+            // Регистрируем маршруты и i18n
+            await this.lifecycleManager.registerModuleRoutes(
+                module,
+                bootstrap,
+                (routeName) => this.autoLoadModuleByRoute(routeName),
+            );
+            await this.lifecycleManager.registerModuleI18n(
+                module,
+                bootstrap,
+                (name) => this.isModuleLoaded(name),
+            );
+
+            // Инициализируем модуль для добавления мок-обработчиков (без onModuleInit)
+            await this.lifecycleManager.initializeModule(module, bootstrap, true);
+            
+            // Помечаем модуль как предзагруженный
+            this.markModuleAsPreloaded(module);
+            log.debug(`Module ${module.name} preloaded successfully`, { prefix: 'bootstrap.moduleLoader' });
+        } catch (error) {
+            this.markModuleAsFailed(module, error);
+            log.error(`Failed to preload module ${module.name}`, { prefix: 'bootstrap.moduleLoader' }, error);
+            throw error;
+        }
     }
 
     /**
@@ -412,15 +568,20 @@ export class BootstrapModuleLoader {
             return;
         }
 
-        if (!(await this.validateLoadConditions(module, bootstrap))) {
-            log.debug(`Module ${module.name} load conditions not met, skipping`, { prefix: 'bootstrap.moduleLoader' });
-            return;
-        }
+        // Если модуль уже предзагружен, пропускаем регистрацию ресурсов
+        const isPreloaded = this.isModulePreloaded(module.name);
+        if (isPreloaded) {
+            log.debug(`Module ${module.name} already preloaded, skipping resource registration`, { prefix: 'bootstrap.moduleLoader' });
+            this.markModuleAsLoading(module);
+        } else {
+            if (!(await this.validateLoadConditions(module, bootstrap))) {
+                log.debug(`Module ${module.name} load conditions not met, skipping`, { prefix: 'bootstrap.moduleLoader' });
+                return;
+            }
 
-        log.debug(`Loading module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
-        this.markModuleAsLoading(module);
+            log.debug(`Loading module: ${module.name}`, { prefix: 'bootstrap.moduleLoader' });
+            this.markModuleAsLoading(module);
 
-        try {
             // Для модулей с динамическим конфигом автоматически загружает конфигурацию
             await this.lifecycleManager.registerModuleResources(
                 module,
@@ -428,6 +589,10 @@ export class BootstrapModuleLoader {
                 (name) => this.isModuleLoaded(name),
                 (routeName) => this.autoLoadModuleByRoute(routeName),
             );
+        }
+
+        try {
+            // Вызываем onModuleInit для завершения инициализации модуля
             await this.lifecycleManager.initializeModule(module, bootstrap);
             this.markModuleAsLoaded(module);
             log.debug(`Module ${module.name} loaded successfully`, { prefix: 'bootstrap.moduleLoader' });
@@ -492,6 +657,19 @@ export class BootstrapModuleLoader {
         this.loadedModules.set(module.name, {
             module,
             status: 'loading',
+        });
+    }
+
+    /**
+     * Помечает модуль как предзагруженный
+     *
+     * @param {Module} module - Модуль для пометки.
+     * @return {void}
+     */
+    private markModuleAsPreloaded(module: Module): void {
+        this.loadedModules.set(module.name, {
+            module,
+            status: 'preloaded',
         });
     }
 
@@ -577,17 +755,9 @@ export class BootstrapModuleLoader {
                 (name) => this.isModuleLoaded(name),
             );
 
-            const canLoad = await this.conditionValidator.checkLoadConditions(
-                module,
-                bootstrap,
-                (name) => this.isModuleLoaded(name),
-            );
-            if (canLoad) {
-                await this.loadModule(module, bootstrap);
-                log.debug(`NORMAL module ${module.name} loaded successfully`, { prefix: 'bootstrap.moduleLoader' });
-            } else {
-                log.debug(`NORMAL module ${module.name} skipped (conditions not met)`, { prefix: 'bootstrap.moduleLoader' });
-            }
+            // Проверка условий выполняется внутри loadModule() через validateLoadConditions(),
+            // поэтому здесь просто вызываем loadModule() без дублирования проверки
+            await this.loadModule(module, bootstrap);
         }
         log.debug('All NORMAL modules processed', { prefix: 'bootstrap.moduleLoader' });
     }

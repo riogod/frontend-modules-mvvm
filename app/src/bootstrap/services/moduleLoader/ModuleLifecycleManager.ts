@@ -8,6 +8,8 @@ import { ModuleRegistry } from './ModuleRegistry';
  * Менеджер жизненного цикла модулей
  */
 export class ModuleLifecycleManager {
+    private initializedModules: Set<string> = new Set();
+    
     constructor(private registry: ModuleRegistry) { }
     /**
      * Регистрирует маршруты модуля в роутере
@@ -166,11 +168,14 @@ export class ModuleLifecycleManager {
             log.debug(`onModuleInit completed for: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
         }
 
-        // Добавляем мок-обработчики только в development
+        // Добавляем мок-обработчики только в development и только один раз
         if (process.env.NODE_ENV === 'development' && config.mockHandlers) {
-            if (bootstrap.mockService) {
+            if (bootstrap.mockService && !this.initializedModules.has(module.name)) {
                 log.debug(`Adding mock handlers for module: ${module.name}`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
                 bootstrap.mockService.addHandlers(config.mockHandlers);
+                this.initializedModules.add(module.name);
+            } else if (this.initializedModules.has(module.name)) {
+                log.debug(`Mock handlers for module ${module.name} already added, skipping`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });
             }
         }
         log.debug(`Module ${module.name} initialized`, { prefix: 'bootstrap.moduleLoader.lifecycleManager' });

@@ -41,10 +41,10 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
 
       // Загрузка NORMAL модулей после старта приложения
       bootstrap.moduleLoader.loadNormalModules().catch((error: unknown) => {
-        console.error('Error loading normal modules:', error);
+        log.error('Error loading normal modules', { prefix: 'bootstrap' }, error);
       });
     });
   })
-  .catch((error: unknown) => {
-    console.error(error);
+  .catch((error: Error) => {
+    log.error('Error initializing bootstrap' , { prefix: 'bootstrap' }, error);
   });
