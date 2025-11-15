@@ -33,7 +33,6 @@ export class LoadTaskListUsecase {
     parsedTodoList.forEach((item) => {
       this.todoModel.setItem(item);
     });
-    log.info('Task list loaded', { prefix: 'usecase.loadTaskList' });
   }
 
 }
