@@ -54,7 +54,7 @@ const TodoInput: FC = () => {
           label={t('actions.inputHelper')}
         />
         <Box sx={{ minWidth: 64, display: 'flex', justifyContent: 'end' }}>
-          <Fab disabled={!value} color="primary" onClick={setComplete}>
+          <Fab disabled={!value} color="primary" onClick={setComplete} aria-label={t('actions.add')}>
             <AddIcon fontSize="medium" />
           </Fab>
         </Box>
