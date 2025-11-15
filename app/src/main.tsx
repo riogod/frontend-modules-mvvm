@@ -16,10 +16,7 @@ import { log } from '@todo/core';
 import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
 
 configure({ enforceActions: 'observed', useProxies: 'always' });
-
-
-const logLevel = getLogLevelFromEnv();
-log.setConfig({ level: logLevel });
+log.setConfig({ level: getLogLevelFromEnv() });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {

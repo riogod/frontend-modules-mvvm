@@ -7,10 +7,8 @@ import { log } from "@todo/core";
 
 export default {
   ROUTES: () => routes,
-
   onModuleInit: () => {
-    log.debug('module todo initialized', { prefix: 'module todo.config' });
-    
+    log.debug('initialized', { prefix: 'module.todo' });
   },
   I18N: (i18n) => {
     i18n.addResourceBundle("en", "todo", en_todo);
