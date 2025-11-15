@@ -65,7 +65,6 @@ const defaultFormatter = (level: LogLevel, message: string, prefix?: string): st
  */
 const defaultConfig: Required<ILoggerConfig> = {
     level: LogLevel.INFO,
-    enableInProduction: false,
     formatter: defaultFormatter,
 };
 
@@ -153,8 +152,9 @@ export const log = {
  * Внутренняя функция логирования (переименована из log для избежания конфликта)
  */
 const logInternal = (level: LogLevel, message: string, prefix: string | undefined, ...args: unknown[]): void => {
-    // Пропускаем логирование в production, если не включено явно
-    if (isProduction() && !globalConfig.enableInProduction) {
+    // В production пропускаем все логи, кроме ERROR
+    // ERROR логи всегда проходят через логгер для будущей интеграции с мониторингом
+    if (isProduction() && level !== LogLevel.ERROR) {
         return;
     }
 
@@ -291,7 +291,9 @@ export const createLogger = (config?: ILoggerConfig) => {
     });
 
     const loggerLog = (level: LogLevel, message: string, prefix: string | undefined, ...args: unknown[]): void => {
-        if (isProduction() && !loggerConfig.enableInProduction) {
+        // В production пропускаем все логи, кроме ERROR
+        // ERROR логи всегда проходят через логгер для будущей интеграции с мониторингом
+        if (isProduction() && level !== LogLevel.ERROR) {
             return;
         }
 

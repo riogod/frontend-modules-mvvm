@@ -33,11 +33,6 @@ export interface ILoggerConfig {
      */
     level?: LogLevel;
     /**
-     * Включить ли логирование в production
-     * @default false
-     */
-    enableInProduction?: boolean;
-    /**
      * Кастомный форматтер для сообщений
      */
     formatter?: (level: LogLevel, message: string, prefix?: string, ...args: unknown[]) => string;

@@ -19,7 +19,7 @@ configure({ enforceActions: 'observed', useProxies: 'always' });
 
 
 const logLevel = getLogLevelFromEnv();
-log.setConfig({ level: logLevel, enableInProduction: false });
+log.setConfig({ level: logLevel });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
