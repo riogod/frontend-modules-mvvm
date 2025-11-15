@@ -27,7 +27,7 @@ export class RouterPostHandler extends AbstractInitHandler {
     }
     const appMenu = bootstrap.routerService.buildRoutesMenu(
       bootstrap.routerService.routes,
-    );
+    ) || [];
     log.debug(`RouterPostHandler: menu built with ${appMenu.length} items`, { prefix: 'bootstrap.handlers' });
 
     bootstrap.routerService.router.setDependencies({

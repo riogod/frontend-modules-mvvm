@@ -21,7 +21,7 @@ import { Module } from '../modules/interface.ts';
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
  *
  * @param {Bootstrap} bootstrap - Инстанс класса Bootstrap.
- * @param {Record<string, any>} config - Файл конфигурации.
+ * @param {IAppConfig} config - Файл конфигурации.
  * @return {Promise<Bootstrap>} Возвращает промис проинициализированного Bootstrap.
  */
 export const initBootstrap = async (

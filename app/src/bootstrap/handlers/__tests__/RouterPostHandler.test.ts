@@ -3,10 +3,11 @@ import { RouterPostHandler } from '../RouterPostHandler.ts';
 
 describe('RouterPostHandler', () => {
   const preloadRoutes = vi.fn();
+  const buildRoutesMenu = vi.fn().mockReturnValue([]);
   const bootstrapMock: Bootstrap = {
     routerService: {
       routerPostInit: vi.fn(),
-      buildRoutesMenu: vi.fn(),
+      buildRoutesMenu,
       routes: [{ path: 'test_path' }],
       router: {
         setDependencies: vi.fn(),

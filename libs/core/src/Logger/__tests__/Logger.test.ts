@@ -5,7 +5,7 @@ describe('Logger', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
   let consoleInfoSpy: ReturnType<typeof vi.spyOn>;
-  let consoleDebugSpy: ReturnType<typeof vi.spyOn>;
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
   let consoleTraceSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -13,7 +13,8 @@ describe('Logger', () => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    // DEBUG уровень использует console.log, а не console.debug (см. Logger.ts:239-256)
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleTraceSpy = vi.spyOn(console, 'trace').mockImplementation(() => {});
   });
 
@@ -46,7 +47,8 @@ describe('Logger', () => {
   describe('log.debug', () => {
     it('должен выводить отладочное сообщение', () => {
       log.debug('Test debug');
-      expect(consoleDebugSpy).toHaveBeenCalledTimes(1);
+      // DEBUG уровень использует console.log, а не console.debug
+      expect(consoleLogSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -80,7 +82,7 @@ describe('Logger', () => {
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       expect(consoleWarnSpy).not.toHaveBeenCalled();
       expect(consoleInfoSpy).not.toHaveBeenCalled();
-      expect(consoleDebugSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
       expect(consoleTraceSpy).not.toHaveBeenCalled();
     });
   });
@@ -115,7 +117,7 @@ describe('Logger', () => {
       expect(consoleErrorSpy).not.toHaveBeenCalled();
       expect(consoleWarnSpy).not.toHaveBeenCalled();
       expect(consoleInfoSpy).not.toHaveBeenCalled();
-      expect(consoleDebugSpy).not.toHaveBeenCalled();
+      expect(consoleLogSpy).not.toHaveBeenCalled();
       expect(consoleTraceSpy).not.toHaveBeenCalled();
     });
   });
