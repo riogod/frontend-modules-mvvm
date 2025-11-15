@@ -42,4 +42,8 @@ export class TodoListModel {
       item.updated_at = new Date();
     }
   }
+  dispose() {
+    this._todos = [];
+    this._completeFilter = false;
+  }
 }
