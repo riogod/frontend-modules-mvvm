@@ -13,7 +13,7 @@ type ViteConfig = UserConfig & { test: InlineConfig };
 export default defineConfig(({ mode }) => {
 const config: ViteConfig = {
   root: __dirname,
-  cacheDir: "../../node_modules/.vite/app",
+  cacheDir: "../../node_modules/.vite/host",
 
   server: {
     port: 4200,
@@ -46,7 +46,7 @@ const config: ViteConfig = {
     },
 
   build: {
-    outDir: "../dist/app",
+    outDir: "../dist/host",
     reportCompressedSize: true,
     target: "esnext",
     chunkSizeWarningLimit: 1000,
@@ -65,7 +65,7 @@ const config: ViteConfig = {
             ? [
               visualizer({
                 open: false,
-                filename: path.resolve(process.cwd(), "dist/app/stats.html"),
+                filename: path.resolve(process.cwd(), "dist/host/stats.html"),
                 gzipSize: true,
                 brotliSize: true,
                 template: "treemap", // или "sunburst", "network"
@@ -142,7 +142,7 @@ const config: ViteConfig = {
     setupFiles: ["./vitest.setup.mts"],
     reporters: ["default"],
     coverage: {
-      reportsDirectory: "../../coverage/app",
+      reportsDirectory: "../../coverage/host",
       provider: "v8"
     }
   }

@@ -11,12 +11,12 @@
 
 ## Использование
 
-### Для приложений (app)
+### Для приложений (host)
 
 Создайте `.eslintrc.js` в корне приложения:
 
 ```javascript
-const { createEslintConfig } = require('../config/eslint-config');
+const { createEslintConfig } = require('@todo/eslint-config');
 
 module.exports = createEslintConfig({
   type: 'app',
@@ -26,7 +26,7 @@ module.exports = createEslintConfig({
 });
 ```
 
-**Особенности конфига для app:**
+**Особенности конфига для app (host):**
 - Включает React поддержку
 - Правила для запрета прямых импортов из `@mui/material` и `@mui/icons-material`
 - Правила для ограничения импортов между модулями
@@ -134,7 +134,7 @@ module.exports = {
 
 - `type: 'base' | 'app' | 'lib'` - Тип конфигурации
   - `'base'` - Базовый конфиг для всех TypeScript проектов
-  - `'app'` - Конфиг для приложений с React поддержкой
+  - `'app'` - Конфиг для приложений/host с React поддержкой
   - `'lib'` - Конфиг для библиотек (может включать React)
 - `tsconfigPath?: string | string[]` - Путь к tsconfig.json для type-aware правил
 - `react?: boolean` - Включить React поддержку (только для `type: 'lib'`)

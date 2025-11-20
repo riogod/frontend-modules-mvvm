@@ -156,7 +156,7 @@ function createAppConfig(options = {}) {
                     'Direct imports from @mui/icons-material/* are not allowed. Use @todo/ui instead for tree shaking support.',
                 },
                 {
-                  group: ['@app/modules/*/!(interface|types)'],
+                  group: ['@host/modules/*/!(interface|types)'],
                   message:
                     'Direct imports from other modules are not allowed. Only types and interfaces can be imported.',
                 },
@@ -213,7 +213,7 @@ function createAppConfig(options = {}) {
             {
               patterns: [
                 {
-                  group: ['@app/modules/*/!(interface|types)'],
+                  group: ['@host/modules/*/!(interface|types)'],
                   message:
                     'Direct imports from other modules are not allowed. Only types and interfaces can be imported.',
                 },
