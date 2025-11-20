@@ -21,11 +21,11 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@todo/core": [
-        "libs/core/src/index.ts"
-      ],
       "@todo/common": [
         "libs/common/src/index.ts"
+      ],
+      "@todo/core": [
+        "libs/core/src/index.ts"
       ],
       "@todo/ui": [
         "libs/ui/src/index.ts"

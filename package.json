@@ -15,7 +15,9 @@
     "build:host:analyze": "vite build --config host/vite.config.mts --mode analyze",
     "storybook": "storybook dev -p 6006 --config-dir libs/ui/.storybook",
     "build-storybook": "storybook build --config-dir libs/ui/.storybook",
-    "analyze:bundle": "npm run build:host:analyze && (open dist/host/stats.html || xdg-open dist/host/stats.html || echo 'Откройте dist/host/stats.html в браузере')"
+    "analyze:bundle": "npm run build:host:analyze && (open dist/host/stats.html || xdg-open dist/host/stats.html || echo 'Откройте dist/host/stats.html в браузере')",
+    "sync:tsconfig-paths": "node scripts/sync-tsconfig-paths.mjs",
+    "postinstall": "npm run sync:tsconfig-paths"
   },
   "private": true,
   "dependencies": {
