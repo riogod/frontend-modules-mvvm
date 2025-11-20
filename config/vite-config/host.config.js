@@ -106,8 +106,8 @@ export function createHostConfig(options) {
       ...define,
     },
     optimizeDeps: {
-      // Включаем оптимизацию для локальных библиотек
-      include: Object.keys(libraryAliases),
+      // Исключаем локальные библиотеки из pre-bundling, используем исходники через алиасы
+      exclude: Object.keys(libraryAliases),
     },
     build: {
       outDir,

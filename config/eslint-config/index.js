@@ -62,6 +62,7 @@ const baseConfig = {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unsafe-assignment': 'off',
         '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-empty-interface': 'off',
         '@typescript-eslint/no-inferrable-types': 'off',
         '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -266,6 +267,7 @@ function createLibConfig(options = {}) {
         rules: {
           '@typescript-eslint/no-for-in-array': 'off',
           '@typescript-eslint/ban-ts-comment': 'off',
+          '@typescript-eslint/no-unsafe-return': 'off',
           ...localRules,
         },
       },
@@ -338,18 +340,18 @@ function createEslintConfig(options) {
   // Объединяем опции с локальным конфигом
   const mergedOptions = localConfig
     ? {
-        ...restOptions,
-        rules: { ...restOptions.rules, ...localConfig.rules },
-        overrides: [...(restOptions.overrides || []), ...(localConfig.overrides || [])],
-        settings: { ...restOptions.settings, ...localConfig.settings },
-        env: { ...restOptions.env, ...localConfig.env },
-        ignorePatterns: [
-          ...(restOptions.ignorePatterns || []),
-          ...(localConfig.ignorePatterns || []),
-        ],
-        react: localConfig.react ?? restOptions.react,
-        tsconfigPath: localConfig.tsconfigPath || restOptions.tsconfigPath,
-      }
+      ...restOptions,
+      rules: { ...restOptions.rules, ...localConfig.rules },
+      overrides: [...(restOptions.overrides || []), ...(localConfig.overrides || [])],
+      settings: { ...restOptions.settings, ...localConfig.settings },
+      env: { ...restOptions.env, ...localConfig.env },
+      ignorePatterns: [
+        ...(restOptions.ignorePatterns || []),
+        ...(localConfig.ignorePatterns || []),
+      ],
+      react: localConfig.react ?? restOptions.react,
+      tsconfigPath: localConfig.tsconfigPath || restOptions.tsconfigPath,
+    }
     : restOptions;
 
   // Создаем базовый конфиг в зависимости от типа

@@ -45,6 +45,7 @@ export const createLibConfig = (options: {
                 rules: {
                     '@typescript-eslint/no-for-in-array': 'off',
                     '@typescript-eslint/ban-ts-comment': 'off',
+                    '@typescript-eslint/no-unsafe-return': 'off',
                     ...localRules,
                 },
             },
