@@ -13,14 +13,6 @@ export const app_modules: Module[] = [
     loadType: ModuleLoadType.INIT,
     loadPriority: 0,
   },
-  // {
-  //   name: "core.access",
-  //   description:
-  //     "Core access module - Отвечает за доступ к модулям",
-  //   config: CoreAccessConfig,
-  //   loadType: ModuleLoadType.INIT,
-  //   loadPriority: 1,
-  // },
   {
     name: "core.layout",
     description:
