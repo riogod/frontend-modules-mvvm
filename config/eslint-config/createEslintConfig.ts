@@ -1,15 +1,15 @@
 import type { ESLintConfig, CreateEslintConfigOptions } from './types';
 import { baseConfig } from './base.config';
-import { createAppConfig } from './app.config';
+import { createHostConfig } from './host.config';
 import { createLibConfig } from './lib.config';
 import path from 'path';
 import fs from 'fs';
 
-export type ConfigType = 'base' | 'app' | 'lib';
+export type ConfigType = 'base' | 'host' | 'lib';
 
 export interface CreateEslintConfigFactoryOptions extends CreateEslintConfigOptions {
     /**
-     * Тип конфигурации: base, app, или lib
+     * Тип конфигурации: base, host, или lib
      */
     type: ConfigType;
 
@@ -82,8 +82,8 @@ export function createEslintConfig(options: CreateEslintConfigFactoryOptions): E
     let base: ESLintConfig;
 
     switch (type) {
-        case 'app':
-            base = createAppConfig({
+        case 'host':
+            base = createHostConfig({
                 tsconfigPath:
                     typeof mergedOptions.tsconfigPath === 'string'
                         ? mergedOptions.tsconfigPath

@@ -19,14 +19,14 @@
 const { createEslintConfig } = require('@todo/eslint-config');
 
 module.exports = createEslintConfig({
-  type: 'app',
+  type: 'host',
   tsconfigPath: './tsconfig.base.json',
   // Опционально: путь к локальному конфигу для расширения
   localConfigPath: './.eslintrc.local.js',
 });
 ```
 
-**Особенности конфига для app (host):**
+**Особенности конфига для host:**
 - Включает React поддержку
 - Правила для запрета прямых импортов из `@mui/material` и `@mui/icons-material`
 - Правила для ограничения импортов между модулями
@@ -132,9 +132,9 @@ module.exports = {
 
 #### Параметры
 
-- `type: 'base' | 'app' | 'lib'` - Тип конфигурации
+- `type: 'base' | 'host' | 'lib'` - Тип конфигурации
   - `'base'` - Базовый конфиг для всех TypeScript проектов
-  - `'app'` - Конфиг для приложений/host с React поддержкой
+  - `'host'` - Конфиг для приложений/host с React поддержкой
   - `'lib'` - Конфиг для библиотек (может включать React)
 - `tsconfigPath?: string | string[]` - Путь к tsconfig.json для type-aware правил
 - `react?: boolean` - Включить React поддержку (только для `type: 'lib'`)
@@ -152,7 +152,7 @@ config/eslint-config/
 ├── index.js              # JavaScript версия (для использования в .eslintrc.js)
 ├── index.ts              # TypeScript версия (для разработки)
 ├── base.config.ts        # Базовый конфиг
-├── app.config.ts         # Конфиг для приложений
+├── host.config.ts        # Конфиг для приложений (host)
 ├── lib.config.ts         # Конфиг для библиотек
 ├── createEslintConfig.ts # Фабрика конфигураций
 ├── types.ts              # TypeScript типы

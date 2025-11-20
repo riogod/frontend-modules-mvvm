@@ -86,9 +86,9 @@ const baseConfig = {
 };
 
 /**
- * Создает конфиг для приложений (app)
+ * Создает конфиг для приложений (host)
  */
-function createAppConfig(options = {}) {
+function createHostConfig(options = {}) {
   const {
     tsconfigPath,
     localRules = {},
@@ -356,8 +356,8 @@ function createEslintConfig(options) {
   let base;
 
   switch (type) {
-    case 'app':
-      base = createAppConfig({
+    case 'host':
+      base = createHostConfig({
         tsconfigPath:
           typeof mergedOptions.tsconfigPath === 'string'
             ? mergedOptions.tsconfigPath
@@ -413,7 +413,7 @@ function createEslintConfig(options) {
 
 module.exports = {
   baseConfig,
-  createAppConfig,
+  createHostConfig,
   createLibConfig,
   createEslintConfig,
 };

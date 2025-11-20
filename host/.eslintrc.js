@@ -2,7 +2,7 @@
 const { createEslintConfig } = require('@todo/eslint-config');
 
 module.exports = createEslintConfig({
-  type: 'app',
+  type: 'host',
   tsconfigPath: './tsconfig.base.json',
   // Опционально: путь к локальному конфигу для расширения
   localConfigPath: './.eslintrc.local.js',

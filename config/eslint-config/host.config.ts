@@ -3,10 +3,10 @@ import { baseConfig } from './base.config';
 import path from 'path';
 
 /**
- * Конфиг для приложений (app)
+ * Конфиг для приложений (host)
  * Включает React поддержку и специфичные правила для приложений
  */
-export const createAppConfig = (options: {
+export const createHostConfig = (options: {
     tsconfigPath?: string;
     localRules?: ESLintConfig['rules'];
     localOverrides?: ESLintConfig['overrides'];
