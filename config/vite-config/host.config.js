@@ -2,6 +2,45 @@ import { createBaseConfig } from './base.config.js';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import path from 'path';
+import fs from 'fs';
+import process from 'node:process';
+
+function collectLibraryAliases(dirname) {
+  const aliases = {};
+  const libsDir = path.resolve(dirname, '../libs');
+
+  if (!fs.existsSync(libsDir)) {
+    return aliases;
+  }
+
+  const libraries = fs.readdirSync(libsDir, { withFileTypes: true });
+
+  libraries.forEach((libraryDirent) => {
+    if (!libraryDirent.isDirectory()) {
+      return;
+    }
+
+    const libraryRoot = path.join(libsDir, libraryDirent.name);
+    const packageJsonPath = path.join(libraryRoot, 'package.json');
+    const srcDir = path.join(libraryRoot, 'src');
+
+    if (!fs.existsSync(packageJsonPath) || !fs.existsSync(srcDir)) {
+      return;
+    }
+
+    try {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      const aliasName = packageJson.name || `@todo/${libraryDirent.name}`;
+      aliases[aliasName] = path.resolve(dirname, `../libs/${libraryDirent.name}/src`);
+    } catch (error) {
+      process.emitWarning(
+        `[vite-config] Не удалось прочитать ${packageJsonPath}: ${(error && error.message) || error}`
+      );
+    }
+  });
+
+  return aliases;
+}
 
 /**
  * Конфиг для host приложений
@@ -28,17 +67,22 @@ export function createHostConfig(options) {
     plugins = [],
   } = options;
 
+  const libraryAliases = collectLibraryAliases(dirname);
+  const finalResolve = resolve
+    ? {
+        ...resolve,
+        alias: {
+          ...libraryAliases,
+          ...(resolve.alias || {}),
+        },
+      }
+    : { alias: libraryAliases };
+
   const base = createBaseConfig({
     dirname,
     cacheDir: cacheDir || `../../node_modules/.vite/host`,
     plugins: [react(), svgr(), ...plugins],
-    resolve: resolve || {
-      alias: {
-        '@todo/core': path.resolve(dirname, '../libs/core/src'),
-        '@todo/common': path.resolve(dirname, '../libs/common/src'),
-        '@todo/ui': path.resolve(dirname, '../libs/ui/src'),
-      },
-    },
+    resolve: finalResolve,
     test: {
       globals: true,
       environment: 'jsdom',
@@ -63,7 +107,7 @@ export function createHostConfig(options) {
     },
     optimizeDeps: {
       // Включаем оптимизацию для локальных библиотек
-      include: ['@todo/ui', '@todo/core', '@todo/common'],
+      include: Object.keys(libraryAliases),
     },
     build: {
       outDir,
