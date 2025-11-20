@@ -13,14 +13,27 @@
     "forceConsistentCasingInFileNames": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": [
+      "es2020",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@todo/core": ["libs/core/src/index.ts"],
-      "@todo/ui": ["libs/ui/src/index.ts"]
+      "@todo/core": [
+        "libs/core/src/index.ts"
+      ],
+      "@todo/common": [
+        "libs/common/src/index.ts"
+      ],
+      "@todo/ui": [
+        "libs/ui/src/index.ts"
+      ]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }

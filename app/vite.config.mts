@@ -27,6 +27,14 @@ const config: ViteConfig = {
 
   plugins: [react(), tsconfigPaths(), svgr()],
 
+  resolve: {
+    alias: {
+      '@todo/core': path.resolve(__dirname, '../libs/core/src'),
+      '@todo/common': path.resolve(__dirname, '../libs/common/src'),
+      '@todo/ui': path.resolve(__dirname, '../libs/ui/src'),
+    },
+  },
+
   define: {
     // Делаем переменную окружения LOG_LEVEL доступной в коде
     'import.meta.env.LOG_LEVEL': JSON.stringify(process.env.LOG_LEVEL || ''),
@@ -34,7 +42,7 @@ const config: ViteConfig = {
 
     optimizeDeps: {
       // Включаем оптимизацию для локальных библиотек
-      include: ['@todo/ui', '@todo/core']
+      include: ['@todo/ui', '@todo/core', '@todo/common']
     },
 
   build: {
