@@ -1,4 +1,4 @@
-import { createTheme, ThemeOptions } from '@mui/material/styles';
+import { createTheme, type ThemeOptions } from '@mui/material/styles';
 import { theme } from './theme';
 import merge from '../utils/merge';
 

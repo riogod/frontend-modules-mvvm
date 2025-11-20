@@ -1,6 +1,6 @@
-import { FC } from "react";
-import { ICompleteActions } from "./interface.ts";
-import { RadioButtonUncheckedIcon, CheckCircleIcon, MuiIconButton, IconButtonProps } from "@todo/ui";
+import { type FC } from "react";
+import { type ICompleteActions } from "./interface.ts";
+import { RadioButtonUncheckedIcon, CheckCircleIcon, MuiIconButton, type IconButtonProps } from "@todo/ui";
 import { observer } from "mobx-react-lite";
 
 const TodoItemActionComplete: FC<ICompleteActions> = ({

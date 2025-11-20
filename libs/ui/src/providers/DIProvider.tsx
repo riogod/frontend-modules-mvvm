@@ -1,6 +1,6 @@
-import { PropsWithChildren, FC } from 'react';
+import { type PropsWithChildren, type FC } from 'react';
 import { DIContext } from '../contexts';
-import { Container } from 'inversify';
+import { type Container } from 'inversify';
 
 interface IProps {
   container: Container;

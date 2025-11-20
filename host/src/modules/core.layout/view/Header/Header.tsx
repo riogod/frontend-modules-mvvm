@@ -1,7 +1,7 @@
-import { FC } from 'react';
+import { type FC } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Toolbar, SettingsIcon, MuiIconButton, Box, Divider } from '@todo/ui';
-import { IProps } from './interfaces.tsx';
+import { type IProps } from './interfaces.tsx';
 import { AppBarStyled } from './components/AppBarStyled.tsx';
 import { useTranslation } from 'react-i18next';
 import MenuBuilder from '../MenuBuilder/index.tsx';

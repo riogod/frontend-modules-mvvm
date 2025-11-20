@@ -1,4 +1,4 @@
-import { IRoutes } from "@todo/core";
+import { type IRoutes } from "@todo/core";
 import { lazy } from "react";
 import { LoadTaskListUsecase } from "../usecases/loadTaskList.usecase.ts";
 import { DisposeTaskListUsecase } from "../usecases/disposeTaskList.usecase.ts";

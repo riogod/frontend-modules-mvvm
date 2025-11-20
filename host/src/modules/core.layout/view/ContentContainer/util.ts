@@ -1,5 +1,5 @@
-import { IMenuItem } from "@todo/core";
-import { FunctionComponent } from "react";
+import { type IMenuItem } from "@todo/core";
+import { type FunctionComponent } from "react";
 
 export function findSegment(
   obj: Array<IMenuItem>,

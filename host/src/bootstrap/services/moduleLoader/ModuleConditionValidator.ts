@@ -1,5 +1,5 @@
-import { Module } from '../../../modules/interface';
-import { Bootstrap } from '../../index';
+import { type Module } from '../../../modules/interface';
+import { type Bootstrap } from '../../index';
 import { AccessControlModel } from '../../../modules/core.access/models/accessControl.model';
 import { log } from '@todo/core';
 

@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { type FC } from "react";
 import { Container } from "@todo/ui";
 import NotFoundImage from "../assets/NotFound.svg?react";
 

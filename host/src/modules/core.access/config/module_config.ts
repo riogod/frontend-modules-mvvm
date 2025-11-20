@@ -1,4 +1,4 @@
-import { ModuleConfig } from '../../../bootstrap/interface.ts';
+import { type ModuleConfig } from '../../../bootstrap/interface.ts';
 import { LoadStartParamUsecase } from '../usecases/loadStartParam.usecase';
 import { handlers } from './mocks';
 import { log } from '@todo/core';

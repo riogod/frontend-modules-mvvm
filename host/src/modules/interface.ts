@@ -1,4 +1,4 @@
-import { ModuleConfig } from "../bootstrap/interface";
+import { type ModuleConfig } from "../bootstrap/interface";
 
 /**
  * Базовый интерфейс модуля

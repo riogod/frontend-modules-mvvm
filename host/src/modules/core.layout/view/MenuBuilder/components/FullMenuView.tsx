@@ -1,5 +1,5 @@
-import { FC, memo } from "react";
-import { IMenuItem } from "@todo/core";
+import { type FC, memo } from "react";
+import { type IMenuItem } from "@todo/core";
 import { Button, Box } from "@todo/ui";
 
 interface IProps {

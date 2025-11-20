@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { ButtonProps } from "@mui/material/Button";
+import { type ReactNode } from "react";
+import { type ButtonProps } from "@mui/material/Button";
 
 export interface IProps extends ButtonProps {
   icon: ReactNode;

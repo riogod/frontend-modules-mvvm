@@ -1,4 +1,4 @@
-import { http, HttpResponse, RequestHandler } from 'msw';
+import { http, HttpResponse, type RequestHandler } from 'msw';
 
 import appStartDataResponse from './data/appStartData.json';
 import { EAPIAccessEndpoints } from '../endpoints';

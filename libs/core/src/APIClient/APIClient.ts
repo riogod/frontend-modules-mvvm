@@ -86,7 +86,7 @@ export class APIClient {
         }
       }
 
-      return Promise.reject<Resp>(error);
+      return Promise.reject<Resp>(error instanceof Error ? error : new Error(String(error)));
     }
   }
 }

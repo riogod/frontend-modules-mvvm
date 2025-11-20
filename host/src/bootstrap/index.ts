@@ -7,14 +7,14 @@ import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
 import { InitI18nHandler } from './handlers/InitI18nHandler.ts';
-import i18next, { i18n } from 'i18next';
+import i18next, { type i18n } from 'i18next';
 import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
 import { BootstrapMockService } from './services/mockService.ts';
 import { BootstrapRouterService } from './services/routerService.ts';
 import { BootstrapModuleLoader } from './services/moduleLoader/';
-import { IAppConfig } from '../config/app.ts';
+import { type IAppConfig } from '../config/app.ts';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
-import { Module } from '../modules/interface.ts';
+import { type Module } from '../modules/interface.ts';
 
 
 /**

@@ -1,4 +1,4 @@
-import { ModuleConfig } from "../../../bootstrap/interface";
+import { type ModuleConfig } from "../../../bootstrap/interface";
 import { routes } from "./routes";
 import en_api from "./i18n/en_api.json";
 import ru_api from "./i18n/ru_api.json";

@@ -1,4 +1,4 @@
-import { IMenuItem } from "@todo/core";
+import { type IMenuItem } from "@todo/core";
 
 /**
  * Рекурсивная функция поиска сегмента в меню

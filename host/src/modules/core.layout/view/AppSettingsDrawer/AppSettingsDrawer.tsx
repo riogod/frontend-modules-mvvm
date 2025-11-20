@@ -1,5 +1,5 @@
-import { FC } from "react";
-import { IProps } from "./interfaces.tsx";
+import { type FC } from "react";
+import { type IProps } from "./interfaces.tsx";
 import { Typography, MuiIconButton, CloseIcon, Divider, Box, Drawer } from "@todo/ui";
 import ThemeModeToggle from "./components/ThemeModeToggle/index.tsx";
 import { useTranslation } from "react-i18next";

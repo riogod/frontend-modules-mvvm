@@ -3,15 +3,9 @@ const { createEslintConfig } = require('@todo/eslint-config');
 
 module.exports = createEslintConfig({
   type: 'lib',
-  react: true,
-  tsconfigPath: './tsconfig.eslint.json',
-  ignorePatterns: [
-    'node_modules',
-    'storybook-static/**/*',
-    '.cache/**/*',
-    'coverage/**/*',
-    'dist/**/*',
-  ],
+  react: false,
+  tsconfigPath: './tsconfig.base.json',
+  ignorePatterns: ['.eslintrc.cjs', '.eslintrc.local.js'],
   // Опционально: путь к локальному конфигу для расширения
   localConfigPath: './.eslintrc.local.js',
 });

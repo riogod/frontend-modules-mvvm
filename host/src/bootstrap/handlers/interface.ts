@@ -1,4 +1,4 @@
-import { Bootstrap } from "..";
+import { type Bootstrap } from "..";
 
 export interface InitHandler {
   setNext: (handler: InitHandler) => InitHandler;

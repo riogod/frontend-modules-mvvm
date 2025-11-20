@@ -1,4 +1,4 @@
-import { TodoList } from "../../models/todo_list.interface.ts";
+import { type TodoList } from "../../models/todo_list.interface.ts";
 
 export interface IProps {
   item: TodoList;

@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { type FC, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Header } from "../Header";
 import AppSettingsDrawer from "../AppSettingsDrawer";

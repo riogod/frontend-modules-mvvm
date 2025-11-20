@@ -1,5 +1,5 @@
-import { Module } from '../../../modules/interface';
-import { IRoute } from '@todo/core';
+import { type Module } from '../../../modules/interface';
+import { type IRoute } from '@todo/core';
 
 /**
  * Статус загрузки модуля

@@ -1,6 +1,6 @@
-import { Bootstrap } from '..';
-import { InitHandler } from './interface';
-import { IAppConfig } from '../../config/app.ts';
+import { type Bootstrap } from '..';
+import { type InitHandler } from './interface';
+import { type IAppConfig } from '../../config/app.ts';
 
 /**
  * Абстрактный обработчик инициализации.

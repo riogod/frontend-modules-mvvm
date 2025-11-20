@@ -1,7 +1,7 @@
-import { IRoute } from "@todo/core";
-import { Bootstrap } from ".";
-import { i18n } from "i18next";
-import { RequestHandler } from "msw";
+import { type IRoute } from "@todo/core";
+import { type Bootstrap } from ".";
+import { type i18n } from "i18next";
+import { type RequestHandler } from "msw";
 
 /**
  *  Интерфейс конфигурации модуля приложения.

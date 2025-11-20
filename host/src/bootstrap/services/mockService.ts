@@ -1,5 +1,5 @@
-import { SetupWorker, setupWorker } from "msw/browser";
-import { RequestHandler } from "msw";
+import { type SetupWorker, setupWorker } from "msw/browser";
+import { type RequestHandler } from "msw";
 import { log } from "@todo/core";
 
 /**

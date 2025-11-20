@@ -1,11 +1,11 @@
-import { Module, ModuleLoadType } from '../../../modules/interface';
-import { ModuleConfig } from '../../interface';
-import { Bootstrap } from '../../index';
+import { type Module, ModuleLoadType } from '../../../modules/interface';
+import { type ModuleConfig } from '../../interface';
+import { type Bootstrap } from '../../index';
 import { ModuleRegistry } from './ModuleRegistry';
 import { ModuleDependencyResolver } from './ModuleDependencyResolver';
 import { ModuleConditionValidator } from './ModuleConditionValidator';
 import { ModuleLifecycleManager } from './ModuleLifecycleManager';
-import { ModuleLoadStatus, LoadedModule } from './types';
+import { type ModuleLoadStatus, type LoadedModule } from './types';
 import { log } from '@todo/core';
 
 /**

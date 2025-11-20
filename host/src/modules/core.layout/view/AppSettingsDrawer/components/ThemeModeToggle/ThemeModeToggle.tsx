@@ -1,7 +1,8 @@
-import React, { FC } from 'react';
+import {type FC} from 'react';
+import type React from 'react';
 import { Observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { ThemeMode } from '../../../../../core/models/app.interface.ts';
+import { type ThemeMode } from '../../../../../core/models/app.interface.ts';
 import { UiSettingsViewModel } from '../../../../../core/viewmodels/uiSettings.vm.ts';
 import { useVM, Box, Typography, ToggleButtonGroup, ToggleButton, Tooltip, LightModeOutlinedIcon, SettingsBrightnessOutlinedIcon, DarkModeOutlinedIcon } from '@todo/ui';
 

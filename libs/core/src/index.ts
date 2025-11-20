@@ -1,5 +1,5 @@
 export * from './APIClient';
-export * from './Router';
+export type * from './Router';
 export * from './Logger';
 
 export interface Ahaha {

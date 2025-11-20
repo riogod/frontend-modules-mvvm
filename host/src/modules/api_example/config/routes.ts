@@ -1,4 +1,4 @@
-import { IRoutes } from "@todo/core";
+import { type IRoutes } from "@todo/core";
 import { lazy } from "react";
 import { JokeViewModel } from "../viewmodels/joke.vm.ts";
 

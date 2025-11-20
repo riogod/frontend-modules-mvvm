@@ -1,4 +1,4 @@
-import { delay, http, HttpResponse, RequestHandler } from 'msw';
+import { delay, http, HttpResponse, type RequestHandler } from 'msw';
 import { EAPIExampleEndpoints } from '../endpoints.ts';
 import jokes from './data/getJoke.json';
 

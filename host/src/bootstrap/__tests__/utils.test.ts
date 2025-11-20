@@ -1,5 +1,5 @@
 import { findSegment } from "../utils.ts";
-import { IMenuItem } from "@todo/core";
+import { type IMenuItem } from "@todo/core";
 
 describe("findSegment", () => {
   const mockMenu: IMenuItem[] = [

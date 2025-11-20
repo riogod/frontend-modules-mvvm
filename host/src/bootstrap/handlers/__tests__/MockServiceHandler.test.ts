@@ -1,4 +1,4 @@
-import { Bootstrap } from '../../index.ts';
+import { type Bootstrap } from '../../index.ts';
 import { MockServiceHandler } from '../MockServiceHandler.ts';
 
 describe('MockServiceHandler', () => {

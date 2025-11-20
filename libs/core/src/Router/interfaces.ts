@@ -1,7 +1,7 @@
 import type { Route } from "@riogz/router";
 import type { Router } from "@riogz/router";
 import type { FunctionComponent, ReactNode } from "react";
-import { Container } from "inversify";
+import { type Container } from "inversify";
 
 export interface RouterDependencies {
   di: Container;

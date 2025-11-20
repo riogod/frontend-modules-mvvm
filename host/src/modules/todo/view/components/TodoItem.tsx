@@ -1,6 +1,6 @@
-import { FC, memo } from 'react';
+import { type FC, memo } from 'react';
 import { useVM, Box, Card } from '@todo/ui';
-import { IProps } from './interface.ts';
+import { type IProps } from './interface.ts';
 import TodoItemActions from './TodoItemActions.tsx';
 import TodoItemActionComplete from './TodoItemComplete.tsx';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';

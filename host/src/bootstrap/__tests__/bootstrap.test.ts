@@ -1,5 +1,5 @@
 import { Bootstrap } from '../index.ts';
-import { Module, ModuleLoadType } from '../../modules/interface.ts';
+import { type Module, ModuleLoadType } from '../../modules/interface.ts';
 import { Container } from 'inversify';
 import { APIClient } from '@todo/core';
 
@@ -159,7 +159,7 @@ describe('bootstrap', () => {
     beforeEach(async () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      bootstrap.initModuleLoader();
+      void bootstrap.initModuleLoader();
       await bootstrap.moduleLoader.initInitModules();
     });
 
@@ -181,7 +181,7 @@ describe('bootstrap', () => {
       bootstrap = new Bootstrap(modules);
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      bootstrap.initModuleLoader();
+      void bootstrap.initModuleLoader();
       await bootstrap.moduleLoader.initInitModules();
 
       expect(bootstrap.mockService).not.toBeNull();

@@ -1,4 +1,4 @@
-import { ModuleConfig } from '../../../bootstrap/interface.ts';
+import { type ModuleConfig } from '../../../bootstrap/interface.ts';
 import ru_common from './i18n/ru_common.json';
 import en_common from './i18n/en_common.json';
 import { log } from '@todo/core';

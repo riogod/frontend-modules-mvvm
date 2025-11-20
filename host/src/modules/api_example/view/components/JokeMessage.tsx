@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { type FC } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useVM, Typography, Button, Skeleton, Card, CardContent, CardActions } from '@todo/ui';
 import { JokeViewModel } from '../../viewmodels/joke.vm.ts';

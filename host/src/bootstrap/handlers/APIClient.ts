@@ -1,5 +1,5 @@
 import { AbstractInitHandler } from "./AbstractInitHandler";
-import { Bootstrap } from "..";
+import { type Bootstrap } from "..";
 import { log } from "@todo/core";
 
 /**

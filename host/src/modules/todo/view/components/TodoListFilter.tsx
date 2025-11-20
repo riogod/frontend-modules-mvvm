@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import { type FC } from 'react';
 import { useVM, Box, Typography, FormControlLabel, Switch } from '@todo/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { observer } from 'mobx-react-lite';

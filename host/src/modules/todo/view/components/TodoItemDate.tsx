@@ -1,5 +1,5 @@
-import { FC } from "react";
-import { IProps } from "./interface.ts";
+import { type FC } from "react";
+import { type IProps } from "./interface.ts";
 import { Typography } from "@todo/ui";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";

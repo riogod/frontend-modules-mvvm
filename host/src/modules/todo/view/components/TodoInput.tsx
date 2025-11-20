@@ -1,4 +1,4 @@
-import { ChangeEvent, FC, useState, KeyboardEvent } from 'react';
+import { type ChangeEvent, type FC, useState, type KeyboardEvent } from 'react';
 import { useVM, Box, Container, Fab, Paper, TextField, AddIcon } from '@todo/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { useTranslation } from 'react-i18next';

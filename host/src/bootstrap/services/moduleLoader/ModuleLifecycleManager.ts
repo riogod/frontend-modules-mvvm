@@ -1,8 +1,8 @@
-import { Module } from '../../../modules/interface.ts';
-import { Bootstrap } from '../../index';
-import { IRoutes, log } from '@todo/core';
-import { RouteState, RouteFromState, RouteDependencies } from './types';
-import { ModuleRegistry } from './ModuleRegistry';
+import { type Module } from '../../../modules/interface.ts';
+import { type Bootstrap } from '../../index';
+import { type IRoutes, log } from '@todo/core';
+import { type RouteState, type RouteFromState, type RouteDependencies } from './types';
+import { type ModuleRegistry } from './ModuleRegistry';
 
 /**
  * Менеджер жизненного цикла модулей

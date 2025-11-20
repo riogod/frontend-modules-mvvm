@@ -1,4 +1,4 @@
-import { Bootstrap } from '../../index.ts';
+import { type Bootstrap } from '../../index.ts';
 import { APIClientHandler } from '../APIClient.ts';
 
 describe('APIClientHandler', () => {

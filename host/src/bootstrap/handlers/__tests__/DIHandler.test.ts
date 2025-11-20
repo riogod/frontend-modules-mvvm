@@ -1,4 +1,4 @@
-import { Bootstrap } from '../../index.ts';
+import { type Bootstrap } from '../../index.ts';
 import { DIHandler } from '../DIHandler.ts';
 
 describe('DIHandler', () => {

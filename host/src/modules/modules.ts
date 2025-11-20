@@ -1,4 +1,4 @@
-import { Module, ModuleLoadType } from "./interface.ts";
+import { type Module, ModuleLoadType } from "./interface.ts";
 import CoreConfig from "./core/config/module_config";
 import TodoConfig from "./todo/config/module_config";
 import CoreAccessConfig from "./core.access/config/module_config";

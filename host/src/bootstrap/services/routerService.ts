@@ -1,10 +1,10 @@
 import {
-  IMenuItem,
-  IRoutes,
-  RouterDependencies,
+  type IMenuItem,
+  type IRoutes,
+  type RouterDependencies,
   log,
 } from '@todo/core';
-import { createRouter, Router } from '@riogz/router';
+import { createRouter, type Router } from '@riogz/router';
 import browserPlugin from '@riogz/router-plugin-browser';
 import { findSegment } from '../utils.ts';
 

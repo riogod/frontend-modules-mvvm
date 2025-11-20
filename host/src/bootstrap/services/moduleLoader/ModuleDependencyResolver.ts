@@ -1,6 +1,6 @@
-import { Module } from '../../../modules/interface';
-import { Bootstrap } from '../../index';
-import { ModuleRegistry } from './ModuleRegistry';
+import { type Module } from '../../../modules/interface';
+import { type Bootstrap } from '../../index';
+import { type ModuleRegistry } from './ModuleRegistry';
 import { log } from '@todo/core';
 
 /**

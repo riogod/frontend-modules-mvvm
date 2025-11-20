@@ -1,5 +1,5 @@
 import { AbstractInitHandler } from "./AbstractInitHandler";
-import { Bootstrap } from "../index.ts";
+import { type Bootstrap } from "../index.ts";
 import { log } from "@todo/core";
 
 /**

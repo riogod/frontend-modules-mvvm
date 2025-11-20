@@ -1,5 +1,5 @@
-import { Module, ModuleLoadType } from '../../../modules/interface';
-import { IRoutes, log } from '@todo/core';
+import { type Module, ModuleLoadType } from '../../../modules/interface';
+import { type IRoutes, log } from '@todo/core';
 
 /**
  * Реестр модулей - управление списком модулей

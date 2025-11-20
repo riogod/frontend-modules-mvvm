@@ -1,5 +1,5 @@
 import { AbstractInitHandler } from './AbstractInitHandler';
-import { Bootstrap } from '../index.ts';
+import { type Bootstrap } from '../index.ts';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { log } from '@todo/core';

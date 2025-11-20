@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APIClient } from '../index';
 import { HttpMethod } from '../enums';
 import MockAdapter from 'axios-mock-adapter';
-import { AxiosError } from 'axios';
+import { type AxiosError } from 'axios';
 import { z } from 'zod';
 
 interface RequestDTO {

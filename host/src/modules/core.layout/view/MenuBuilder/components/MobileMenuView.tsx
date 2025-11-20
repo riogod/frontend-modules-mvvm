@@ -1,5 +1,5 @@
-import { FC, memo, useState, MouseEvent } from 'react';
-import { IMenuItem } from '@todo/core';
+import { type FC, memo, useState, type MouseEvent } from 'react';
+import { type IMenuItem } from '@todo/core';
 import { MuiIconButton, MenuIcon, Typography, Box, MuiMenu, MenuItem } from '@todo/ui';
 
 interface IProps {
