@@ -1,7 +1,6 @@
 import { type Module, ModuleLoadType } from "./interface.ts";
 import CoreConfig from "./core/config/module_config";
 import TodoConfig from "./todo/config/module_config";
-import CoreAccessConfig from "./core.access/config/module_config";
 import CoreLayoutConfig from "./core.layout/config/module_config";
 
 
@@ -14,14 +13,14 @@ export const app_modules: Module[] = [
     loadType: ModuleLoadType.INIT,
     loadPriority: 0,
   },
-  {
-    name: "core.access",
-    description:
-      "Core access module - Отвечает за доступ к модулям",
-    config: CoreAccessConfig,
-    loadType: ModuleLoadType.INIT,
-    loadPriority: 1,
-  },
+  // {
+  //   name: "core.access",
+  //   description:
+  //     "Core access module - Отвечает за доступ к модулям",
+  //   config: CoreAccessConfig,
+  //   loadType: ModuleLoadType.INIT,
+  //   loadPriority: 1,
+  // },
   {
     name: "core.layout",
     description:

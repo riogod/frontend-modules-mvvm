@@ -8,7 +8,7 @@ import { ThemeMode } from './app.interface.ts';
 export class AppModel {
   private _defaultColorMode: ThemeMode =
     window.matchMedia &&
-    window.matchMedia('(prefers-color-scheme:dark)').matches
+      window.matchMedia('(prefers-color-scheme:dark)').matches
       ? 'dark'
       : 'light';
   private _colorMode: Omit<ThemeMode, 'system'>;

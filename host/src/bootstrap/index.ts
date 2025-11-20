@@ -15,7 +15,7 @@ import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { type IAppConfig } from '../config/app.ts';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
 import { type Module } from '../modules/interface.ts';
-
+import { AccessControlHandler } from './handlers/AccessControlHandler.ts';
 
 /**
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
@@ -36,9 +36,11 @@ export const initBootstrap = async (
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))
     .setNext(new MockServiceHandler(config))
+    .setNext(new AccessControlHandler(config))
     .setNext(new ModulesHandler(config))
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
+    
 
   const result = await handler.handle(bootstrap);
 

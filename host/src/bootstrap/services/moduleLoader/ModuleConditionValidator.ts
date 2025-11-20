@@ -1,6 +1,6 @@
 import { type Module } from '../../../modules/interface';
 import { type Bootstrap } from '../../index';
-import { AccessControlModel } from '../../../modules/core.access/models/accessControl.model';
+import { AccessControlModel } from '@todo/common';
 import { log } from '@todo/core';
 
 /**
@@ -17,7 +17,7 @@ export class ModuleConditionValidator {
     async checkFeatureFlags(featureFlags: string[], bootstrap: Bootstrap): Promise<boolean> {
         log.debug(`Checking feature flags: ${featureFlags.join(', ')}`, { prefix: 'bootstrap.moduleLoader.conditionValidator' });
         try {
-            const accessControlModel = bootstrap.di.get<AccessControlModel>(AccessControlModel);
+            const accessControlModel = bootstrap.di.get<AccessControlModel>('AccessControlModel');
             const result = await Promise.resolve(accessControlModel.includesFeatureFlags(featureFlags));
             log.debug(`Feature flags check result: ${result}`, { prefix: 'bootstrap.moduleLoader.conditionValidator' });
             return result;
@@ -41,7 +41,7 @@ export class ModuleConditionValidator {
     ): Promise<boolean> {
         log.debug(`Checking access permissions: ${accessPermissions.join(', ')}`, { prefix: 'bootstrap.moduleLoader.conditionValidator' });
         try {
-            const accessControlModel = bootstrap.di.get<AccessControlModel>(AccessControlModel);
+            const accessControlModel = bootstrap.di.get<AccessControlModel>('AccessControlModel');
             const result = await Promise.resolve(accessControlModel.includesPermissions(accessPermissions));
             log.debug(`Access permissions check result: ${result}`, { prefix: 'bootstrap.moduleLoader.conditionValidator' });
             return result;
