@@ -13,10 +13,7 @@
     "baseUrl": "."
   },
   "files": ["src/index.ts"],
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
@@ -31,7 +28,3 @@
   ],
   "extends": "../../tsconfig.base.json"
 }
-
-
-
-
