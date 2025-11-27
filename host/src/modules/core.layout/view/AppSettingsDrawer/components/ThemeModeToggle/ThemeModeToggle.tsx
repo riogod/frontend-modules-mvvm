@@ -3,7 +3,7 @@ import type React from 'react';
 import { Observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { type ThemeMode } from '../../../../../core/models/app.interface.ts';
-import { UiSettingsViewModel } from '../../../../../core/viewmodels/uiSettings.vm.ts';
+import type { UiSettingsViewModel } from '../../../../../core/viewmodels/uiSettings.vm.ts';
 import {
   useVM,
   Box,
@@ -15,10 +15,11 @@ import {
   SettingsBrightnessOutlinedIcon,
   DarkModeOutlinedIcon,
 } from '@platform/ui';
+import { IOC_CORE_TOKENS } from '@platform/core';
 
 const ThemeModeToggle: FC = () => {
   const { t } = useTranslation();
-  const ui = useVM<UiSettingsViewModel>(UiSettingsViewModel);
+  const ui = useVM<UiSettingsViewModel>(IOC_CORE_TOKENS.VIEW_MODEL_UI_SETTINGS);
   const handleAlignment = (
     _event: React.MouseEvent<HTMLElement>,
     value: ThemeMode,

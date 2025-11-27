@@ -1,7 +1,7 @@
 import { APIClientHandler } from './handlers/APIClient';
 import { RouterHandler } from './handlers/RouterHandler';
 import { RouterPostHandler } from './handlers/RouterPostHandler';
-import { APIClient, log } from '@platform/core';
+import { APIClient, IOC_CORE_TOKENS, log } from '@platform/core';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
@@ -62,7 +62,6 @@ export class Bootstrap {
 
   private _APIClient: APIClient | null = null;
   private _di: Container = new Container({
-    autobind: true,
     defaultScope: 'Singleton',
   });
 
@@ -124,7 +123,9 @@ export class Bootstrap {
     void this._di.load(buildProviderModule());
 
     if (this._APIClient) {
-      this._di.bind<APIClient>(APIClient).toConstantValue(this._APIClient);
+      this._di
+        .bind<APIClient>(IOC_CORE_TOKENS.APIClient)
+        .toConstantValue(this._APIClient);
       log.debug('APIClient bound to DI container', { prefix: 'bootstrap' });
     }
     log.debug('DI container initialized', { prefix: 'bootstrap' });

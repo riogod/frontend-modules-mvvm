@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction } from 'mobx';
 import { inject, injectable } from 'inversify';
 import { JokesRepository } from '../data/jokes.repository.ts';
 import { Joke } from './jokes.interface.ts';
+import { API_EXAMPLE_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()
 export class JokesModel {
@@ -23,7 +24,7 @@ export class JokesModel {
   }
 
   constructor(
-    @inject(JokesRepository)
+    @inject(API_EXAMPLE_DI_TOKENS.REPOSITORY_JOKE)
     private jokesRepository: JokesRepository,
   ) {
     makeAutoObservable(this);

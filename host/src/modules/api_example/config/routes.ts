@@ -1,6 +1,7 @@
 import { type IRoutes } from '@platform/core';
 import { lazy } from 'react';
-import { JokeViewModel } from '../viewmodels/joke.vm.ts';
+import type { JokeViewModel } from '../viewmodels/joke.vm.ts';
+import { API_EXAMPLE_DI_TOKENS } from './di.tokens.ts';
 
 export const API_ROUTES = {
   API: 'api-example',
@@ -17,11 +18,15 @@ export const routes: IRoutes = [
     pageComponent: lazy(() => import('../view/ApiPage.tsx')),
     onEnterNode: async (_toState, _fromState, deps) => {
       const container = deps.di;
-      await container.get<JokeViewModel>(JokeViewModel).getJoke();
+      await container
+        .get<JokeViewModel>(API_EXAMPLE_DI_TOKENS.VIEW_MODEL_JOKE)
+        .getJoke();
     },
     onExitNode: async (_toState, _fromState, deps): Promise<void> => {
       const container = deps.di;
-      container.get<JokeViewModel>(JokeViewModel).dispose();
+      container
+        .get<JokeViewModel>(API_EXAMPLE_DI_TOKENS.VIEW_MODEL_JOKE)
+        .dispose();
       return Promise.resolve();
     },
   },

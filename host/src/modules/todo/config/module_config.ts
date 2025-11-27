@@ -4,10 +4,12 @@ import { routes } from './routes';
 import en_todo from './i18n/en_todo.json';
 import ru_todo from './i18n/ru_todo.json';
 import { log } from '@platform/core';
+import { DI_CONFIG } from './di.config';
 
 export default {
   ROUTES: () => routes,
-  onModuleInit: () => {
+  onModuleInit: (bootstrap) => {
+    DI_CONFIG(bootstrap.di);
     log.debug('initialized', { prefix: 'module.todo' });
   },
   I18N: (i18n) => {

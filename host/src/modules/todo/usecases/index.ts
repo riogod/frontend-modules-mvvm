@@ -1,6 +1,6 @@
-import { AddTaskUsecase } from "./addTask.usecase.ts";
-import { RemoveTaskUsecase } from "./removeTask.usecase.ts";
-import { UpdateTaskUsecase } from "./updateTask.usecase.ts";
-import { GetTaskListUsecase } from "./getTaskList.usecase.ts";
+import { AddTaskUsecase } from "./addTask.usecase";
+import { RemoveTaskUsecase } from "./removeTask.usecase";
+import { UpdateTaskUsecase } from "./updateTask.usecase";
+import { GetTaskListUsecase } from "./getTaskList.usecase";
 
 export { AddTaskUsecase, RemoveTaskUsecase, UpdateTaskUsecase, GetTaskListUsecase };

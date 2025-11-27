@@ -9,12 +9,15 @@ import {
   CardContent,
   CardActions,
 } from '@platform/ui';
-import { JokeViewModel } from '../../viewmodels/joke.vm.ts';
+import type { JokeViewModel } from '../../viewmodels/joke.vm.ts';
 import { useTranslation } from 'react-i18next';
+import { API_EXAMPLE_DI_TOKENS } from '../../config/di.tokens';
 
 const JokeMessage: FC = () => {
   const { t } = useTranslation('api');
-  const jokeMessage = useVM<JokeViewModel>(JokeViewModel);
+  const jokeMessage = useVM<JokeViewModel>(
+    API_EXAMPLE_DI_TOKENS.VIEW_MODEL_JOKE,
+  );
 
   const getJoke = () => {
     void (async () => {

@@ -1,9 +1,14 @@
-import { makeAutoObservable } from "mobx";
-import { inject, injectable } from "inversify";
-import { TodoListModel } from "../models/todo_list.model.ts";
-import { UpdateTodoList } from "../models/todo_list.interface.ts";
-import { AddTaskUsecase, GetTaskListUsecase, RemoveTaskUsecase, UpdateTaskUsecase } from "../usecases/index.ts";
-
+import { makeAutoObservable } from 'mobx';
+import { inject, injectable } from 'inversify';
+import { TodoListModel } from '../models/todo_list.model.ts';
+import { UpdateTodoList } from '../models/todo_list.interface.ts';
+import {
+  AddTaskUsecase,
+  GetTaskListUsecase,
+  RemoveTaskUsecase,
+  UpdateTaskUsecase,
+} from '../usecases/index.ts';
+import { TODO_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()
 export class TodoListViewModel {
@@ -23,15 +28,15 @@ export class TodoListViewModel {
   }
 
   constructor(
-    @inject(TodoListModel)
+    @inject(TODO_DI_TOKENS.MODEL_TODO_LIST)
     private todoModel: TodoListModel,
-    @inject(AddTaskUsecase)
+    @inject(TODO_DI_TOKENS.USECASE_ADD_TASK)
     private addTaskUsecase: AddTaskUsecase,
-    @inject(RemoveTaskUsecase)
+    @inject(TODO_DI_TOKENS.USECASE_REMOVE_TASK)
     private removeTaskUsecase: RemoveTaskUsecase,
-    @inject(UpdateTaskUsecase)
+    @inject(TODO_DI_TOKENS.USECASE_UPDATE_TASK)
     private updateTaskUsecase: UpdateTaskUsecase,
-    @inject(GetTaskListUsecase)
+    @inject(TODO_DI_TOKENS.USECASE_GET_TASK_LIST)
     private getTaskListUsecase: GetTaskListUsecase,
   ) {
     makeAutoObservable(this);

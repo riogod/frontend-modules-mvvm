@@ -13,7 +13,7 @@ import {
 } from '@platform/common';
 import { type Bootstrap } from '..';
 import { AbstractInitHandler } from './AbstractInitHandler';
-import { log } from '@platform/core';
+import { IOC_CORE_TOKENS, log } from '@platform/core';
 import { AppStartRepository } from '../services/accessControl/data/app.repository';
 
 /**
@@ -27,50 +27,60 @@ export class AccessControlHandler extends AbstractInitHandler {
 
     // Binding Repositories to DI container
     bootstrap.di
-      .bind<AppStartRepository>('AppStartRepository')
+      .bind<AppStartRepository>(IOC_CORE_TOKENS.REPOSITORY_APP_START)
       .to(AppStartRepository);
     // Binding Models to DI container
     bootstrap.di
-      .bind<AccessControlModel>('AccessControlModel')
+      .bind<AccessControlModel>(IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL)
       .to(AccessControlModel);
 
     // Binding Usecases to DI container
     bootstrap.di
-      .bind<GetFeatureFlagUsecase>('GetFeatureFlagUsecase')
+      .bind<GetFeatureFlagUsecase>(IOC_CORE_TOKENS.USECASE_GET_FEATURE_FLAG)
       .to(GetFeatureFlagUsecase);
     bootstrap.di
-      .bind<GetFeatureFlagsUsecase>('GetFeatureFlagsUsecase')
+      .bind<GetFeatureFlagsUsecase>(IOC_CORE_TOKENS.USECASE_GET_FEATURE_FLAGS)
       .to(GetFeatureFlagsUsecase);
     bootstrap.di
-      .bind<RemoveFeatureFlagsUsecase>('RemoveFeatureFlagsUsecase')
+      .bind<RemoveFeatureFlagsUsecase>(
+        IOC_CORE_TOKENS.USECASE_REMOVE_FEATURE_FLAGS,
+      )
       .to(RemoveFeatureFlagsUsecase);
     bootstrap.di
-      .bind<SetFeatureFlagsUsecase>('SetFeatureFlagsUsecase')
+      .bind<SetFeatureFlagsUsecase>(IOC_CORE_TOKENS.USECASE_SET_FEATURE_FLAGS)
       .to(SetFeatureFlagsUsecase);
     bootstrap.di
-      .bind<UpdateFeatureFlagsUsecase>('UpdateFeatureFlagsUsecase')
+      .bind<UpdateFeatureFlagsUsecase>(
+        IOC_CORE_TOKENS.USECASE_UPDATE_FEATURE_FLAGS,
+      )
       .to(UpdateFeatureFlagsUsecase);
 
     bootstrap.di
-      .bind<GetPermissionUsecase>('GetPermissionUsecase')
+      .bind<GetPermissionUsecase>(IOC_CORE_TOKENS.USECASE_GET_PERMISSION)
       .to(GetPermissionUsecase);
     bootstrap.di
-      .bind<GetPermissionsUsecase>('GetPermissionsUsecase')
+      .bind<GetPermissionsUsecase>(IOC_CORE_TOKENS.USECASE_GET_PERMISSIONS)
       .to(GetPermissionsUsecase);
     bootstrap.di
-      .bind<RemovePermissionsUsecase>('RemovePermissionsUsecase')
+      .bind<RemovePermissionsUsecase>(
+        IOC_CORE_TOKENS.USECASE_REMOVE_PERMISSIONS,
+      )
       .to(RemovePermissionsUsecase);
     bootstrap.di
-      .bind<SetPermissionsUsecase>('SetPermissionsUsecase')
+      .bind<SetPermissionsUsecase>(IOC_CORE_TOKENS.USECASE_SET_PERMISSIONS)
       .to(SetPermissionsUsecase);
     bootstrap.di
-      .bind<UpdatePermissionsUsecase>('UpdatePermissionsUsecase')
+      .bind<UpdatePermissionsUsecase>(
+        IOC_CORE_TOKENS.USECASE_UPDATE_PERMISSIONS,
+      )
       .to(UpdatePermissionsUsecase);
 
-    const appStartRepository =
-      bootstrap.di.get<AppStartRepository>('AppStartRepository');
-    const accessControlModel =
-      bootstrap.di.get<AccessControlModel>('AccessControlModel');
+    const appStartRepository = bootstrap.di.get<AppStartRepository>(
+      IOC_CORE_TOKENS.REPOSITORY_APP_START,
+    );
+    const accessControlModel = bootstrap.di.get<AccessControlModel>(
+      IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
+    );
     const appStart = await appStartRepository.getAppStart();
 
     accessControlModel.setFeatureFlags(appStart.data.features);

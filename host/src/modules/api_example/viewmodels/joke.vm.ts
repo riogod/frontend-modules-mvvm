@@ -1,7 +1,8 @@
-import { makeAutoObservable } from "mobx";
-import { inject, injectable } from "inversify";
-import { JokesModel } from "../models/jokes.model.ts";
-import { GetJokeUsecase } from "../usecases/getJoke.usecase.ts";
+import { makeAutoObservable } from 'mobx';
+import { inject, injectable } from 'inversify';
+import { JokesModel } from '../models/jokes.model.ts';
+import { GetJokeUsecase } from '../usecases/getJoke.usecase.ts';
+import { API_EXAMPLE_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()
 export class JokeViewModel {
@@ -13,9 +14,9 @@ export class JokeViewModel {
     return this.jokesModel.joke;
   }
   constructor(
-    @inject(JokesModel)
+    @inject(API_EXAMPLE_DI_TOKENS.MODEL_JOKE)
     private jokesModel: JokesModel,
-    @inject(GetJokeUsecase)
+    @inject(API_EXAMPLE_DI_TOKENS.USECASE_GET_JOKE)
     private getJokeUsecase: GetJokeUsecase,
   ) {
     makeAutoObservable(this);

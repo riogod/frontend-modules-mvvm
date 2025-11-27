@@ -3,12 +3,15 @@ import { useVM, Box, Card } from '@platform/ui';
 import { type IProps } from './interface.ts';
 import TodoItemActions from './TodoItemActions.tsx';
 import TodoItemActionComplete from './TodoItemComplete.tsx';
-import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
+import type { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import TodoItemDescription from './TodoItemDescription';
 import TodoItemDate from './TodoItemDate';
+import { TODO_DI_TOKENS } from '../../config/di.tokens';
 
 const TodoItem: FC<IProps> = ({ item }) => {
-  const listViewModel = useVM<TodoListViewModel>(TodoListViewModel);
+  const listViewModel = useVM<TodoListViewModel>(
+    TODO_DI_TOKENS.VIEW_MODEL_TODO_LIST,
+  );
 
   const handleComplete = () => {
     listViewModel.updateItem({

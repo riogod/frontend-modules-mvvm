@@ -1,11 +1,14 @@
 import { type FC } from 'react';
 import { useVM, Box, Typography, FormControlLabel, Switch } from '@platform/ui';
-import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
+import type { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { TODO_DI_TOKENS } from '../../config/di.tokens';
 
 const TodoListFilter: FC = () => {
-  const listViewModel = useVM<TodoListViewModel>(TodoListViewModel);
+  const listViewModel = useVM<TodoListViewModel>(
+    TODO_DI_TOKENS.VIEW_MODEL_TODO_LIST,
+  );
   const { t } = useTranslation('todo');
 
   if (listViewModel.allItemsLength === 0) return null;

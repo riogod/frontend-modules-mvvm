@@ -1,7 +1,7 @@
 import { type Module } from '../../../modules/interface';
 import { type Bootstrap } from '../../index';
-import { AccessControlModel } from '@platform/common';
-import { log } from '@platform/core';
+import type { AccessControlModel } from '@platform/common';
+import { IOC_CORE_TOKENS, log } from '@platform/core';
 
 /**
  * Валидатор условий загрузки модулей
@@ -22,8 +22,9 @@ export class ModuleConditionValidator {
       prefix: 'bootstrap.moduleLoader.conditionValidator',
     });
     try {
-      const accessControlModel =
-        bootstrap.di.get<AccessControlModel>('AccessControlModel');
+      const accessControlModel = bootstrap.di.get<AccessControlModel>(
+        IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
+      );
       const result = await Promise.resolve(
         accessControlModel.includesFeatureFlags(featureFlags),
       );
@@ -57,8 +58,9 @@ export class ModuleConditionValidator {
       prefix: 'bootstrap.moduleLoader.conditionValidator',
     });
     try {
-      const accessControlModel =
-        bootstrap.di.get<AccessControlModel>('AccessControlModel');
+      const accessControlModel = bootstrap.di.get<AccessControlModel>(
+        IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
+      );
       const result = await Promise.resolve(
         accessControlModel.includesPermissions(accessPermissions),
       );

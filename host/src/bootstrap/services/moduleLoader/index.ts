@@ -625,6 +625,18 @@ export class BootstrapModuleLoader {
     // Статус loading уже установлен в preloadModule для синхронизации
 
     try {
+      const loadType = module.loadType ?? ModuleLoadType.NORMAL;
+
+      // ВАЖНО: Для модулей типа NORMAL вызываем onModuleInit ПЕРЕД регистрацией роутов
+      // Это гарантирует, что DI зависимости зарегистрированы до того, как роуты будут использованы
+      if (loadType === ModuleLoadType.NORMAL) {
+        log.debug(
+          `Calling onModuleInit for NORMAL module: ${module.name} during preload`,
+          { prefix: 'bootstrap.moduleLoader' },
+        );
+        await this.lifecycleManager.initializeModule(module, bootstrap, false);
+      }
+
       // Регистрируем маршруты и i18n
       await this.lifecycleManager.registerModuleRoutes(
         module,
@@ -637,8 +649,11 @@ export class BootstrapModuleLoader {
         (name) => this.isModuleLoaded(name),
       );
 
-      // Инициализируем модуль для добавления мок-обработчиков (без onModuleInit)
-      await this.lifecycleManager.initializeModule(module, bootstrap, true);
+      // Для INIT модулей инициализируем только для добавления мок-обработчиков (без onModuleInit)
+      // так как onModuleInit уже был вызван при загрузке INIT модулей
+      if (loadType === ModuleLoadType.INIT) {
+        await this.lifecycleManager.initializeModule(module, bootstrap, true);
+      }
 
       // Помечаем модуль как предзагруженный
       this.markModuleAsPreloaded(module);
@@ -679,43 +694,57 @@ export class BootstrapModuleLoader {
       return;
     }
 
-    // Если модуль уже предзагружен, пропускаем регистрацию ресурсов
+    // Если модуль уже предзагружен, пропускаем повторную инициализацию
     const isPreloaded = this.isModulePreloaded(module.name);
     if (isPreloaded) {
       log.debug(
-        `Module ${module.name} already preloaded, skipping resource registration`,
+        `Module ${module.name} already preloaded, onModuleInit was already called during preload`,
         { prefix: 'bootstrap.moduleLoader' },
       );
       this.markModuleAsLoading(module);
-    } else {
-      if (!(await this.validateLoadConditions(module, bootstrap))) {
-        log.debug(`Module ${module.name} load conditions not met, skipping`, {
-          prefix: 'bootstrap.moduleLoader',
-        });
-        return;
-      }
-
-      log.debug(`Loading module: ${module.name}`, {
+      // Для предзагруженных модулей onModuleInit уже был вызван при предзагрузке
+      // Просто помечаем модуль как загруженный
+      this.markModuleAsLoaded(module);
+      log.debug(`Module ${module.name} loaded successfully (was preloaded)`, {
         prefix: 'bootstrap.moduleLoader',
       });
-      this.markModuleAsLoading(module);
+      return;
+    }
 
-      // Для модулей с динамическим конфигом автоматически загружает конфигурацию
+    if (!(await this.validateLoadConditions(module, bootstrap))) {
+      log.debug(`Module ${module.name} load conditions not met, skipping`, {
+        prefix: 'bootstrap.moduleLoader',
+      });
+      return;
+    }
+
+    log.debug(`Loading module: ${module.name}`, {
+      prefix: 'bootstrap.moduleLoader',
+    });
+    this.markModuleAsLoading(module);
+
+    try {
+      // ВАЖНО: Вызываем onModuleInit ПЕРЕД регистрацией роутов
+      // Это гарантирует, что DI зависимости зарегистрированы до того, как роуты будут использованы
+      log.debug(
+        `Calling initializeModule for: ${module.name} (skipOnModuleInit: false)`,
+        { prefix: 'bootstrap.moduleLoader' },
+      );
+      await this.lifecycleManager.initializeModule(module, bootstrap, false);
+
+      // Регистрируем ресурсы (роуты и i18n) ПОСЛЕ вызова onModuleInit
+      // Это важно, чтобы DI зависимости были зарегистрированы до регистрации роутов
+      log.debug(
+        `Registering resources for module: ${module.name} after onModuleInit`,
+        { prefix: 'bootstrap.moduleLoader' },
+      );
       await this.lifecycleManager.registerModuleResources(
         module,
         bootstrap,
         (name) => this.isModuleLoaded(name),
         (routeName) => this.autoLoadModuleByRoute(routeName),
       );
-    }
 
-    try {
-      log.debug(
-        `Calling initializeModule for: ${module.name} (skipOnModuleInit: false)`,
-        { prefix: 'bootstrap.moduleLoader' },
-      );
-      // Вызываем onModuleInit для завершения инициализации модуля
-      await this.lifecycleManager.initializeModule(module, bootstrap, false);
       this.markModuleAsLoaded(module);
       log.debug(`Module ${module.name} loaded successfully`, {
         prefix: 'bootstrap.moduleLoader',

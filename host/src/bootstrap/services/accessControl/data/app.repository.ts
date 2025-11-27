@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { APIClient, HttpMethod } from '@platform/core';
+import { APIClient, HttpMethod, IOC_CORE_TOKENS } from '@platform/core';
 import { AppStartDTO } from './app.dto.ts';
 import { appStartResponseSchema } from './validation/appStart.response.schema.ts';
 import { ECoreEndpoints } from 'host/src/config/endpoints.ts';
@@ -7,7 +7,7 @@ import { ECoreEndpoints } from 'host/src/config/endpoints.ts';
 @injectable()
 export class AppStartRepository {
   constructor(
-    @inject(APIClient)
+    @inject(IOC_CORE_TOKENS.APIClient)
     private apiClient: APIClient,
   ) {}
 

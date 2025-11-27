@@ -8,11 +8,14 @@ import {
   TextField,
   AddIcon,
 } from '@platform/ui';
-import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
+import type { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { useTranslation } from 'react-i18next';
+import { TODO_DI_TOKENS } from '../../config/di.tokens';
 
 const TodoInput: FC = () => {
-  const listViewModel = useVM<TodoListViewModel>(TodoListViewModel);
+  const listViewModel = useVM<TodoListViewModel>(
+    TODO_DI_TOKENS.VIEW_MODEL_TODO_LIST,
+  );
   const { t } = useTranslation('todo');
   const [value, setValue] = useState('');
 

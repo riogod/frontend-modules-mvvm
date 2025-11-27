@@ -1,7 +1,7 @@
 import { Bootstrap } from '../index.ts';
 import { type Module, ModuleLoadType } from '../../modules/interface.ts';
 import { Container } from 'inversify';
-import { APIClient } from '@platform/core';
+import { APIClient, IOC_CORE_TOKENS } from '@platform/core';
 
 let bootstrap: Bootstrap;
 
@@ -136,7 +136,7 @@ describe('bootstrap', () => {
     test('should bind APIClient to DI container', () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      expect(bootstrap.di.isBound(APIClient)).toBe(true);
+      expect(bootstrap.di.isBound(IOC_CORE_TOKENS.APIClient)).toBe(true);
     });
     test('should not bind APIClient to DI container', () => {
       bootstrap.initDI();
@@ -164,16 +164,32 @@ describe('bootstrap', () => {
     });
 
     test('should initialize module routes if routes are defined', () => {
-      expect(registerRoutes).toBeCalledWith(modules[0].config.ROUTES());
+      const moduleConfig = modules[0].config;
+      if (moduleConfig instanceof Promise) {
+        throw new Error('INIT modules should have synchronous config');
+      }
+      if (moduleConfig.ROUTES) {
+        expect(registerRoutes).toBeCalledWith(moduleConfig.ROUTES());
+      }
     });
 
     test('should call onModuleInit if onModuleInit is defined', () => {
-      expect(modules[0].config.onModuleInit).toBeCalled();
+      const moduleConfig = modules[0].config;
+      if (moduleConfig instanceof Promise) {
+        throw new Error('INIT modules should have synchronous config');
+      }
+      if (moduleConfig.onModuleInit) {
+        expect(moduleConfig.onModuleInit).toBeCalled();
+      }
     });
 
     test('should add i18n dictionaries if I18N is defined', () => {
+      const moduleConfig = modules[0].config;
+      if (moduleConfig instanceof Promise) {
+        throw new Error('INIT modules should have synchronous config');
+      }
       expect(bootstrap.i18n).not.toBeNull();
-      expect(modules[0].config.I18N).toBeCalled();
+      expect(moduleConfig.I18N).toBeCalled();
     });
 
     test('should add mock handlers if  NODE_ENV is development, mockHandlers and mockService is defined', async () => {

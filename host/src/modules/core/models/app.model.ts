@@ -3,12 +3,13 @@ import { inject, injectable } from 'inversify';
 
 import { LocalStorageRepository } from '../data/localStorage.repository.ts';
 import { ThemeMode } from './app.interface.ts';
+import { IOC_CORE_TOKENS } from '@platform/core';
 
 @injectable()
 export class AppModel {
   private _defaultColorMode: ThemeMode =
     window.matchMedia &&
-      window.matchMedia('(prefers-color-scheme:dark)').matches
+    window.matchMedia('(prefers-color-scheme:dark)').matches
       ? 'dark'
       : 'light';
   private _colorMode: Omit<ThemeMode, 'system'>;
@@ -44,7 +45,7 @@ export class AppModel {
   }
 
   constructor(
-    @inject(LocalStorageRepository)
+    @inject(IOC_CORE_TOKENS.REPOSITORY_LOCAL_STORAGE)
     private localStorageRepository: LocalStorageRepository,
   ) {
     makeAutoObservable(this);

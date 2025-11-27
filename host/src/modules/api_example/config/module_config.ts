@@ -4,10 +4,12 @@ import en_api from './i18n/en_api.json';
 import ru_api from './i18n/ru_api.json';
 import { handlers } from './mocks';
 import { log } from '@platform/core';
+import { DI_CONFIG } from './di.config';
 
 export default {
   ROUTES: () => routes,
-  onModuleInit: () => {
+  onModuleInit: (bootstrap) => {
+    DI_CONFIG(bootstrap.di);
     log.debug('initialized', { prefix: 'module.api' });
   },
   I18N: (i18n) => {

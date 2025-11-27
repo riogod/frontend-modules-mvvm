@@ -1,10 +1,13 @@
 import { type FC } from 'react';
 import { observer } from 'mobx-react-lite';
-import { AppSettingsViewModel } from '../../../core/viewmodels/appSettings.vm.ts';
+import type { AppSettingsViewModel } from '../../../core/viewmodels/appSettings.vm.ts';
 import { useVM, Alert, Slide, Snackbar } from '@platform/ui';
+import { IOC_CORE_TOKENS } from '@platform/core';
 
 const Notifier: FC = () => {
-  const appViewModel = useVM<AppSettingsViewModel>(AppSettingsViewModel);
+  const appViewModel = useVM<AppSettingsViewModel>(
+    IOC_CORE_TOKENS.VIEW_MODEL_APP_SETTINGS,
+  );
   const handleClose = () => {
     appViewModel.clearNotification();
   };
