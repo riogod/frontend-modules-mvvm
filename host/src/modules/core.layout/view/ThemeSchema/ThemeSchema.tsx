@@ -1,8 +1,7 @@
 import { type FC, type ReactNode } from 'react';
 import { Observer } from 'mobx-react-lite';
-import { themeDark, themeLight, ThemeProvider, useVM } from '@todo/ui';
+import { themeDark, themeLight, ThemeProvider, useVM } from '@platform/ui';
 import { UiSettingsViewModel } from '../../../core/viewmodels/uiSettings.vm.ts';
-
 
 interface IProps {
   children?: ReactNode;

@@ -1,6 +1,6 @@
-import { type FC, memo } from "react";
-import { type IMenuItem } from "@todo/core";
-import { Button, Box } from "@todo/ui";
+import { type FC, memo } from 'react';
+import { type IMenuItem } from '@platform/core';
+import { Button, Box } from '@platform/ui';
 
 interface IProps {
   menuList: IMenuItem[];
@@ -16,7 +16,7 @@ const FullMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+    <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
       {menuList.map((page) => {
         return (
           <Button key={page.id} onClick={onNavigate(page.path)} color="primary">

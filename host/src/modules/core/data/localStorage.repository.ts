@@ -1,4 +1,4 @@
-import { log } from '@todo/core';
+import { log } from '@platform/core';
 import { injectable } from 'inversify';
 
 @injectable()
@@ -7,7 +7,10 @@ class LocalStorageRepository {
     try {
       return localStorage.getItem(key) as T;
     } catch (error) {
-      log.error('Error getting key', { prefix: 'localStorage.repository', error });
+      log.error('Error getting key', {
+        prefix: 'localStorage.repository',
+        error,
+      });
       throw error;
     }
   }
@@ -16,7 +19,10 @@ class LocalStorageRepository {
     try {
       localStorage.setItem(key, value as string);
     } catch (error) {
-      log.error('Error setting key', { prefix: 'localStorage.repository', error });
+      log.error('Error setting key', {
+        prefix: 'localStorage.repository',
+        error,
+      });
       throw error;
     }
   }
@@ -25,7 +31,10 @@ class LocalStorageRepository {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      log.error('Error removing key', { prefix: 'localStorage.repository', error });
+      log.error('Error removing key', {
+        prefix: 'localStorage.repository',
+        error,
+      });
       throw error;
     }
   }

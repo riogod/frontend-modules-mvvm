@@ -1,10 +1,10 @@
-import { type FC, useState } from "react";
-import { observer } from "mobx-react-lite";
-import { Header } from "../Header";
-import AppSettingsDrawer from "../AppSettingsDrawer";
-import ContentContainer from "../ContentContainer";
-import { Container, Toolbar } from "@todo/ui";
-import { Notifier } from "../Notifier";
+import { type FC, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Header } from '../Header';
+import AppSettingsDrawer from '../AppSettingsDrawer';
+import ContentContainer from '../ContentContainer';
+import { Container, Toolbar } from '@platform/ui';
+import { Notifier } from '../Notifier';
 
 const Layout: FC = () => {
   const [open, setOpen] = useState(false);
@@ -29,7 +29,7 @@ const Layout: FC = () => {
         handleDrawerOpen={handleDrawerOpen}
         handleAppSettingsOpen={openAppSettingsHandler}
       />
-      <Container maxWidth="xl" sx={{ height: "calc(100% - 64px)" }}>
+      <Container maxWidth="xl" sx={{ height: 'calc(100% - 64px)' }}>
         <Toolbar disableGutters />
         <ContentContainer />
       </Container>

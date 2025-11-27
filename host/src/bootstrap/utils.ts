@@ -1,4 +1,4 @@
-import { type IMenuItem } from "@todo/core";
+import { type IMenuItem } from '@platform/core';
 
 /**
  * Рекурсивная функция поиска сегмента в меню
@@ -14,7 +14,7 @@ export function findSegment(
   result: Array<string> = [],
 ): Array<string> {
   for (const key in obj) {
-    const route = obj[key].path.split(".");
+    const route = obj[key].path.split('.');
     const routeLast = route[route.length - 1];
 
     if (routeLast === item[0]) {

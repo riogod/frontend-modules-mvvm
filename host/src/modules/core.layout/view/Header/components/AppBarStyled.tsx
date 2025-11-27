@@ -1,4 +1,4 @@
-import { styled, AppBar } from '@todo/ui';
+import { styled, AppBar } from '@platform/ui';
 import { type AppBarProps } from '../interfaces.tsx';
 
 export const AppBarStyled = styled(

@@ -1,16 +1,15 @@
-import { inject, injectable } from "inversify";
-import { APIClient, HttpMethod } from "@todo/core";
-import { EAPIExampleEndpoints } from "../config/endpoints.ts";
-import { JokeResponseDTO } from "./jokes.dto.ts";
-import { jokesResponseSchema } from "./validation/jokes.response.schema.ts";
-
+import { inject, injectable } from 'inversify';
+import { APIClient, HttpMethod } from '@platform/core';
+import { EAPIExampleEndpoints } from '../config/endpoints.ts';
+import { JokeResponseDTO } from './jokes.dto.ts';
+import { jokesResponseSchema } from './validation/jokes.response.schema.ts';
 
 @injectable()
 export class JokesRepository {
   constructor(
     @inject(APIClient)
     private apiClient: APIClient,
-  ) { }
+  ) {}
 
   async getJoke(): Promise<JokeResponseDTO[]> {
     return await this.apiClient.request<null, JokeResponseDTO[]>({

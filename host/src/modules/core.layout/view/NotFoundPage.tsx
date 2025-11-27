@@ -1,21 +1,21 @@
-import { type FC } from "react";
-import { Container } from "@todo/ui";
-import NotFoundImage from "../assets/NotFound.svg?react";
+import { type FC } from 'react';
+import { Container } from '@platform/ui';
+import NotFoundImage from '../assets/NotFound.svg?react';
 
 const NotFoundPage: FC = () => {
   return (
     <Container
       sx={{
         height: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <NotFoundImage
         style={{
-          width: "inherit",
+          width: 'inherit',
           maxWidth: 500,
         }}
       />

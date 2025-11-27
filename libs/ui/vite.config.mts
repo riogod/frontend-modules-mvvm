@@ -1,6 +1,6 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
-import { createViteConfig } from '@todo/vite-config';
+import { createViteConfig } from '@platform/vite-config';
 
 export default defineConfig(
   createViteConfig({
@@ -19,5 +19,5 @@ export default defineConfig(
     ],
     // Опционально: путь к локальному конфигу для расширения
     localConfigPath: './vite.config.local.mts',
-  })
+  }),
 );

@@ -1,6 +1,6 @@
-import { type FC } from "react";
-import { Container } from "@todo/ui";
-import JokeMessage from "./components/JokeMessage";
+import { type FC } from 'react';
+import { Container } from '@platform/ui';
+import JokeMessage from './components/JokeMessage';
 
 const ApiPage: FC = () => {
   return (
@@ -8,10 +8,10 @@ const ApiPage: FC = () => {
       maxWidth="sm"
       sx={{
         height: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <JokeMessage />

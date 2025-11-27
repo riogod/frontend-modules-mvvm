@@ -1,7 +1,7 @@
-import { type FC } from "react";
-import { type IProps } from "./interface.ts";
-import { Typography } from "@todo/ui";
-import { observer } from "mobx-react-lite";
+import { type FC } from 'react';
+import { type IProps } from './interface.ts';
+import { Typography } from '@platform/ui';
+import { observer } from 'mobx-react-lite';
 
 const TodoItemDescription: FC<IProps> = ({ item }) => {
   return (
@@ -10,10 +10,10 @@ const TodoItemDescription: FC<IProps> = ({ item }) => {
       color="text.primary"
       sx={
         item.completed
-          ? { fontStyle: "italic", textDecoration: "line-through" }
+          ? { fontStyle: 'italic', textDecoration: 'line-through' }
           : {}
       }
-      style={{ whiteSpace: "pre-line" }}
+      style={{ whiteSpace: 'pre-line' }}
     >
       {item.description}
     </Typography>

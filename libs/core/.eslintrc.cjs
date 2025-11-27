@@ -1,5 +1,5 @@
 /* eslint-env node */
-const { createEslintConfig } = require('@todo/eslint-config');
+const { createEslintConfig } = require('@platform/eslint-config');
 
 module.exports = createEslintConfig({
   type: 'lib',
@@ -9,4 +9,3 @@ module.exports = createEslintConfig({
   // Опционально: путь к локальному конфигу для расширения
   localConfigPath: './.eslintrc.local.js',
 });
-

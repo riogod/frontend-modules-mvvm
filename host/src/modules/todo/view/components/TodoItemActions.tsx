@@ -1,5 +1,5 @@
 import { type FC, memo } from 'react';
-import { Box, MuiIconButton, DeleteForeverIcon } from '@todo/ui';
+import { Box, MuiIconButton, DeleteForeverIcon } from '@platform/ui';
 import { type IActions } from './interface.ts';
 import { useTranslation } from 'react-i18next';
 

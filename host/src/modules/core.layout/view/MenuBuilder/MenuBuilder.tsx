@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react';
 import { useRouter } from '@riogz/react-router';
-import { type IMenuItem } from '@todo/core';
+import { type IMenuItem } from '@platform/core';
 import { useTranslation } from 'react-i18next';
 import FullMenuView from './components/FullMenuView';
 import MobileMenuView from './components/MobileMenuView';

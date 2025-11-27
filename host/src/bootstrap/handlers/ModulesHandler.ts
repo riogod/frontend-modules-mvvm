@@ -1,6 +1,6 @@
-import { type Bootstrap } from "..";
-import { AbstractInitHandler } from "./AbstractInitHandler";
-import { log } from "@todo/core";
+import { type Bootstrap } from '..';
+import { AbstractInitHandler } from './AbstractInitHandler';
+import { log } from '@platform/core';
 
 /**
  * Обработчик инициализации локальных модулей приложения.
@@ -16,9 +16,13 @@ export class ModulesHandler extends AbstractInitHandler {
     // Загружаем INIT модули перед preloadRoutes() (который вызывается в RouterPostHandler),
     // чтобы они могли установить feature flags и permissions, которые нужны для проверки
     // условий загрузки других модулей
-    log.debug('ModulesHandler: loading INIT modules', { prefix: 'bootstrap.handlers' });
+    log.debug('ModulesHandler: loading INIT modules', {
+      prefix: 'bootstrap.handlers',
+    });
     await bootstrap.moduleLoader.initInitModules();
-    log.debug('ModulesHandler: INIT modules loaded', { prefix: 'bootstrap.handlers' });
+    log.debug('ModulesHandler: INIT modules loaded', {
+      prefix: 'bootstrap.handlers',
+    });
 
     log.debug('ModulesHandler: completed', { prefix: 'bootstrap.handlers' });
     return await super.handle(bootstrap);

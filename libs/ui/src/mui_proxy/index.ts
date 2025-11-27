@@ -1,14 +1,14 @@
 /**
  * Прокси-экспорты MUI компонентов для tree shaking
- * 
+ *
  * Все компоненты экспортируются напрямую из @mui/material,
  * что позволяет bundler'у правильно выполнять tree shaking.
- * 
+ *
  * MUI использует default exports, поэтому мы импортируем их
  * и реэкспортируем как named exports для удобства использования.
- * 
+ *
  * Использование:
- * import { Button, TextField } from '@todo/ui';
+ * import { Button, TextField } from '@platform/ui';
  */
 
 // Layout components
@@ -113,6 +113,6 @@ export { styled } from '@mui/material/styles';
 export { default as ToggleButtonGroup } from '@mui/material/ToggleButtonGroup';
 export { default as ToggleButton } from '@mui/material/ToggleButton';
 
-export type { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
+export type { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 
 export type { IconButtonProps } from '@mui/material/IconButton';

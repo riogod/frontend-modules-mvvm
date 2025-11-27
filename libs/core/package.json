@@ -1,5 +1,12 @@
 {
-  "name": "@todo/core",
+  "name": "@platform/core",
+  "description": "Используется для базовых функций",
+  "keywords": [
+    "core",
+    "common",
+    "utils",
+    "helpers"
+  ],
   "version": "0.0.1",
   "main": "./index.js",
   "types": "./index.d.ts",

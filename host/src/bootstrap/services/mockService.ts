@@ -1,6 +1,6 @@
-import { type SetupWorker, setupWorker } from "msw/browser";
-import { type RequestHandler } from "msw";
-import { log } from "@todo/core";
+import { type SetupWorker, setupWorker } from 'msw/browser';
+import { type RequestHandler } from 'msw';
+import { log } from '@platform/core';
 
 /**
  * Сервис моков API для локальной разработки основан на библиотеке msw
@@ -14,8 +14,10 @@ export class BootstrapMockService {
    * @return {Promise<void>}
    */
   async init(): Promise<void> {
-    if (process.env.NODE_ENV !== "development") {
-      log.debug('Mock service skipped (not in development mode)', { prefix: 'bootstrap.mockService' });
+    if (process.env.NODE_ENV !== 'development') {
+      log.debug('Mock service skipped (not in development mode)', {
+        prefix: 'bootstrap.mockService',
+      });
       return;
     }
     if (!this.mswWorker) {
@@ -25,9 +27,11 @@ export class BootstrapMockService {
 
     log.debug('Starting MSW worker', { prefix: 'bootstrap.mockService' });
     await this.mswWorker.start({
-      onUnhandledRequest: "bypass",
+      onUnhandledRequest: 'bypass',
     });
-    log.debug('MSW worker started successfully', { prefix: 'bootstrap.mockService' });
+    log.debug('MSW worker started successfully', {
+      prefix: 'bootstrap.mockService',
+    });
   }
 
   /**
@@ -37,20 +41,28 @@ export class BootstrapMockService {
    * @param handlers - Массив обработчиков
    */
   addHandlers(handlers: RequestHandler[]): void {
-    if (process.env.NODE_ENV !== "development") {
-      log.debug('Mock handlers skipped (not in development mode)', { prefix: 'bootstrap.mockService' });
+    if (process.env.NODE_ENV !== 'development') {
+      log.debug('Mock handlers skipped (not in development mode)', {
+        prefix: 'bootstrap.mockService',
+      });
       return;
     }
     if (!this.mswWorker) {
-      log.warn('Worker not initialized, cannot add handlers', { prefix: 'bootstrap.mockService' });
+      log.warn('Worker not initialized, cannot add handlers', {
+        prefix: 'bootstrap.mockService',
+      });
       return;
     }
     if (!handlers || handlers.length === 0) {
       log.warn('No handlers provided', { prefix: 'bootstrap.mockService' });
       return;
     }
-    log.debug(`Adding ${handlers.length} mock handlers to MSW worker`, { prefix: 'bootstrap.mockService' });
+    log.debug(`Adding ${handlers.length} mock handlers to MSW worker`, {
+      prefix: 'bootstrap.mockService',
+    });
     this.mswWorker.use(...handlers);
-    log.debug(`Mock handlers added successfully`, { prefix: 'bootstrap.mockService' });
+    log.debug(`Mock handlers added successfully`, {
+      prefix: 'bootstrap.mockService',
+    });
   }
 }

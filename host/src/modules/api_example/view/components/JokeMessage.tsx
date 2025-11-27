@@ -1,6 +1,14 @@
 import { type FC } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useVM, Typography, Button, Skeleton, Card, CardContent, CardActions } from '@todo/ui';
+import {
+  useVM,
+  Typography,
+  Button,
+  Skeleton,
+  Card,
+  CardContent,
+  CardActions,
+} from '@platform/ui';
 import { JokeViewModel } from '../../viewmodels/joke.vm.ts';
 import { useTranslation } from 'react-i18next';
 

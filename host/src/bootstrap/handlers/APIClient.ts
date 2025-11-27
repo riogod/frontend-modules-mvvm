@@ -1,6 +1,6 @@
-import { AbstractInitHandler } from "./AbstractInitHandler";
-import { type Bootstrap } from "..";
-import { log } from "@todo/core";
+import { AbstractInitHandler } from './AbstractInitHandler';
+import { type Bootstrap } from '..';
+import { log } from '@platform/core';
 
 /**
  * Обработчик инициализации APIClient.
@@ -11,7 +11,7 @@ export class APIClientHandler extends AbstractInitHandler {
     const { apiUrl } = this.params;
 
     if (!apiUrl) {
-      throw new Error("apiUrl in application config is not defined");
+      throw new Error('apiUrl in application config is not defined');
     }
     bootstrap.initAPIClient(apiUrl);
 

@@ -98,7 +98,8 @@ function createHostConfig(options = {}) {
     localIgnorePatterns = [],
   } = options;
 
-  const tsconfig = tsconfigPath || path.join(process.cwd(), 'tsconfig.base.json');
+  const tsconfig =
+    tsconfigPath || path.join(process.cwd(), 'tsconfig.base.json');
 
   return {
     ...baseConfig,
@@ -137,24 +138,24 @@ function createHostConfig(options = {}) {
                 {
                   name: '@mui/material',
                   message:
-                    'Direct imports from @mui/material are not allowed. Use @todo/ui instead for tree shaking support.',
+                    'Direct imports from @mui/material are not allowed. Use @platform/ui instead for tree shaking support.',
                 },
                 {
                   name: '@mui/icons-material',
                   message:
-                    'Direct imports from @mui/icons-material are not allowed. Use @todo/ui instead for tree shaking support.',
+                    'Direct imports from @mui/icons-material are not allowed. Use @platform/ui instead for tree shaking support.',
                 },
               ],
               patterns: [
                 {
                   group: ['@mui/material/*'],
                   message:
-                    'Direct imports from @mui/material/* are not allowed. Use @todo/ui instead for tree shaking support.',
+                    'Direct imports from @mui/material/* are not allowed. Use @platform/ui instead for tree shaking support.',
                 },
                 {
                   group: ['@mui/icons-material/*'],
                   message:
-                    'Direct imports from @mui/icons-material/* are not allowed. Use @todo/ui instead for tree shaking support.',
+                    'Direct imports from @mui/icons-material/* are not allowed. Use @platform/ui instead for tree shaking support.',
                 },
                 {
                   group: ['@host/modules/*/!(interface|types)'],
@@ -247,7 +248,8 @@ function createLibConfig(options = {}) {
     localEnv = {},
   } = options;
 
-  const tsconfig = tsconfigPath || path.join(process.cwd(), 'tsconfig.base.json');
+  const tsconfig =
+    tsconfigPath || path.join(process.cwd(), 'tsconfig.base.json');
 
   const config = {
     ...baseConfig,
@@ -340,18 +342,21 @@ function createEslintConfig(options) {
   // Объединяем опции с локальным конфигом
   const mergedOptions = localConfig
     ? {
-      ...restOptions,
-      rules: { ...restOptions.rules, ...localConfig.rules },
-      overrides: [...(restOptions.overrides || []), ...(localConfig.overrides || [])],
-      settings: { ...restOptions.settings, ...localConfig.settings },
-      env: { ...restOptions.env, ...localConfig.env },
-      ignorePatterns: [
-        ...(restOptions.ignorePatterns || []),
-        ...(localConfig.ignorePatterns || []),
-      ],
-      react: localConfig.react ?? restOptions.react,
-      tsconfigPath: localConfig.tsconfigPath || restOptions.tsconfigPath,
-    }
+        ...restOptions,
+        rules: { ...restOptions.rules, ...localConfig.rules },
+        overrides: [
+          ...(restOptions.overrides || []),
+          ...(localConfig.overrides || []),
+        ],
+        settings: { ...restOptions.settings, ...localConfig.settings },
+        env: { ...restOptions.env, ...localConfig.env },
+        ignorePatterns: [
+          ...(restOptions.ignorePatterns || []),
+          ...(localConfig.ignorePatterns || []),
+        ],
+        react: localConfig.react ?? restOptions.react,
+        tsconfigPath: localConfig.tsconfigPath || restOptions.tsconfigPath,
+      }
     : restOptions;
 
   // Создаем базовый конфиг в зависимости от типа
@@ -393,7 +398,10 @@ function createEslintConfig(options) {
         base.rules = { ...base.rules, ...mergedOptions.rules };
       }
       if (mergedOptions.overrides) {
-        base.overrides = [...(base.overrides || []), ...mergedOptions.overrides];
+        base.overrides = [
+          ...(base.overrides || []),
+          ...mergedOptions.overrides,
+        ];
       }
       if (mergedOptions.settings) {
         base.settings = { ...mergedOptions.settings };
@@ -419,4 +427,3 @@ module.exports = {
   createLibConfig,
   createEslintConfig,
 };
-

@@ -1,7 +1,7 @@
 import { type FC, type SyntheticEvent, useState } from 'react';
 import { Observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { Typography, Autocomplete, Box, TextField } from '@todo/ui';
+import { Typography, Autocomplete, Box, TextField } from '@platform/ui';
 
 const LanguageSelect: FC = () => {
   const { t, i18n } = useTranslation('common');

@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 import TodoInput from './components/TodoInput.tsx';
-import { useVM, Container, Box } from '@todo/ui';
+import { useVM, Container, Box } from '@platform/ui';
 import { TodoListViewModel } from '../viewmodels/todo_list.vm.ts';
 import { Observer } from 'mobx-react-lite';
 import TodoItem from './components/TodoItem.tsx';

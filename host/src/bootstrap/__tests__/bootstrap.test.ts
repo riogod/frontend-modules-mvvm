@@ -1,7 +1,7 @@
 import { Bootstrap } from '../index.ts';
 import { type Module, ModuleLoadType } from '../../modules/interface.ts';
 import { Container } from 'inversify';
-import { APIClient } from '@todo/core';
+import { APIClient } from '@platform/core';
 
 let bootstrap: Bootstrap;
 

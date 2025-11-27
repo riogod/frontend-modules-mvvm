@@ -30,11 +30,14 @@ function collectLibraryAliases(dirname) {
 
     try {
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-      const aliasName = packageJson.name || `@todo/${libraryDirent.name}`;
-      aliases[aliasName] = path.resolve(dirname, `../libs/${libraryDirent.name}/src`);
+      const aliasName = packageJson.name || `@platform/${libraryDirent.name}`;
+      aliases[aliasName] = path.resolve(
+        dirname,
+        `../libs/${libraryDirent.name}/src`,
+      );
     } catch (error) {
       process.emitWarning(
-        `[vite-config] Не удалось прочитать ${packageJsonPath}: ${(error && error.message) || error}`
+        `[vite-config] Не удалось прочитать ${packageJsonPath}: ${(error && error.message) || error}`,
       );
     }
   });
@@ -135,7 +138,10 @@ export function createHostConfig(options) {
             // Разделение vendor библиотек
             if (id.includes('node_modules')) {
               // Router библиотеки
-              if (id.includes('@riogz/router') || id.includes('@riogz/react-router')) {
+              if (
+                id.includes('@riogz/router') ||
+                id.includes('@riogz/react-router')
+              ) {
                 return 'vendor-router';
               }
               // UI библиотеки (MUI и emotion)
@@ -143,7 +149,11 @@ export function createHostConfig(options) {
                 return 'vendor-ui';
               }
               // Утилиты
-              if (id.includes('axios') || id.includes('zod') || id.includes('@fingerprintjs')) {
+              if (
+                id.includes('axios') ||
+                id.includes('zod') ||
+                id.includes('@fingerprintjs')
+              ) {
                 return 'vendor-utils';
               }
               // i18next
@@ -187,4 +197,3 @@ export function createHostConfig(options) {
     },
   };
 }
-

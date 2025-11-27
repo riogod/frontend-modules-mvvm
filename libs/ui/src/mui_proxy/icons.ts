@@ -1,11 +1,11 @@
 /**
  * Прокси-экспорты MUI иконок для tree shaking
- * 
+ *
  * Все иконки экспортируются напрямую из @mui/icons-material,
  * что позволяет bundler'у правильно выполнять tree shaking.
- * 
+ *
  * Использование:
- * import { Delete, Add, Edit } from '@todo/ui';
+ * import { Delete, Add, Edit } from '@platform/ui';
  */
 
 // Common icons

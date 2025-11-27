@@ -1,14 +1,19 @@
-import { type FC } from "react";
-import { type ICompleteActions } from "./interface.ts";
-import { RadioButtonUncheckedIcon, CheckCircleIcon, MuiIconButton, type IconButtonProps } from "@todo/ui";
-import { observer } from "mobx-react-lite";
+import { type FC } from 'react';
+import { type ICompleteActions } from './interface.ts';
+import {
+  RadioButtonUncheckedIcon,
+  CheckCircleIcon,
+  MuiIconButton,
+  type IconButtonProps,
+} from '@platform/ui';
+import { observer } from 'mobx-react-lite';
 
 const TodoItemActionComplete: FC<ICompleteActions> = ({
   item,
   setComplete,
 }) => {
   const iconButtonProps: IconButtonProps = {
-    color: item.completed ? "success" : "error",
+    color: item.completed ? 'success' : 'error',
     onClick: setComplete,
   };
 
@@ -18,7 +23,14 @@ const TodoItemActionComplete: FC<ICompleteActions> = ({
     <RadioButtonUncheckedIcon fontSize="medium" />
   );
 
-  return <MuiIconButton {...iconButtonProps} aria-label={item.completed ? 'Mark as incomplete' : 'Mark as complete'}>{icon}</MuiIconButton>;
+  return (
+    <MuiIconButton
+      {...iconButtonProps}
+      aria-label={item.completed ? 'Mark as incomplete' : 'Mark as complete'}
+    >
+      {icon}
+    </MuiIconButton>
+  );
 };
 
 export default observer(TodoItemActionComplete);

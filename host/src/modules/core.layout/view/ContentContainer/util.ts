@@ -1,5 +1,5 @@
-import { type IMenuItem } from "@todo/core";
-import { type FunctionComponent } from "react";
+import { type IMenuItem } from '@platform/core';
+import { type FunctionComponent } from 'react';
 
 export function findSegment(
   obj: Array<IMenuItem>,
@@ -7,7 +7,7 @@ export function findSegment(
   result: Array<string> = [],
 ): FunctionComponent | undefined {
   for (const key in obj) {
-    const route = obj[key].path.split(".");
+    const route = obj[key].path.split('.');
     const routeLast = route[route.length - 1];
 
     if (routeLast === item[0]) {

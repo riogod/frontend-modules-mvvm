@@ -1,5 +1,5 @@
 /* eslint-env node */
-const { createEslintConfig } = require('@todo/eslint-config');
+const { createEslintConfig } = require('@platform/eslint-config');
 const path = require('path');
 
 module.exports = createEslintConfig({
@@ -8,4 +8,3 @@ module.exports = createEslintConfig({
   tsconfigPath: path.join(__dirname, 'tsconfig.json'),
   ignorePatterns: ['.eslintrc.cjs', '.eslintrc.local.js'],
 });
-

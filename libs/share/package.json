@@ -1,7 +1,8 @@
 {
-  "name": "@platform/common",
-  "description": "Используется для общих базовых функциональностей",
+  "name": "@platform/share",
+  "description": "Используется для обмена данными между модулями",
   "keywords": [
+    "share",
     "common",
     "utils",
     "helpers"

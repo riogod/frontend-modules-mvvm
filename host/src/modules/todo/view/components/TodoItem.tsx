@@ -1,5 +1,5 @@
 import { type FC, memo } from 'react';
-import { useVM, Box, Card } from '@todo/ui';
+import { useVM, Box, Card } from '@platform/ui';
 import { type IProps } from './interface.ts';
 import TodoItemActions from './TodoItemActions.tsx';
 import TodoItemActionComplete from './TodoItemComplete.tsx';

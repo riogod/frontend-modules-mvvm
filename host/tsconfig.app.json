@@ -2,25 +2,17 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "composite": true,
     "resolveJsonModule": true
   },
-  "files": [
-    "src/main.tsx"
-  ],
+  "files": ["src/main.tsx"],
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.json",
-    "../libs/ui/src/**/*.ts",
-    "../libs/ui/src/**/*.tsx",
-    "../libs/core/src/**/*.ts",
-    "../libs/core/src/**/*.tsx",
-    "../libs/common/src/**/*.ts",
-    "../libs/common/src/**/*.tsx"
+    "../libs/*/src/**/*.ts",
+    "../libs/*/src/**/*.tsx"
   ],
   "exclude": [
     "src/**/*.spec.ts",

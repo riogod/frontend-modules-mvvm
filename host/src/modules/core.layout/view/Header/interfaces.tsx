@@ -1,4 +1,4 @@
-import { type MuiAppBarProps } from "@todo/ui";
+import { type MuiAppBarProps } from '@platform/ui';
 
 export interface IProps extends AppBarProps {
   handleDrawerOpen: () => void;

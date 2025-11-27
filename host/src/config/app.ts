@@ -1,7 +1,7 @@
 import { type Router } from '@riogz/router';
 import { i18nOptions } from './i18n.ts';
 import { type InitOptions } from 'i18next';
-import { type IRoutes, type RouterDependencies } from '@todo/core';
+import { type IRoutes, type RouterDependencies } from '@platform/core';
 
 export interface IAppConfig {
   apiUrl?: string;

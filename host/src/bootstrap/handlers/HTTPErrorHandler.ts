@@ -1,6 +1,6 @@
-import { type Bootstrap } from "..";
-import { AbstractInitHandler } from "./AbstractInitHandler";
-import { log } from "@todo/core";
+import { type Bootstrap } from '..';
+import { AbstractInitHandler } from './AbstractInitHandler';
+import { log } from '@platform/core';
 
 /**
  * Обработчик инициализации HTTP ошибок.

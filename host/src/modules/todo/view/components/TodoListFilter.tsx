@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { useVM, Box, Typography, FormControlLabel, Switch } from '@todo/ui';
+import { useVM, Box, Typography, FormControlLabel, Switch } from '@platform/ui';
 import { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';

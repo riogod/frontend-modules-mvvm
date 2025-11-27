@@ -1,6 +1,6 @@
 import { AbstractInitHandler } from './AbstractInitHandler';
 import { type Bootstrap } from '..';
-import { log } from '@todo/core';
+import { log } from '@platform/core';
 
 /**
  * Обработчик пост инициализации роутера.
@@ -16,19 +16,28 @@ export class RouterPostHandler extends AbstractInitHandler {
     // Это необходимо для регистрации всех маршрутов в роутере и загрузки i18n до старта приложения
     // Для модулей с условиями загрузки - проверяет условия перед загрузкой маршрутов
     // Для модулей с динамическим конфигом (Promise) - конфигурация загружается при первом обращении
-    log.debug('RouterPostHandler: preloading routes from all modules', { prefix: 'bootstrap.handlers' });
+    log.debug('RouterPostHandler: preloading routes from all modules', {
+      prefix: 'bootstrap.handlers',
+    });
     await bootstrap.moduleLoader.preloadRoutes();
-    log.debug(`RouterPostHandler: routes preloaded, total routes: ${bootstrap.routerService.routes.length}`, { prefix: 'bootstrap.handlers' });
+    log.debug(
+      `RouterPostHandler: routes preloaded, total routes: ${bootstrap.routerService.routes.length}`,
+      { prefix: 'bootstrap.handlers' },
+    );
 
     const { routerPostInit } = this.params;
     if (routerPostInit) {
       bootstrap.routerService.routerPostInit(routerPostInit);
-      log.debug('RouterPostHandler: routerPostInit callback executed', { prefix: 'bootstrap.handlers' });
+      log.debug('RouterPostHandler: routerPostInit callback executed', {
+        prefix: 'bootstrap.handlers',
+      });
     }
-    const appMenu = bootstrap.routerService.buildRoutesMenu(
-      bootstrap.routerService.routes,
-    ) || [];
-    log.debug(`RouterPostHandler: menu built with ${appMenu.length} items`, { prefix: 'bootstrap.handlers' });
+    const appMenu =
+      bootstrap.routerService.buildRoutesMenu(bootstrap.routerService.routes) ||
+      [];
+    log.debug(`RouterPostHandler: menu built with ${appMenu.length} items`, {
+      prefix: 'bootstrap.handlers',
+    });
 
     bootstrap.routerService.router.setDependencies({
       di: bootstrap.di,

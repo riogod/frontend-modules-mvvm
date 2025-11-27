@@ -1,6 +1,6 @@
 import { BootstrapRouterService } from '../routerService.ts';
 import { type Router } from '@riogz/router';
-import { type IMenuItem, type IRoutes } from '@todo/core';
+import { type IMenuItem, type IRoutes } from '@platform/core';
 
 const routes = [{ path: 'test_path', name: 'test_name' }];
 
@@ -59,7 +59,9 @@ describe('BootstrapRouterService', () => {
       classInstance.registerRoutes(duplicateRoutes);
 
       expect(classInstance.routes).toHaveLength(2);
-      expect(classInstance.routes.filter((r) => r.name === 'test1')).toHaveLength(1);
+      expect(
+        classInstance.routes.filter((r) => r.name === 'test1'),
+      ).toHaveLength(1);
     });
 
     test('should do nothing if all routes are duplicates', () => {

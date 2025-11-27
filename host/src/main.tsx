@@ -1,18 +1,18 @@
 import 'reflect-metadata';
 import { createRoot } from 'react-dom/client';
-import { CssBaseline } from '@todo/ui';
+import { CssBaseline } from '@platform/ui';
 import './main.css';
 import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';
 import { app_modules } from './modules/modules';
 import { RouterProvider } from '@riogz/react-router';
-import { DIProvider } from '@todo/ui';
+import { DIProvider } from '@platform/ui';
 import { configure } from 'mobx';
 import ThemeSchema from './modules/core.layout/view/ThemeSchema';
 import { Layout } from './modules/core.layout/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
-import { log } from '@todo/core';
+import { log } from '@platform/core';
 import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
 
 configure({ enforceActions: 'observed', useProxies: 'always' });
@@ -38,10 +38,14 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
 
       // Загрузка NORMAL модулей после старта приложения
       bootstrap.moduleLoader.loadNormalModules().catch((error: unknown) => {
-        log.error('Error loading normal modules', { prefix: 'bootstrap' }, error);
+        log.error(
+          'Error loading normal modules',
+          { prefix: 'bootstrap' },
+          error,
+        );
       });
     });
   })
   .catch((error: Error) => {
-    log.error('Error initializing bootstrap' , { prefix: 'bootstrap' }, error);
+    log.error('Error initializing bootstrap', { prefix: 'bootstrap' }, error);
   });

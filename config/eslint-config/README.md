@@ -16,7 +16,7 @@
 Создайте `.eslintrc.js` в корне приложения:
 
 ```javascript
-const { createEslintConfig } = require('@todo/eslint-config');
+const { createEslintConfig } = require('@platform/eslint-config');
 
 module.exports = createEslintConfig({
   type: 'host',
@@ -27,6 +27,7 @@ module.exports = createEslintConfig({
 ```
 
 **Особенности конфига для host:**
+
 - Включает React поддержку
 - Правила для запрета прямых импортов из `@mui/material` и `@mui/icons-material`
 - Правила для ограничения импортов между модулями
@@ -43,17 +44,14 @@ module.exports = createEslintConfig({
   type: 'lib',
   react: true, // если библиотека использует React
   tsconfigPath: './tsconfig.base.json',
-  ignorePatterns: [
-    'node_modules',
-    'dist/**/*',
-    'coverage/**/*',
-  ],
+  ignorePatterns: ['node_modules', 'dist/**/*', 'coverage/**/*'],
   // Опционально: путь к локальному конфигу для расширения
   localConfigPath: './.eslintrc.local.js',
 });
 ```
 
 **Особенности конфига для lib:**
+
 - Может включать или исключать React поддержку
 - Базовые правила для TypeScript
 - Специальные правила для тестовых файлов
@@ -85,7 +83,7 @@ module.exports = {
     'custom-rule': 'error',
     '@typescript-eslint/no-explicit-any': 'warn',
   },
-  
+
   // Дополнительные overrides
   overrides: [
     {
@@ -95,16 +93,14 @@ module.exports = {
       },
     },
   ],
-  
+
   // Дополнительные настройки
   settings: {
     'custom-setting': 'value',
   },
-  
+
   // Дополнительные ignore patterns
-  ignorePatterns: [
-    'custom-pattern/**/*',
-  ],
+  ignorePatterns: ['custom-pattern/**/*'],
 };
 ```
 
@@ -164,4 +160,3 @@ config/eslint-config/
 ## Миграция со старых конфигов
 
 Старые `.eslintrc.json` файлы можно удалить после создания `.eslintrc.js` файлов. ESLint автоматически будет использовать `.eslintrc.js` если он существует.
-

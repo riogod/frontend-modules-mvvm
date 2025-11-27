@@ -1,6 +1,6 @@
 import { createElement, type FC, Suspense } from 'react';
 import { useRoute } from '@riogz/react-router';
-import { type IMenuItem } from '@todo/core';
+import { type IMenuItem } from '@platform/core';
 import { findSegment } from './util.ts';
 import NotFoundPage from '../NotFoundPage.tsx';
 import { observer } from 'mobx-react-lite';

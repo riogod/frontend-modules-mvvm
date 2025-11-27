@@ -1,6 +1,13 @@
 import { type FC, memo, useState, type MouseEvent } from 'react';
-import { type IMenuItem } from '@todo/core';
-import { MuiIconButton, MenuIcon, Typography, Box, MuiMenu, MenuItem } from '@todo/ui';
+import { type IMenuItem } from '@platform/core';
+import {
+  MuiIconButton,
+  MenuIcon,
+  Typography,
+  Box,
+  MuiMenu,
+  MenuItem,
+} from '@platform/ui';
 
 interface IProps {
   menuList: IMenuItem[];

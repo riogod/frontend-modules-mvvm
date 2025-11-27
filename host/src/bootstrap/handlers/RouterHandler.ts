@@ -1,6 +1,6 @@
 import { type Bootstrap } from '..';
 import { AbstractInitHandler } from './AbstractInitHandler';
-import { log } from '@todo/core';
+import { log } from '@platform/core';
 
 /**
  * Обработчик инициализации роутера
@@ -11,7 +11,10 @@ export class RouterHandler extends AbstractInitHandler {
     const { routes, appPrefix } = this.params;
     if (routes) {
       bootstrap.routerService.initRouter(routes, appPrefix || '');
-      log.debug(`RouterHandler: router initialized with ${routes.length} routes, prefix: ${appPrefix || ''}`, { prefix: 'bootstrap.handlers' });
+      log.debug(
+        `RouterHandler: router initialized with ${routes.length} routes, prefix: ${appPrefix || ''}`,
+        { prefix: 'bootstrap.handlers' },
+      );
     }
 
     log.debug('RouterHandler: completed', { prefix: 'bootstrap.handlers' });

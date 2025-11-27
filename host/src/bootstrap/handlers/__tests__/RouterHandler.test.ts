@@ -1,6 +1,6 @@
 import { type Bootstrap } from '../../index.ts';
 import { RouterHandler } from '../RouterHandler.ts';
-import { type IRoutes } from '@todo/core';
+import { type IRoutes } from '@platform/core';
 
 describe('RouterHandler', () => {
   const bootstrapMock: Bootstrap = {

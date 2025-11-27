@@ -1,7 +1,7 @@
 import { APIClientHandler } from './handlers/APIClient';
 import { RouterHandler } from './handlers/RouterHandler';
 import { RouterPostHandler } from './handlers/RouterPostHandler';
-import { APIClient, log } from '@todo/core';
+import { APIClient, log } from '@platform/core';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
@@ -40,7 +40,6 @@ export const initBootstrap = async (
     .setNext(new ModulesHandler(config))
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
-    
 
   const result = await handler.handle(bootstrap);
 
@@ -106,7 +105,9 @@ export class Bootstrap {
    * @return {void}
    */
   initAPIClient(baseURL: string): void {
-    log.debug(`Initializing APIClient with baseURL: ${baseURL}`, { prefix: 'bootstrap' });
+    log.debug(`Initializing APIClient with baseURL: ${baseURL}`, {
+      prefix: 'bootstrap',
+    });
     this._APIClient = new APIClient(baseURL);
     log.debug('APIClient initialized', { prefix: 'bootstrap' });
   }
@@ -137,10 +138,14 @@ export class Bootstrap {
    * @return {Promise<void>}
    */
   async initModuleLoader(): Promise<void> {
-    log.debug(`Initializing ModuleLoader with ${this.modules.length} modules`, { prefix: 'bootstrap' });
+    log.debug(`Initializing ModuleLoader with ${this.modules.length} modules`, {
+      prefix: 'bootstrap',
+    });
     this.moduleLoader.init(this);
     // Ждем завершения добавления модулей, чтобы они были доступны при загрузке INIT модулей
     await this.moduleLoader.addModules(this.modules);
-    log.debug('ModuleLoader initialized and modules added', { prefix: 'bootstrap' });
+    log.debug('ModuleLoader initialized and modules added', {
+      prefix: 'bootstrap',
+    });
   }
 }

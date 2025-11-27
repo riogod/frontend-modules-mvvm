@@ -1,6 +1,6 @@
-import { type AxiosError } from "@todo/core";
-import { type Bootstrap } from "../../../bootstrap/index.ts";
-import { AppModel } from "../models/app.model.ts";
+import { type AxiosError } from '@platform/core';
+import { type Bootstrap } from '../../../bootstrap/index.ts';
+import { AppModel } from '../models/app.model.ts';
 
 type TCallbacks = (error: AxiosError) => void;
 
@@ -8,10 +8,10 @@ export const HttpErrorHandler = (bootstrap: Bootstrap) => {
   const appModel = bootstrap.di.get<AppModel>(AppModel);
 
   const errorMap: Record<string, TCallbacks> = {
-    "500": () => {
-      appModel.notification = "Service error: 500!";
+    '500': () => {
+      appModel.notification = 'Service error: 500!';
     },
-    "401": (err) => {
+    '401': (err) => {
       throw err;
     },
   };
