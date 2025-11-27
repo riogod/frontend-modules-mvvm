@@ -20,12 +20,22 @@ export function createLibConfig(options) {
   } = options;
 
   let dtsPlugin = null;
-  if (useDts && process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+  // eslint-disable-next-line no-undef
+  const nodeEnv =
+    // eslint-disable-next-line no-undef
+    typeof process !== 'undefined' ? process.env.NODE_ENV : undefined;
+  // eslint-disable-next-line no-undef
+  const isVitest =
+    // eslint-disable-next-line no-undef
+    typeof process !== 'undefined' ? process.env.VITEST : undefined;
+  if (useDts && nodeEnv !== 'test' && !isVitest) {
     try {
+      // eslint-disable-next-line no-undef
       const dts = require('vite-plugin-dts');
       dtsPlugin = dts.default({
         entryRoot: 'src',
-        tsconfigPath: dtsTsconfigPath || path.join(dirname, 'tsconfig.lib.json'),
+        tsconfigPath:
+          dtsTsconfigPath || path.join(dirname, 'tsconfig.lib.json'),
       });
     } catch (e) {
       // ignored
@@ -73,16 +83,15 @@ export function createLibConfig(options) {
       commonjsOptions: {
         transformMixedEsModules: true,
       },
-      lib:
-        lib || {
-          entry: 'src/index.ts',
-          name: libName,
-          fileName:
-            libName === 'ui'
-              ? (format) => `index.${format === 'es' ? 'mjs' : 'js'}`
-              : 'index',
-          formats: ['es', 'cjs'],
-        },
+      lib: lib || {
+        entry: 'src/index.ts',
+        name: libName,
+        fileName:
+          libName === 'ui'
+            ? (format) => `index.${format === 'es' ? 'mjs' : 'js'}`
+            : 'index',
+        formats: ['es', 'cjs'],
+      },
       rollupOptions: {
         external,
         output:
@@ -100,4 +109,3 @@ export function createLibConfig(options) {
     },
   };
 }
-

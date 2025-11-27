@@ -6,7 +6,14 @@ export interface IconButtonProps {
   onClick?: () => void;
   disabled?: boolean;
   size?: 'small' | 'medium' | 'large';
-  color?: 'inherit' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+  color?:
+    | 'inherit'
+    | 'primary'
+    | 'secondary'
+    | 'error'
+    | 'info'
+    | 'success'
+    | 'warning';
   title?: string;
   'aria-label'?: string;
 }
@@ -16,7 +23,7 @@ export const IconButton: FC<IconButtonProps> = ({
   onClick,
   disabled = false,
   size = 'medium',
-  color = 'primary'
+  color = 'primary',
 }) => {
   return (
     <MuiIconButton

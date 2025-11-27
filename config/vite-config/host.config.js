@@ -109,7 +109,8 @@ export function createHostConfig(options) {
       ...define,
     },
     optimizeDeps: {
-      // Исключаем локальные библиотеки из pre-bundling, используем исходники через алиасы
+      // Исключаем локальные библиотеки из pre-bundling в dev режиме
+      // В production они будут собраны в отдельные чанки через manualChunks
       exclude: Object.keys(libraryAliases),
     },
     build: {
@@ -135,6 +136,20 @@ export function createHostConfig(options) {
             constBindings: true,
           },
           manualChunks: (id) => {
+            // Разделение локальных библиотек из libs/ на отдельные чанки
+            // Это важно для микрофронтендов - каждая библиотека будет в отдельном чанке,
+            // который можно переиспользовать в разных микрофронтендах
+            if (id.includes('/libs/')) {
+              // Извлекаем имя библиотеки из пути
+              const libMatch = id.match(/\/libs\/([^/]+)\//);
+              if (libMatch) {
+                const libName = libMatch[1];
+                // Создаем чанк с префиксом lib- для удобства идентификации
+                // Формат: lib-core.js, lib-ui.js, lib-common.js, lib-share.js
+                return `lib-${libName}`;
+              }
+            }
+
             // Разделение vendor библиотек
             if (id.includes('node_modules')) {
               // Router библиотеки
