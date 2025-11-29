@@ -64,7 +64,6 @@ const meta = {
       },
     },
   },
-  tags: ['autodocs'],
   argTypes: {
     children: {
       control: false,
@@ -92,17 +91,20 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// Вспомогательный тип для stories с render функцией
+type StoryWithRender = Omit<Story, 'args'>;
+
 /**
  * Базовый пример использования ErrorBoundary с компонентом, который выбрасывает ошибку
  */
-export const Default: Story = {
+export const Default: StoryWithRender = {
   render: () => <ErrorTrigger />,
 };
 
 /**
  * Пример с кастомным fallback компонентом
  */
-export const CustomFallbackComponent: Story = {
+export const CustomFallbackComponent: StoryWithRender = {
   render: () => {
     const [shouldThrow, setShouldThrow] = useState(false);
 
@@ -116,9 +118,7 @@ export const CustomFallbackComponent: Story = {
         >
           Вызвать ошибку
         </Button>
-        <ErrorBoundary
-          fallback={(error) => <CustomFallback error={error} />}
-        >
+        <ErrorBoundary fallback={(error) => <CustomFallback error={error} />}>
           <ThrowError shouldThrow={shouldThrow} />
         </ErrorBoundary>
       </Box>
@@ -129,7 +129,7 @@ export const CustomFallbackComponent: Story = {
 /**
  * Пример с кастомным префиксом для логирования
  */
-export const CustomLogPrefix: Story = {
+export const CustomLogPrefix: StoryWithRender = {
   render: () => {
     const [shouldThrow, setShouldThrow] = useState(false);
 
@@ -154,7 +154,7 @@ export const CustomLogPrefix: Story = {
 /**
  * Пример с callback функцией onError
  */
-export const WithOnErrorCallback: Story = {
+export const WithOnErrorCallback: StoryWithRender = {
   render: () => {
     const [shouldThrow, setShouldThrow] = useState(false);
     const [errorLog, setErrorLog] = useState<string[]>([]);
@@ -183,7 +183,10 @@ export const WithOnErrorCallback: Story = {
         )}
         <ErrorBoundary
           onError={(error) => {
-            setErrorLog((prev) => [...prev, `Ошибка: ${error.message} в ${new Date().toLocaleTimeString()}`]);
+            setErrorLog((prev) => [
+              ...prev,
+              `Ошибка: ${error.message} в ${new Date().toLocaleTimeString()}`,
+            ]);
           }}
         >
           <ThrowError shouldThrow={shouldThrow} />
@@ -196,7 +199,7 @@ export const WithOnErrorCallback: Story = {
 /**
  * Пример без кнопки перезагрузки страницы
  */
-export const WithoutReloadButton: Story = {
+export const WithoutReloadButton: StoryWithRender = {
   render: () => {
     const [shouldThrow, setShouldThrow] = useState(false);
 
@@ -221,7 +224,7 @@ export const WithoutReloadButton: Story = {
 /**
  * Пример с нормально работающим компонентом (без ошибок)
  */
-export const WithoutError: Story = {
+export const WithoutError: StoryWithRender = {
   render: () => (
     <ErrorBoundary>
       <Box sx={{ p: 3, bgcolor: 'success.light', borderRadius: 1 }}>
@@ -235,4 +238,3 @@ export const WithoutError: Story = {
     </ErrorBoundary>
   ),
 };
-

@@ -1,26 +1,45 @@
-import { Box, Button, Typography } from '@platform/ui';
+import { Box, Button, Container, Typography } from '@platform/ui';
 
-const ModuleErrorFallback = () => {
+const ModuleErrorFallback = ({ error }: { error: Error }) => {
   return (
-    <Box
+    <Container
       sx={{
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
-        alignItems: 'center',
         justifyContent: 'center',
-        height: '100vh',
+        alignItems: 'center',
       }}
     >
-      <Typography>Ой! Произошла ошибка при загрузке модуля</Typography>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => window.location.reload()}
+      <Box
+        sx={{
+          p: 3,
+          border: '2px dashed',
+          borderColor: 'error.main',
+          borderRadius: 2,
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
       >
-        Перезагрузить страницу
-      </Button>
-    </Box>
+        <Typography variant="h5" color="error" gutterBottom>
+          Ой! Что-то пошло не так
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {error.message}
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => window.location.reload()}
+          sx={{ mt: 2 }}
+        >
+          Перезагрузить страницу
+        </Button>
+      </Box>
+    </Container>
   );
 };
 

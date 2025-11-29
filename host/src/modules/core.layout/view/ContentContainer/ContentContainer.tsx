@@ -20,7 +20,7 @@ const ContentContainer = () => {
     <ErrorBoundary
       key={route.route.name}
       logPrefix="host.page"
-      fallback={<ModuleErrorFallback />}
+      fallback={(error) => <ModuleErrorFallback error={error} />}
     >
       <Suspense>{createElement(pageComponent)}</Suspense>
     </ErrorBoundary>
