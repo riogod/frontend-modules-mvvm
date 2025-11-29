@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { createRoot } from 'react-dom/client';
-import { CssBaseline } from '@platform/ui';
+import { CssBaseline, ErrorBoundary } from '@platform/ui';
 import './main.css';
 import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';
@@ -22,18 +22,20 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
     bootstrap.routerService.router.start(() => {
       createRoot(document.getElementById('root')!).render(
-        <RouterProvider router={bootstrap.routerService.router}>
-          <DIProvider container={bootstrap.di}>
-            <I18nextProvider i18n={bootstrap.i18n}>
-              <ThemeSchema>
-                <CssBaseline />
-                <StrictMode>
-                  <Layout />
-                </StrictMode>
-              </ThemeSchema>
-            </I18nextProvider>
-          </DIProvider>
-        </RouterProvider>,
+        <ErrorBoundary logPrefix="host.app">
+          <RouterProvider router={bootstrap.routerService.router}>
+            <DIProvider container={bootstrap.di}>
+              <I18nextProvider i18n={bootstrap.i18n}>
+                <ThemeSchema>
+                  <CssBaseline />
+                  <StrictMode>
+                    <Layout />
+                  </StrictMode>
+                </ThemeSchema>
+              </I18nextProvider>
+            </DIProvider>
+          </RouterProvider>
+        </ErrorBoundary>,
       );
 
       // Загрузка NORMAL модулей после старта приложения

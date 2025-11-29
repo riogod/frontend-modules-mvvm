@@ -11,6 +11,7 @@ module.exports = createEslintConfig({
     '.cache/**/*',
     'coverage/**/*',
     'dist/**/*',
+    'src/**/*.stories.tsx',
   ],
   // Опционально: путь к локальному конфигу для расширения
   localConfigPath: './.eslintrc.local.js',

@@ -16,6 +16,7 @@ export default defineConfig(
       '@mui/material',
       '@mui/icons-material',
       'inversify',
+      '@platform/core',
     ],
     // Опционально: путь к локальному конфигу для расширения
     localConfigPath: './vite.config.local.mts',

@@ -6,15 +6,13 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "jsxImportSource": "@emotion/react",
-    "types": ["vite/client", "vitest"],
-    "composite": true,
+    "types": ["vite/client", "vitest", "node"],
     "declaration": true,
     "declarationMap": true,
     "outDir": "../../dist/out-tsc",
-    "baseUrl": ".",
+    "baseUrl": "../..",
     "moduleResolution": "bundler"
   },
-  "files": ["src/index.ts"],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["jest.config.ts"],
   "extends": "../../tsconfig.base.json"
