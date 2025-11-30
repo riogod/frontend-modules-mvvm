@@ -46,8 +46,17 @@ export class ModuleGenerator {
             if (!value || value.trim() === '') {
               return 'Название не может быть пустым';
             }
+            // Проверка на русские символы
+            if (/[а-яёА-ЯЁ]/.test(value)) {
+              return 'Название не должно содержать русские символы. Используйте только латинские буквы';
+            }
+            // Проверка на подчеркивания
+            if (value.includes('_')) {
+              return 'Название не должно содержать подчеркивания (_). Используйте дефисы (-)';
+            }
+            // Проверка формата kebab-case
             if (!/^[a-z][a-z0-9-]*$/.test(value)) {
-              return 'Используйте kebab-case (например: todo-list)';
+              return 'Используйте kebab-case: только строчные латинские буквы, цифры и дефисы (например: todo-list)';
             }
             if (fs.existsSync(path.join(this.packagesDir, value))) {
               return `Модуль ${value} уже существует`;
@@ -110,6 +119,7 @@ export class ModuleGenerator {
     // Подготовка переменных для замены
     const variables = {
       '{{MODULE_NAME}}': answers.name,
+      '{{MODULE_NAME_VAR}}': answers.name.replace(/-/g, '_'), // Для валидных JS идентификаторов
       '{{MODULE_SCOPE_NAME}}': `module-${answers.name}`,
       '{{MODULE_NAME_UPPER}}': this.toUpperSnakeCase(answers.name),
       '{{MODULE_DESCRIPTION}}': answers.description,
@@ -166,10 +176,18 @@ export class ModuleGenerator {
    */
   async installDependencies(moduleName) {
     // Устанавливаем зависимости в корне проекта (npm workspaces)
-    execSync('npm install', { 
-      cwd: path.resolve(__dirname, '../..'), 
-      stdio: 'ignore' 
-    });
+    try {
+      // Используем --legacy-peer-deps для обхода конфликтов peer dependencies
+      execSync('npm install --legacy-peer-deps', { 
+        cwd: path.resolve(__dirname, '../..'), 
+        stdio: 'pipe' 
+      });
+    } catch (error) {
+      // Если установка не удалась, это не критично - зависимости можно установить вручную
+      console.log(chalk.yellow('\n⚠️  Не удалось автоматически установить зависимости.'));
+      console.log(chalk.gray('Вы можете установить их вручную: npm install --legacy-peer-deps\n'));
+      // Не пробрасываем ошибку дальше, так как модуль уже создан
+    }
   }
 
   /**
@@ -244,10 +262,15 @@ export class ModuleGenerator {
       await this.generateModule(answers);
       spinner.succeed('Структура модуля создана');
 
-      // Установка зависимостей
+      // Установка зависимостей (не критично, если не удастся)
       spinner.start('Установка зависимостей...');
-      await this.installDependencies(answers.name);
-      spinner.succeed('Зависимости установлены');
+      try {
+        await this.installDependencies(answers.name);
+        spinner.succeed('Зависимости установлены');
+      } catch (error) {
+        // Ошибка уже обработана в installDependencies, просто останавливаем спиннер
+        spinner.stop();
+      }
 
       this.printSuccess(answers);
 
@@ -261,6 +284,14 @@ export class ModuleGenerator {
       if (error.stack) {
         console.error(chalk.gray(error.stack));
       }
+      
+      // Проверяем, был ли модуль создан хотя бы частично
+      const modulePath = path.join(this.packagesDir, answers.name);
+      if (fs.existsSync(modulePath)) {
+        console.log(chalk.yellow(`\n⚠️  Модуль частично создан в ${modulePath}`));
+        console.log(chalk.gray('Вы можете удалить его вручную или исправить ошибки.\n'));
+      }
+      
       return null;
     }
   }

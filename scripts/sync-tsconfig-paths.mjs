@@ -90,8 +90,19 @@ function updateTsconfigPaths() {
   const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
   const newPaths = collectLibraryPaths();
 
+  // Статические пути для host модулей (не должны перезаписываться)
+  const staticPaths = {
+    '@host/bootstrap/*': ['host/src/bootstrap/*'],
+    '@host/bootstrap/interface': ['host/src/bootstrap/interface.ts'],
+    '@host/modules/core/*': ['host/src/modules/core/*'],
+  };
+
   tsconfig.compilerOptions = tsconfig.compilerOptions || {};
-  tsconfig.compilerOptions.paths = newPaths;
+  // Объединяем статические пути с динамически собранными
+  tsconfig.compilerOptions.paths = {
+    ...staticPaths,
+    ...newPaths,
+  };
 
   fs.writeFileSync(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 

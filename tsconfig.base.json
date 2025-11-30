@@ -21,6 +21,15 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@host/bootstrap/*": [
+        "host/src/bootstrap/*"
+      ],
+      "@host/bootstrap/interface": [
+        "host/src/bootstrap/interface.ts"
+      ],
+      "@host/modules/core/*": [
+        "host/src/modules/core/*"
+      ],
       "@platform/common": [
         "libs/common/src/index.ts"
       ],
@@ -33,6 +42,12 @@
       "@platform/module-api-example/*": [
         "packages/api_example/src/*"
       ],
+      "@platform/module-my-super-module": [
+        "packages/my-super-module/src"
+      ],
+      "@platform/module-my-super-module/*": [
+        "packages/my-super-module/src/*"
+      ],
       "@platform/module-todo": [
         "packages/todo/src"
       ],
@@ -44,12 +59,6 @@
       ],
       "@platform/ui": [
         "libs/ui/src/index.ts"
-      ],
-      "@host/modules/core/*": [
-        "host/src/modules/core/*"
-      ],
-      "@host/bootstrap/*": [
-        "host/src/bootstrap/*"
       ]
     }
   },
