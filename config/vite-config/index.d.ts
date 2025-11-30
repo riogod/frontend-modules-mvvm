@@ -1,5 +1,6 @@
-import type { UserConfig } from 'vite';
+import type { UserConfig, Plugin } from 'vite';
 import type { InlineConfig } from 'vitest/config';
+import type { AppManifest } from './plugins/types.js';
 
 export type ViteConfig = UserConfig & { test?: InlineConfig };
 
@@ -32,7 +33,8 @@ export interface CreateViteConfigOptions {
 
 export type ConfigType = 'base' | 'host' | 'lib';
 
-export interface CreateViteConfigFactoryOptions extends CreateViteConfigOptions {
+export interface CreateViteConfigFactoryOptions
+  extends CreateViteConfigOptions {
   type: ConfigType;
   libName?: string;
 }
@@ -90,33 +92,33 @@ export interface CreateModuleConfigOptions {
 }
 
 export function createModuleConfig(
-  options: CreateModuleConfigOptions
+  options: CreateModuleConfigOptions,
 ): Promise<ViteConfig>;
 
 export function createViteConfig(
-  options: CreateViteConfigFactoryOptions
+  options: CreateViteConfigFactoryOptions,
 ): ViteConfig | ((env: { mode: string }) => ViteConfig);
 
 // Плагины для MFE
 export function createModuleAliasesPlugin(options: {
-  manifest: import('./plugins/types.js').AppManifest | null;
+  manifest: AppManifest | null;
   packagesDir: string;
-}): import('vite').Plugin;
+}): Plugin;
 
 export function createManifestMiddleware(options: {
-  manifest: import('./plugins/types.js').AppManifest | null;
+  manifest: AppManifest | null;
   defaultUser?: {
     permissions: string[];
     featureFlags: string[];
   };
-}): import('vite').Plugin;
+}): Plugin;
 
 export function loadManifest(options: {
   dirname: string;
   manifestPath?: string;
   packagesDir?: string;
   createFallback?: boolean;
-}): import('./plugins/types.js').AppManifest | null;
+}): AppManifest | null;
 
 export type {
   AppManifest,
@@ -126,4 +128,3 @@ export type {
 } from './plugins/types.js';
 
 export type { LoadManifestOptions } from './plugins/loadManifest.js';
-
