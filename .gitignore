@@ -51,5 +51,7 @@ storybook-static
 stats.html
 dist/app/stats.html
 
+# Launcher configuration (local)
+.launcher/
 
 storybook-static
