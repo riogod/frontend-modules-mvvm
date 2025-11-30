@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "allowJs": false,
     "esModuleInterop": false,
@@ -13,6 +14,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
+    "src/**/*.json",
     "../../host/src/modules/core/**/*.ts",
     "../../host/src/bootstrap/**/*.ts"
   ],

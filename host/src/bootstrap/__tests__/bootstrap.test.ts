@@ -159,7 +159,7 @@ describe('bootstrap', () => {
     beforeEach(async () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      await bootstrap.initModuleLoader();
+      bootstrap.initModuleLoader();
       await bootstrap.moduleLoader.initInitModules();
     });
 
@@ -197,7 +197,7 @@ describe('bootstrap', () => {
       bootstrap = new Bootstrap(modules);
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
-      await bootstrap.initModuleLoader();
+      bootstrap.initModuleLoader();
       await bootstrap.moduleLoader.initInitModules();
 
       expect(bootstrap.mockService).not.toBeNull();

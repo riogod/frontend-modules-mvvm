@@ -438,15 +438,59 @@ async function runConfiguration(
   viteLauncher,
   configId,
 ) {
-  const config = configManager.get(configId);
+  // Получаем конфигурацию
+  let config = configManager.get(configId);
 
   if (!config) {
     console.log(chalk.red(`Конфигурация "${configId}" не найдена.`));
     return;
   }
 
-  // Генерируем манифест
-  const manifest = manifestGenerator.generate(config);
+  // Фильтруем несуществующие модули перед генерацией манифеста
+  if (config.modules) {
+    const filteredModules = {};
+    let removedCount = 0;
+
+    for (const [name, moduleConfig] of Object.entries(config.modules)) {
+      // Для LOCAL модулей проверяем существование
+      if (moduleConfig.source === 'local') {
+        if (moduleDiscovery.moduleExists(name)) {
+          filteredModules[name] = moduleConfig;
+        } else {
+          removedCount++;
+          console.warn(
+            chalk.yellow(
+              `⚠️  Модуль "${name}" пропущен: не найден в packages/${name}`,
+            ),
+          );
+        }
+      } else {
+        // REMOTE модули не проверяем
+        filteredModules[name] = moduleConfig;
+      }
+    }
+
+    // Если были удалены модули, обновляем конфигурацию
+    if (removedCount > 0) {
+      console.log(
+        chalk.yellow(
+          `\n⚠️  Удалено ${removedCount} несуществующих модулей из конфигурации.\n`,
+        ),
+      );
+      config.modules = filteredModules;
+      configManager.update(
+        configId,
+        config.name,
+        filteredModules,
+        config.description,
+      );
+      // Обновляем локальную переменную
+      config = { ...config, modules: filteredModules };
+    }
+  }
+
+  // Генерируем манифест (передаем moduleDiscovery для проверки существования модулей)
+  const manifest = manifestGenerator.generate(config, moduleDiscovery);
 
   // Увеличиваем счетчик использования
   configManager.incrementUsage(configId);
@@ -570,10 +614,39 @@ async function main() {
             const normalModules = await moduleDiscovery.getNormalModules();
             const currentModules = { ...config.modules };
 
+            // Удаляем несуществующие модули из текущей конфигурации
+            const filteredModules = {};
+            let removedCount = 0;
+            for (const [name, moduleConfig] of Object.entries(currentModules)) {
+              if (moduleConfig.source === 'local') {
+                if (moduleDiscovery.moduleExists(name)) {
+                  filteredModules[name] = moduleConfig;
+                } else {
+                  removedCount++;
+                  console.log(
+                    chalk.yellow(
+                      `⚠️  Модуль "${name}" удален из конфигурации: не найден в packages/${name}`,
+                    ),
+                  );
+                }
+              } else {
+                // REMOTE модули не проверяем
+                filteredModules[name] = moduleConfig;
+              }
+            }
+
+            if (removedCount > 0) {
+              console.log(
+                chalk.yellow(
+                  `\n⚠️  Удалено ${removedCount} несуществующих модулей из конфигурации.\n`,
+                ),
+              );
+            }
+
             // Используем ту же функцию редактирования модулей
             const editedModules = await editModulesMenu(
               normalModules,
-              currentModules,
+              filteredModules,
               configManager,
             );
 

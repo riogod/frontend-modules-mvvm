@@ -12,7 +12,7 @@
 | 004 | [Менеджер конфигураций CLI](./004-cli-config-manager.md)         | 🟢 Завершена | 6-8ч  | 003           |
 | 005 | [Генератор MFE модулей](./005-cli-module-generator.md)           | 🟢 Завершена | 6-8ч  | 002, 003      |
 | 006 | [Vite плагины для Host](./006-host-vite-plugins.md)              | 🟢 Завершена | 4-6ч  | 001, 004      |
-| 007 | [ModulesDiscoveryHandler](./007-modules-discovery-handler.md)    | ⚪ Не начата | 6-8ч  | 001, 006      |
+| 007 | [ModulesDiscoveryHandler](./007-modules-discovery-handler.md)    | 🟢 Завершена | 6-8ч  | 001, 006      |
 | 008 | [RemoteModuleLoader](./008-remote-module-loader.md)              | ⚪ Не начата | 6-8ч  | 007           |
 | 009 | [Production Build & CI/CD](./009-federation-production-build.md) | ⚪ Не начата | 8-12ч | 002, 006, 008 |
 | 010 | [CSS изоляция](./010-css-isolation.md)                           | ⚪ Не начата | 4-6ч  | 001, 002      |

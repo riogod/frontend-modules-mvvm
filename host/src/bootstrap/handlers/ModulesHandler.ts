@@ -1,17 +1,35 @@
 import { type Bootstrap } from '..';
 import { AbstractInitHandler } from './AbstractInitHandler';
 import { log } from '@platform/core';
+import { type Module, ModuleLoadType } from '../../modules/interface';
+import { app_modules } from '../../modules/modules';
 
 /**
  * Обработчик инициализации локальных модулей приложения.
  * Инициализирует ModuleLoader и загружает INIT модули.
+ * Использует discovered modules из манифеста (NORMAL модули) и локальные INIT модули.
  */
 export class ModulesHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
     log.debug('ModulesHandler: starting', { prefix: 'bootstrap.handlers' });
-    // Инициализируем ModuleLoader с зависимостями и ждем добавления всех модулей
+
+    // Получаем discovered modules (NORMAL модули из манифеста)
+    const discoveredModules = bootstrap.getDiscoveredModules();
+
+    // Загружаем INIT модули (они определены локально в modules.ts)
+    const initModules = app_modules.filter(
+      (m) => m.loadType === ModuleLoadType.INIT,
+    );
+
+    // Объединяем: INIT модули + discovered NORMAL модули
+    const allModules: Module[] = [...initModules, ...discoveredModules];
+
+    // Инициализируем ModuleLoader с зависимостями
     // Должен быть вызван после инициализации router и DI
-    await bootstrap.initModuleLoader();
+    bootstrap.initModuleLoader();
+
+    // Регистрируем все модули (INIT + discovered NORMAL)
+    await bootstrap.moduleLoader.addModules(allModules);
 
     // Загружаем INIT модули перед preloadRoutes() (который вызывается в RouterPostHandler),
     // чтобы они могли установить feature flags и permissions, которые нужны для проверки

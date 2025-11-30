@@ -30,6 +30,9 @@
       "@host/modules/core/*": [
         "host/src/modules/core/*"
       ],
+      "@platform/vite-config/*": [
+        "config/vite-config/*"
+      ],
       "@platform/common": [
         "libs/common/src/index.ts"
       ],
@@ -41,12 +44,6 @@
       ],
       "@platform/module-api-example/*": [
         "packages/api_example/src/*"
-      ],
-      "@platform/module-my-super-module": [
-        "packages/my-super-module/src"
-      ],
-      "@platform/module-my-super-module/*": [
-        "packages/my-super-module/src/*"
       ],
       "@platform/module-todo": [
         "packages/todo/src"

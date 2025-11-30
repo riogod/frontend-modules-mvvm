@@ -16,6 +16,7 @@ import { type IAppConfig } from '../config/app.ts';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
 import { type Module } from '../modules/interface.ts';
 import { AccessControlHandler } from './handlers/AccessControlHandler.ts';
+import { ModulesDiscoveryHandler } from './handlers/ModulesDiscoveryHandler';
 
 /**
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
@@ -32,6 +33,7 @@ export const initBootstrap = async (
 
   const handler = new APIClientHandler(config);
   handler
+    .setNext(new ModulesDiscoveryHandler(config)) // Загрузка манифеста
     .setNext(new RouterHandler(config))
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))
@@ -64,6 +66,9 @@ export class Bootstrap {
   private _di: Container = new Container({
     defaultScope: 'Singleton',
   });
+  private discoveredModules: Module[] = [];
+  private userData: { permissions: string[]; featureFlags: string[] } | null =
+    null;
 
   /**
    * @return {APIClient} Клиент для взаимодействия с api
@@ -134,19 +139,49 @@ export class Bootstrap {
   /**
    * Инициализация ModuleLoader с зависимостями
    * Должен быть вызван после инициализации router, i18n и DI
-   * Ждет завершения добавления модулей в реестр перед возвратом
+   * Модули добавляются отдельно в ModulesHandler после получения discovered modules
    *
-   * @return {Promise<void>}
+   * @return {void}
    */
-  async initModuleLoader(): Promise<void> {
-    log.debug(`Initializing ModuleLoader with ${this.modules.length} modules`, {
+  initModuleLoader(): void {
+    // Модули теперь добавляются в ModulesHandler после получения discovered modules
+    log.debug('Initializing ModuleLoader', {
       prefix: 'bootstrap',
     });
     this.moduleLoader.init(this);
-    // Ждем завершения добавления модулей, чтобы они были доступны при загрузке INIT модулей
-    await this.moduleLoader.addModules(this.modules);
-    log.debug('ModuleLoader initialized and modules added', {
+    log.debug('ModuleLoader initialized', {
       prefix: 'bootstrap',
     });
+  }
+
+  /**
+   * Устанавливает данные пользователя из манифеста
+   */
+  setUserData(user: {
+    permissions: string[];
+    featureFlags: string[];
+  }): void {
+    this.userData = user;
+  }
+
+  /**
+   * Получает данные пользователя из манифеста
+   */
+  getUserData(): { permissions: string[]; featureFlags: string[] } | null {
+    return this.userData;
+  }
+
+  /**
+   * Устанавливает модули, обнаруженные через манифест
+   */
+  setDiscoveredModules(modules: Module[]): void {
+    this.discoveredModules = modules;
+  }
+
+  /**
+   * Получает модули, обнаруженные через манифест
+   */
+  getDiscoveredModules(): Module[] {
+    return this.discoveredModules;
   }
 }

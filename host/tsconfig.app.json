@@ -15,7 +15,8 @@
     "../libs/*/src/**/*.tsx",
     "../packages/*/src/**/*.ts",
     "../packages/*/src/**/*.tsx",
-    "../packages/*/src/**/*.json"
+    "../packages/*/src/**/*.json",
+    "../config/vite-config/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

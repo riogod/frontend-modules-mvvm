@@ -95,6 +95,7 @@ function updateTsconfigPaths() {
     '@host/bootstrap/*': ['host/src/bootstrap/*'],
     '@host/bootstrap/interface': ['host/src/bootstrap/interface.ts'],
     '@host/modules/core/*': ['host/src/modules/core/*'],
+    '@platform/vite-config/*': ['config/vite-config/*'],
   };
 
   tsconfig.compilerOptions = tsconfig.compilerOptions || {};

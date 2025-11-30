@@ -7,9 +7,10 @@ export class ManifestGenerator {
    * Генерирует манифест на основе конфигурации
    * @param {Object} config - Конфигурация модулей
    * @param {Object} config.modules - Объект с конфигурацией модулей
+   * @param {ModuleDiscovery} moduleDiscovery - Экземпляр ModuleDiscovery для проверки существования модулей
    * @returns {Object} Манифест для Module Federation
    */
-  generate(config) {
+  generate(config, moduleDiscovery = null) {
     const manifest = {
       modules: [],
       timestamp: new Date().toISOString(),
@@ -34,6 +35,18 @@ export class ManifestGenerator {
     // NORMAL модули на основе конфигурации
     if (config.modules) {
       for (const [name, moduleConfig] of Object.entries(config.modules)) {
+        // Проверяем существование модуля, если передан moduleDiscovery
+        if (moduleDiscovery) {
+          // Для LOCAL модулей проверяем физическое существование
+          if (moduleConfig.source === 'local' && !moduleDiscovery.moduleExists(name)) {
+            console.warn(
+              `[ManifestGenerator] Пропускаем модуль "${name}": модуль не найден в packages/${name}`,
+            );
+            continue;
+          }
+          // Для REMOTE модулей не проверяем (они загружаются удаленно)
+        }
+
         manifest.modules.push({
           name,
           loadType: 'normal',

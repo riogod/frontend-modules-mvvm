@@ -1,4 +1,4 @@
-import { type ModuleConfig } from "../bootstrap/interface";
+import { type ModuleConfig } from '../bootstrap/interface';
 
 /**
  * Базовый интерфейс модуля
@@ -24,6 +24,21 @@ export interface InitModule extends BaseModule {
 }
 
 /**
+ * Расширенный интерфейс для Remote модулей
+ */
+export interface RemoteModuleInfo {
+  /**
+   * URL к remoteEntry.js
+   */
+  entry: string;
+
+  /**
+   * Имя scope в Module Federation
+   */
+  scope: string;
+}
+
+/**
  * Модуль типа NORMAL - загружается в фоновом режиме после инициализации приложения
  * Поддерживает как статический, так и динамический импорт конфигурации:
  * - Статический: config: ModuleConfig (конфиг загружается вместе с основным бандлом)
@@ -41,6 +56,11 @@ export interface NormalModule extends BaseModule {
    * Пример динамической загрузки: config: import('./module_config').then(m => m.default)
    */
   config: ModuleConfig | Promise<ModuleConfig>;
+
+  /**
+   * Информация о remote модуле (только для REMOTE источника)
+   */
+  remote?: RemoteModuleInfo;
 }
 
 /**
@@ -79,9 +99,9 @@ export type ModuleLoadCondition = {
   accessPermissions?: string[];
   /**
    * Массив идентификаторов модулей, от которых зависит текущий модуль.
-   * Загрузка зависимых модулей будет происходить перед загрузкой текущего модуля в соответствии 
+   * Загрузка зависимых модулей будет происходить перед загрузкой текущего модуля в соответствии
    * с их приоритетами загрузки.
    * При их отсутствии модуль не загружается.
    */
   dependencies?: string[];
-}
+};

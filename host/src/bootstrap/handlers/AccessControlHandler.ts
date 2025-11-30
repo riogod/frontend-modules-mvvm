@@ -75,16 +75,44 @@ export class AccessControlHandler extends AbstractInitHandler {
       )
       .to(UpdatePermissionsUsecase);
 
-    const appStartRepository = bootstrap.di.get<AppStartRepository>(
-      IOC_CORE_TOKENS.REPOSITORY_APP_START,
-    );
     const accessControlModel = bootstrap.di.get<AccessControlModel>(
       IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
     );
-    const appStart = await appStartRepository.getAppStart();
 
-    accessControlModel.setFeatureFlags(appStart.data.features);
-    accessControlModel.setPermissions(appStart.data.permissions);
+    // Используем user данные из манифеста, если они есть
+    const userData = bootstrap.getUserData();
+
+    if (userData) {
+      // Используем данные из манифеста
+      // Преобразуем массивы строк в объекты Record<string, boolean>
+      const permissions: Record<string, boolean> = {};
+      for (const perm of userData.permissions) {
+        permissions[perm] = true;
+      }
+
+      const featureFlags: Record<string, boolean> = {};
+      for (const flag of userData.featureFlags) {
+        featureFlags[flag] = true;
+      }
+
+      accessControlModel.setPermissions(permissions);
+      accessControlModel.setFeatureFlags(featureFlags);
+      log.debug('AccessControlHandler: using user data from manifest', {
+        prefix: 'bootstrap.handlers',
+      });
+    } else {
+      // Fallback: загружаем из API или используем defaults
+      const appStartRepository = bootstrap.di.get<AppStartRepository>(
+        IOC_CORE_TOKENS.REPOSITORY_APP_START,
+      );
+      const appStart = await appStartRepository.getAppStart();
+
+      accessControlModel.setFeatureFlags(appStart.data.features);
+      accessControlModel.setPermissions(appStart.data.permissions);
+      log.debug('AccessControlHandler: using user data from API', {
+        prefix: 'bootstrap.handlers',
+      });
+    }
 
     log.debug('AccessControlHandler: completed', {
       prefix: 'bootstrap.handlers',
