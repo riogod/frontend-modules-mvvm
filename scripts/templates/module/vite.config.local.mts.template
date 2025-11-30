@@ -1,0 +1,11 @@
+/**
+ * Локальная конфигурация Module Federation для {{MODULE_NAME}} модуля
+ */
+export default {
+  name: '{{MODULE_SCOPE_NAME}}',
+  exposes: {},
+  shared: {},
+  base: process.env.NODE_ENV === 'production' ? '{{MODULE_BASE_URL}}' : '/',
+  remotes: {},
+};
+

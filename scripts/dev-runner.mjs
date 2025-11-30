@@ -6,6 +6,7 @@ import { ConfigManager } from './launcher/config-manager.mjs';
 import { ModuleDiscovery } from './launcher/module-discovery.mjs';
 import { ManifestGenerator } from './launcher/manifest-generator.mjs';
 import { ViteLauncher } from './launcher/vite-launcher.mjs';
+import { ModuleGenerator } from './launcher/module-generator.mjs';
 
 /**
  * Парсинг аргументов командной строки
@@ -673,13 +674,24 @@ async function main() {
           break;
         }
 
-        case 'create-module':
-          console.log(
-            chalk.yellow(
-              '\nСоздание нового модуля будет реализовано в задаче 005.',
-            ),
-          );
+        case 'create-module': {
+          const generator = new ModuleGenerator();
+          const moduleName = await generator.create();
+
+          if (moduleName) {
+            console.log(
+              chalk.green(
+                `\n✅ Модуль "${moduleName}" создан и готов к использованию!\n`,
+              ),
+            );
+            console.log(
+              chalk.yellow(
+                '💡 Не забудьте добавить модуль в host/src/modules/modules.ts\n',
+              ),
+            );
+          }
           break;
+        }
 
         case 'settings':
           await showSettings(configManager);

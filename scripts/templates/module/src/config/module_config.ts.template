@@ -1,0 +1,20 @@
+import { type ModuleConfig } from '@host/bootstrap/interface';
+import { routes } from './routes';
+
+import en_{{MODULE_NAME}} from './i18n/en_{{MODULE_NAME}}.json';
+import ru_{{MODULE_NAME}} from './i18n/ru_{{MODULE_NAME}}.json';
+import { log } from '@platform/core';
+import { DI_CONFIG } from './di.config';
+
+export default {
+  ROUTES: () => routes,
+  onModuleInit: (bootstrap) => {
+    DI_CONFIG(bootstrap.di);
+    log.debug('initialized', { prefix: 'module.{{MODULE_NAME}}' });
+  },
+  I18N: (i18n) => {
+    i18n.addResourceBundle('en', '{{MODULE_NAME}}', en_{{MODULE_NAME}});
+    i18n.addResourceBundle('ru', '{{MODULE_NAME}}', ru_{{MODULE_NAME}});
+  },
+} as ModuleConfig;
+

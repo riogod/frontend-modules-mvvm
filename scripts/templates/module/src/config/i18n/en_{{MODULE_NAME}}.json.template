@@ -1,0 +1,8 @@
+{
+  "menu": {
+    "{{MODULE_NAME}}": "{{MODULE_TITLE}}"
+  },
+  "title": "{{MODULE_TITLE}}",
+  "description": "Welcome to {{MODULE_NAME}} module"
+}
+
