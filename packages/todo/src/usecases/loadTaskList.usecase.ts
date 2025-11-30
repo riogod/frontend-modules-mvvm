@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
 import { TodoListModel } from '../models/todo_list.model.ts';
 import { TodoList } from '../models/todo_list.interface.ts';
-import { LocalStorageRepository } from '../../core/data/localStorage.repository.ts';
+import { LocalStorageRepository } from '@host/modules/core/data/localStorage.repository.ts';
 import { IOC_CORE_TOKENS, log } from '@platform/core';
 import { TODO_DI_TOKENS } from '../config/di.tokens';
 

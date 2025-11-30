@@ -7,41 +7,75 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 const libsDir = path.join(rootDir, 'libs');
+const packagesDir = path.join(rootDir, 'packages');
 const tsconfigPath = path.join(rootDir, 'tsconfig.base.json');
 
 function collectLibraryPaths() {
-  if (!fs.existsSync(libsDir)) {
-    return {};
+  const aliases = {};
+
+  // Обрабатываем libs/
+  if (fs.existsSync(libsDir)) {
+    const dirEntries = fs.readdirSync(libsDir, { withFileTypes: true });
+
+    dirEntries.forEach((entry) => {
+      if (!entry.isDirectory()) {
+        return;
+      }
+
+      const libraryRoot = path.join(libsDir, entry.name);
+      const packageJsonPath = path.join(libraryRoot, 'package.json');
+      const srcIndexPath = path.join(libraryRoot, 'src', 'index.ts');
+
+      if (!fs.existsSync(packageJsonPath) || !fs.existsSync(srcIndexPath)) {
+        return;
+      }
+
+      try {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        const aliasName = packageJson.name || `@platform/${entry.name}`;
+        aliases[aliasName] = [`libs/${entry.name}/src/index.ts`];
+      } catch (error) {
+        process.emitWarning(
+          `[sync-tsconfig-paths] Не удалось прочитать ${packageJsonPath}: ${
+            (error && error.message) || error
+          }`,
+        );
+      }
+    });
   }
 
-  const aliases = {};
-  const dirEntries = fs.readdirSync(libsDir, { withFileTypes: true });
+  // Обрабатываем packages/
+  if (fs.existsSync(packagesDir)) {
+    const dirEntries = fs.readdirSync(packagesDir, { withFileTypes: true });
 
-  dirEntries.forEach((entry) => {
-    if (!entry.isDirectory()) {
-      return;
-    }
+    dirEntries.forEach((entry) => {
+      if (!entry.isDirectory()) {
+        return;
+      }
 
-    const libraryRoot = path.join(libsDir, entry.name);
-    const packageJsonPath = path.join(libraryRoot, 'package.json');
-    const srcIndexPath = path.join(libraryRoot, 'src', 'index.ts');
+      const moduleRoot = path.join(packagesDir, entry.name);
+      const packageJsonPath = path.join(moduleRoot, 'package.json');
+      const srcDir = path.join(moduleRoot, 'src');
 
-    if (!fs.existsSync(packageJsonPath) || !fs.existsSync(srcIndexPath)) {
-      return;
-    }
+      if (!fs.existsSync(packageJsonPath) || !fs.existsSync(srcDir)) {
+        return;
+      }
 
-    try {
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-      const aliasName = packageJson.name || `@platform/${entry.name}`;
-      aliases[aliasName] = [`libs/${entry.name}/src/index.ts`];
-    } catch (error) {
-      process.emitWarning(
-        `[sync-tsconfig-paths] Не удалось прочитать ${packageJsonPath}: ${
-          (error && error.message) || error
-        }`,
-      );
-    }
-  });
+      try {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        const aliasName = packageJson.name || `@platform/module-${entry.name}`;
+        // Для модулей создаем два алиаса: базовый и с wildcard
+        aliases[aliasName] = [`packages/${entry.name}/src`];
+        aliases[`${aliasName}/*`] = [`packages/${entry.name}/src/*`];
+      } catch (error) {
+        process.emitWarning(
+          `[sync-tsconfig-paths] Не удалось прочитать ${packageJsonPath}: ${
+            (error && error.message) || error
+          }`,
+        );
+      }
+    });
+  }
 
   return Object.fromEntries(
     Object.entries(aliases).sort(([a], [b]) => a.localeCompare(b)),

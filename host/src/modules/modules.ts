@@ -1,6 +1,6 @@
 import { type Module, ModuleLoadType } from './interface.ts';
 import CoreConfig from './core/config/module_config';
-import TodoConfig from './todo/config/module_config';
+import TodoConfig from '@platform/module-todo/config/module_config';
 import CoreLayoutConfig from './core.layout/config/module_config';
 
 export const app_modules: Module[] = [
@@ -31,7 +31,9 @@ export const app_modules: Module[] = [
     description:
       'API example module - Показывает пример реализации работы с API',
     // Динамический импорт конфига - модуль будет вынесен в отдельный чанк
-    config: import('./api_example/config/module_config').then((m) => m.default),
+    config: import('@platform/module-api-example/config/module_config').then(
+      (m) => m.default,
+    ),
     loadType: ModuleLoadType.NORMAL,
     loadPriority: 2,
     loadCondition: {

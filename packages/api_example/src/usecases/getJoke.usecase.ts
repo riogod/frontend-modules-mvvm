@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
 import { JokesModel } from '../models/jokes.model';
 import { JokesRepository } from '../data/jokes.repository';
-import { AppModel } from '../../core/models/app.model';
+import { AppModel } from '@host/modules/core/models/app.model';
 import { API_EXAMPLE_DI_TOKENS } from '../config/di.tokens';
 import { IOC_CORE_TOKENS } from '@platform/core';
 

@@ -12,7 +12,10 @@
     "src/**/*.tsx",
     "src/**/*.json",
     "../libs/*/src/**/*.ts",
-    "../libs/*/src/**/*.tsx"
+    "../libs/*/src/**/*.tsx",
+    "../packages/*/src/**/*.ts",
+    "../packages/*/src/**/*.tsx",
+    "../packages/*/src/**/*.json"
   ],
   "exclude": [
     "src/**/*.spec.ts",

@@ -104,8 +104,9 @@
     "@rolldown/pluginutils": "1.0.0-beta.44"
   },
   "workspaces": [
-    "config/eslint-config",
-    "config/vite-config",
+    "host",
+    "packages/*",
+    "config/*",
     "libs/*"
   ]
 }
