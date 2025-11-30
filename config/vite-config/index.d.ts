@@ -97,3 +97,33 @@ export function createViteConfig(
   options: CreateViteConfigFactoryOptions
 ): ViteConfig | ((env: { mode: string }) => ViteConfig);
 
+// Плагины для MFE
+export function createModuleAliasesPlugin(options: {
+  manifest: import('./plugins/types.js').AppManifest | null;
+  packagesDir: string;
+}): import('vite').Plugin;
+
+export function createManifestMiddleware(options: {
+  manifest: import('./plugins/types.js').AppManifest | null;
+  defaultUser?: {
+    permissions: string[];
+    featureFlags: string[];
+  };
+}): import('vite').Plugin;
+
+export function loadManifest(options: {
+  dirname: string;
+  manifestPath?: string;
+  packagesDir?: string;
+  createFallback?: boolean;
+}): import('./plugins/types.js').AppManifest | null;
+
+export type {
+  AppManifest,
+  ModuleManifestEntry,
+  ModuleAliasesOptions,
+  ManifestMiddlewareOptions,
+} from './plugins/types.js';
+
+export type { LoadManifestOptions } from './plugins/loadManifest.js';
+
