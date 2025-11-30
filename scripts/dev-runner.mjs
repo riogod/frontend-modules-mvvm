@@ -46,13 +46,19 @@ async function showMainMenu(configManager) {
         config.usageCount > 0
           ? ` [используется: ${config.usageCount} раз]`
           : '';
-      const moduleCount = Object.keys(
-        configManager.get(config.id)?.modules || {},
-      ).length;
+      const fullConfig = configManager.get(config.id);
+      const moduleCount = Object.keys(fullConfig?.modules || {}).length;
       const moduleInfo =
         moduleCount > 0 ? ` (${moduleCount} модулей)` : ' (нет модулей)';
+
+      // Формируем заголовок с описанием в той же строке через дефис
+      let title = `${index + 1}. ${config.name}${moduleInfo}${usageInfo}`;
+      if (fullConfig?.description && fullConfig.description.trim() !== '') {
+        title += ` - ${chalk.gray(fullConfig.description)}`;
+      }
+
       return {
-        title: `${index + 1}. ${config.name}${moduleInfo}${usageInfo}`,
+        title,
         value: { action: 'select', config: config.id },
       };
     }),
@@ -537,6 +543,14 @@ async function main() {
 
       switch (menuChoice.action) {
         case 'select': {
+          const config = configManager.get(menuChoice.config);
+          if (!config) {
+            console.log(
+              chalk.red(`Конфигурация "${menuChoice.config}" не найдена.`),
+            );
+            break;
+          }
+
           const action = await selectConfiguration(
             configManager,
             menuChoice.config,
@@ -551,11 +565,72 @@ async function main() {
             );
             return; // Выходим после запуска Vite
           } else if (action === 'edit') {
-            console.log(
-              chalk.yellow(
-                '\nРедактирование конфигурации будет реализовано в следующих версиях.',
-              ),
+            // Редактирование конфигурации
+            const normalModules = await moduleDiscovery.getNormalModules();
+            const currentModules = { ...config.modules };
+
+            // Используем ту же функцию редактирования модулей
+            const editedModules = await editModulesMenu(
+              normalModules,
+              currentModules,
+              configManager,
             );
+
+            if (editedModules !== null) {
+              // Обновляем конфигурацию
+              const { name, description } = await prompts([
+                {
+                  type: 'text',
+                  name: 'name',
+                  message: 'Имя конфигурации:',
+                  initial: config.name,
+                  validate: (value) => {
+                    if (!value || value.trim() === '') {
+                      return 'Имя не может быть пустым';
+                    }
+                    return true;
+                  },
+                },
+                {
+                  type: 'text',
+                  name: 'description',
+                  message: 'Описание (необязательно):',
+                  initial: config.description || '',
+                },
+              ]);
+
+              if (name) {
+                // Сохраняем описание: если пользователь не ввел новое, сохраняем старое
+                const finalDescription =
+                  description?.trim() || config.description || '';
+                configManager.update(menuChoice.config, {
+                  name: name.trim(),
+                  description: finalDescription,
+                  modules: editedModules,
+                });
+                console.log(
+                  chalk.green(`\n✅ Конфигурация "${name}" обновлена!\n`),
+                );
+
+                // Спрашиваем, запустить ли сразу
+                const { runNow } = await prompts({
+                  type: 'confirm',
+                  name: 'runNow',
+                  message: 'Запустить обновленную конфигурацию сейчас?',
+                  initial: true,
+                });
+                if (runNow) {
+                  await runConfiguration(
+                    configManager,
+                    moduleDiscovery,
+                    manifestGenerator,
+                    viteLauncher,
+                    menuChoice.config,
+                  );
+                  return;
+                }
+              }
+            }
           } else if (action === 'delete') {
             const { confirm } = await prompts({
               type: 'confirm',
