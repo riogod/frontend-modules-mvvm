@@ -42,14 +42,4 @@ export const app_modules: Module[] = [
       accessPermissions: ['api.module.load.permission'],
     },
   },
-  {
-    name: 'my-super-module',
-    description:
-      'My super module - Показывает пример работы с моделью My super module',
-    config: import(
-      '@platform/module-my-super-module/config/module_config'
-    ).then((m) => m.default),
-    loadType: ModuleLoadType.NORMAL,
-    loadPriority: 3,
-  },
 ];
