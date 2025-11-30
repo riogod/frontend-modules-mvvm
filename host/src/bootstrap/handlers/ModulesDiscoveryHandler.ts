@@ -10,6 +10,7 @@ import type {
   ModuleLoadType,
 } from '../../modules/interface';
 import type { ModuleConfig } from '../interface';
+import { loadRemoteModule } from '../services/remoteModuleLoader';
 
 /**
  * Handler для загрузки и обработки манифеста модулей
@@ -190,12 +191,10 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     moduleName: string,
     remoteEntry: string,
   ): Promise<ModuleConfig> {
-    // Возвращаем Promise который резолвится при загрузке через Federation
-    // TODO: Реализовать в задаче 008 (RemoteModuleLoader)
-    return Promise.reject(
-      new Error(
-        `Remote module loading not implemented yet. Module: ${moduleName}, Entry: ${remoteEntry}`,
-      ),
-    );
+    return loadRemoteModule(moduleName, remoteEntry, {
+      retries: 3,
+      timeout: 15000,
+      retryDelay: 2000,
+    });
   }
 }
