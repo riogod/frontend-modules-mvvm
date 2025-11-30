@@ -75,6 +75,24 @@ export function createLibConfig(options: {
   plugins?: ViteConfig['plugins'];
 }): ViteConfig;
 
+export interface CreateModuleConfigOptions {
+  dirname: string;
+  moduleName: string;
+  localConfigPath?: string;
+  exposes?: Record<string, string>;
+  shared?: Record<string, any>;
+  cacheDir?: string;
+  outDir?: string;
+  server?: ViteConfig['server'];
+  preview?: ViteConfig['preview'];
+  build?: ViteConfig['build'];
+  plugins?: ViteConfig['plugins'];
+}
+
+export function createModuleConfig(
+  options: CreateModuleConfigOptions
+): Promise<ViteConfig>;
+
 export function createViteConfig(
   options: CreateViteConfigFactoryOptions
 ): ViteConfig | ((env: { mode: string }) => ViteConfig);

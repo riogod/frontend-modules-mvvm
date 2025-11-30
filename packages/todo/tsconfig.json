@@ -8,8 +8,7 @@
     "types": ["node"],
     "composite": true,
     "declaration": true,
-    "declarationMap": true,
-    "baseUrl": "."
+    "declarationMap": true
   },
   "include": [
     "src/**/*.ts",
