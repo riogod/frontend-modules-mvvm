@@ -6,7 +6,6 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["node"],
-    "composite": true,
     "declaration": true,
     "declarationMap": true,
     "resolveJsonModule": true
