@@ -325,6 +325,8 @@ async function createConfiguration(configManager, moduleDiscovery) {
  */
 async function showSettings(configManager) {
   const isRemoteAvailable = configManager.isRemoteAvailable();
+  const currentLogLevel = configManager.getLogLevel();
+  const envLogLevel = process.env.LOG_LEVEL;
 
   console.log(chalk.cyan.bold('\n⚙️ Настройки проекта\n'));
 
@@ -336,10 +338,33 @@ async function showSettings(configManager) {
     console.log(chalk.yellow('Remote Server URL: ⚠️ Не настроен\n'));
   }
 
+  // Показываем уровень логирования
+  if (envLogLevel) {
+    console.log(
+      chalk.yellow(
+        `Уровень логирования: ${envLogLevel} (из переменной окружения LOG_LEVEL)\n`,
+      ),
+    );
+    console.log(
+      chalk.gray(
+        `💡 Переменная окружения имеет приоритет над настройками лаунчера\n`,
+      ),
+    );
+  } else {
+    console.log(
+      chalk.green(`Уровень логирования: ${currentLogLevel}\n`),
+    );
+  }
+
   const choices = [
     {
       title: isRemoteAvailable ? '→ Изменить URL' : '→ Настроить URL',
       value: 'set-url',
+    },
+    {
+      title: `→ Настроить уровень логирования ${envLogLevel ? '(заблокировано - используется переменная окружения)' : `(текущий: ${currentLogLevel})`}`,
+      value: 'set-log-level',
+      disabled: !!envLogLevel, // Отключаем, если установлена переменная окружения
     },
   ];
 
@@ -382,6 +407,44 @@ async function showSettings(configManager) {
   } else if (action === 'clear-url') {
     configManager.setRemoteServerUrl('');
     console.log(chalk.yellow('\nURL очищен. REMOTE модули недоступны.\n'));
+  } else if (action === 'set-log-level') {
+    const levelChoices = [
+      { title: 'NONE - Отключить все логи', value: 'NONE' },
+      { title: 'ERROR - Только ошибки', value: 'ERROR' },
+      { title: 'WARN - Предупреждения и ошибки', value: 'WARN' },
+      { title: 'INFO - Информация, предупреждения и ошибки', value: 'INFO' },
+      { title: 'DEBUG - Отладочная информация', value: 'DEBUG' },
+      { title: 'TRACE - Полная трассировка', value: 'TRACE' },
+    ];
+
+    // Добавляем индикатор текущего уровня
+    const choicesWithCurrent = levelChoices.map((choice) => {
+      const isCurrent = choice.value === currentLogLevel;
+      return {
+        ...choice,
+        title: isCurrent ? `${choice.title} ← текущий` : choice.title,
+      };
+    });
+
+    const { level } = await prompts({
+      type: 'select',
+      name: 'level',
+      message: `Выберите уровень логирования (текущий: ${currentLogLevel}):`,
+      choices: choicesWithCurrent,
+      initial: ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].indexOf(
+        currentLogLevel,
+      ),
+    });
+
+    if (level) {
+      configManager.setLogLevel(level);
+      console.log(chalk.green(`\n✅ Уровень логирования установлен: ${level}\n`));
+      console.log(
+        chalk.yellow(
+          '💡 Примечание: переменная окружения LOG_LEVEL имеет приоритет над этой настройкой\n',
+        ),
+      );
+    }
   }
 }
 
@@ -498,7 +561,7 @@ async function runConfiguration(
   console.log(chalk.green('\n🚀 Запускаем Vite...\n'));
 
   // Запускаем Vite
-  await viteLauncher.start(config, manifest);
+  await viteLauncher.start(config, manifest, configManager);
 }
 
 /**

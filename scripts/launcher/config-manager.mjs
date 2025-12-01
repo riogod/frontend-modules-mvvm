@@ -29,7 +29,10 @@ export class ConfigManager {
       const content = fs.readFileSync(this.configPath, 'utf-8');
       return JSON.parse(content);
     } catch (error) {
-      console.warn('Ошибка при загрузке конфигураций, используется дефолтная:', error.message);
+      console.warn(
+        'Ошибка при загрузке конфигураций, используется дефолтная:',
+        error.message,
+      );
       return this.getDefaultConfig();
     }
   }
@@ -39,7 +42,11 @@ export class ConfigManager {
    */
   save() {
     fs.mkdirSync(path.dirname(this.configPath), { recursive: true });
-    fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf-8');
+    fs.writeFileSync(
+      this.configPath,
+      JSON.stringify(this.config, null, 2),
+      'utf-8',
+    );
   }
 
   /**
@@ -51,6 +58,7 @@ export class ConfigManager {
       version: '1.0.0',
       lastUsed: null,
       remoteServerUrl: '',
+      logLevel: 'INFO', // Уровень логирования по умолчанию
       configurations: {},
     };
   }
@@ -137,7 +145,8 @@ export class ConfigManager {
    */
   incrementUsage(id) {
     if (this.config.configurations[id]) {
-      this.config.configurations[id].usageCount = (this.config.configurations[id].usageCount || 0) + 1;
+      this.config.configurations[id].usageCount =
+        (this.config.configurations[id].usageCount || 0) + 1;
       this.config.lastUsed = id;
       this.save();
     }
@@ -171,7 +180,9 @@ export class ConfigManager {
    * @returns {boolean}
    */
   isRemoteAvailable() {
-    return this.config.remoteServerUrl && this.config.remoteServerUrl.trim() !== '';
+    return (
+      this.config.remoteServerUrl && this.config.remoteServerUrl.trim() !== ''
+    );
   }
 
   /**
@@ -204,4 +215,26 @@ export class ConfigManager {
     return `${baseUrl}/modules/${moduleName}/remoteEntry.js`;
   }
 
+  /**
+   * Получить уровень логирования
+   * @returns {string}
+   */
+  getLogLevel() {
+    return this.config.logLevel || 'INFO';
+  }
+
+  /**
+   * Установить уровень логирования
+   * @param {string} level - Уровень логирования (NONE, ERROR, WARN, INFO, DEBUG, TRACE)
+   */
+  setLogLevel(level) {
+    const validLevels = ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+    if (!validLevels.includes(level.toUpperCase())) {
+      throw new Error(
+        `Недопустимый уровень логирования: ${level}. Допустимые значения: ${validLevels.join(', ')}`,
+      );
+    }
+    this.config.logLevel = level.toUpperCase();
+    this.save();
+  }
 }

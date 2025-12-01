@@ -14,8 +14,9 @@ export class ViteLauncher {
    * Запускает Vite dev server с указанной конфигурацией
    * @param {Object} config - Конфигурация запуска
    * @param {Object} manifest - Манифест модулей
+   * @param {Object} configManager - Менеджер конфигураций для получения настроек
    */
-  async start(config, manifest) {
+  async start(config, manifest, configManager = null) {
     const rootDir = path.resolve(__dirname, '../..');
     const launcherDir = path.resolve(rootDir, '.launcher');
     const manifestPath = path.resolve(launcherDir, 'current-manifest.json');
@@ -32,10 +33,14 @@ export class ViteLauncher {
       .map((m) => m.name);
 
     // 4. Подготовить переменные окружения
+    // Приоритет: переменная окружения > настройка из конфига > INFO по умолчанию
+    const logLevel = process.env.LOG_LEVEL 
+      || (configManager ? configManager.getLogLevel() : 'INFO');
+
     const env = {
       ...process.env,
       VITE_LOCAL_MODULES: localModules.join(','),
-      LOG_LEVEL: process.env.LOG_LEVEL || 'INFO',
+      LOG_LEVEL: logLevel,
     };
 
     // 5. Запустить Vite
