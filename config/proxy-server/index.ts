@@ -1,8 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse, type RequestHandler } from 'msw';
+import { type RequestHandler } from 'msw';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
@@ -265,9 +264,6 @@ async function createProxyServer() {
   const hostUseLocalMocks = activeConfig.settings?.useLocalMocks !== false;
   const hostApiUrl = activeConfig.settings?.apiUrl || '';
 
-  // Создаем MSW server для обработки моков
-  const mswServer = setupServer();
-
   // Загружаем handlers для host, если моки включены
   let hostHandlers: RequestHandler[] = [];
   if (hostUseLocalMocks) {
@@ -276,7 +272,6 @@ async function createProxyServer() {
       const hostMocks = await import(hostMocksUrl);
       if (hostMocks.handlers && Array.isArray(hostMocks.handlers)) {
         hostHandlers = hostMocks.handlers;
-        mswServer.use(...hostMocks.handlers);
         console.log(
           `[ProxyServer] Host mocks: ${hostMocks.handlers.length} handlers`,
         );
@@ -295,18 +290,12 @@ async function createProxyServer() {
       const handlers = await loadModuleHandlers(moduleName);
       if (handlers && handlers.length > 0) {
         moduleHandlers.set(moduleName, handlers);
-        mswServer.use(...handlers);
         console.log(
           `[ProxyServer] Module ${moduleName}: ${handlers.length} handlers`,
         );
       }
     }
   }
-
-  // Запускаем MSW server
-  // Важно: MSW перехватывает глобальный fetch, поэтому нужно быть осторожным
-  // чтобы не создавать бесконечные циклы
-  mswServer.listen({ onUnhandledRequest: 'bypass' });
 
   // Обработка /app/start
   app.all('/app/start', async (req: Request, res: Response) => {
@@ -356,6 +345,7 @@ async function createProxyServer() {
         }
 
         // Для остальных методов
+        // validateStatus: 304 (Not Modified) - это нормальный ответ, не ошибка
         const response = await axios({
           method: req.method as any,
           url: targetUrl,
@@ -364,7 +354,33 @@ async function createProxyServer() {
             ? req.body
             : undefined,
           params: req.query,
+          validateStatus: (status) => {
+            // Считаем успешными статусы 200-299 и 304 (Not Modified)
+            return (status >= 200 && status < 300) || status === 304;
+          },
         });
+
+        // Копируем заголовки из ответа
+        Object.entries(response.headers).forEach(([key, value]) => {
+          if (value) res.setHeader(key, String(value));
+        });
+
+        // Для 304 (Not Modified) обогащаем базовым ответом
+        if (response.status === 304) {
+          const baseResponse = {
+            status: 'success',
+            data: {
+              features: {},
+              permissions: {},
+              params: {},
+              modules: [],
+            },
+          };
+          const enriched = enrichAppStartResponse(baseResponse);
+          res.status(304).json(enriched);
+          return;
+        }
+
         const enriched = enrichAppStartResponse(response.data);
         res.status(response.status).json(enriched);
         return;
@@ -383,6 +399,36 @@ async function createProxyServer() {
       const enriched = enrichAppStartResponse(baseResponse);
       res.json(enriched);
     } catch (error: any) {
+      // Если ошибка связана с ответом (например, 304 без validateStatus)
+      if (error.response) {
+        const status = error.response.status;
+        // Копируем заголовки из ответа
+        Object.entries(error.response.headers).forEach(([key, value]) => {
+          if (value) res.setHeader(key, String(value));
+        });
+
+        // Для 304 (Not Modified) обогащаем базовым ответом
+        if (status === 304) {
+          const baseResponse = {
+            status: 'success',
+            data: {
+              features: {},
+              permissions: {},
+              params: {},
+              modules: [],
+            },
+          };
+          const enriched = enrichAppStartResponse(baseResponse);
+          res.status(304).json(enriched);
+          return;
+        }
+
+        // Для других статусов отправляем данные
+        const enriched = enrichAppStartResponse(error.response.data || {});
+        res.status(status).json(enriched);
+        return;
+      }
+
       console.error(`[ProxyServer] Error handling /app/start:`, error);
       res.status(500).json({
         error: 'Internal server error',
@@ -415,13 +461,17 @@ async function createProxyServer() {
         // Проверяем, есть ли handlers для этого модуля
         const handlers = moduleHandlers.get(moduleName);
         if (handlers && handlers.length > 0) {
-          // Для модулей используем MSW через fetch с внешним URL
-          // чтобы избежать бесконечного цикла
-          // Поддерживаем все HTTP методы: GET, POST, PUT, DELETE, PATCH
+          // Ищем подходящий handler и вызываем его напрямую
           try {
-            const externalUrl = `http://127.0.0.1:${PROXY_PORT}${urlPath}`;
+            // Создаем URL для матчинга
+            const url = new URL(urlPath, 'http://localhost');
+            Object.entries(req.query).forEach(([key, value]) => {
+              if (value) {
+                url.searchParams.append(key, String(value));
+              }
+            });
 
-            // Подготавливаем body для методов с телом запроса
+            // Подготавливаем body
             let requestBody: string | undefined = undefined;
             if (['POST', 'PUT', 'PATCH'].includes(req.method.toUpperCase())) {
               if (req.body) {
@@ -432,55 +482,88 @@ async function createProxyServer() {
               }
             }
 
-            // Создаем Request с правильным body для всех методов
-            const request = new Request(externalUrl, {
+            // Создаем Request для передачи в handler
+            const mockRequest = new Request(url.toString(), {
               method: req.method,
               headers: {
-                ...(req.headers as Record<string, string>),
-                // Убеждаемся, что Content-Type установлен для методов с body
-                ...(requestBody && !req.headers['content-type']
-                  ? { 'Content-Type': 'application/json' }
-                  : {}),
+                'Content-Type': 'application/json',
               },
               body: requestBody,
             });
 
-            // MSW перехватывает fetch, используем 127.0.0.1 чтобы избежать цикла
-            const response = await fetch(request);
+            // Ищем подходящий handler по методу и пути
+            let matchedResponse: globalThis.Response | null = null;
+            for (const handler of handlers) {
+              // Проверяем совпадение метода и пути
+              // MSW handler.info содержит header (method) и path
+              const handlerAny = handler as any;
+              const handlerMethod = (
+                handlerAny.info?.method ||
+                handlerAny.info?.header ||
+                'GET'
+              ).toUpperCase();
+              const handlerPath = handlerAny.info?.path || '';
 
-            if (response) {
-              // Получаем данные в зависимости от Content-Type ответа
-              const contentType = response.headers.get('content-type') || '';
+              // Проверяем метод
+              if (
+                handlerMethod !== 'ALL' &&
+                handlerMethod !== req.method.toUpperCase()
+              ) {
+                continue;
+              }
+
+              // Проверяем путь (простое сравнение)
+              if (urlPath === handlerPath || urlPath.startsWith(handlerPath)) {
+                // Вызываем resolver напрямую
+                const resolver = handlerAny.resolver;
+                if (typeof resolver === 'function') {
+                  const result = await resolver({
+                    request: mockRequest,
+                    params: {},
+                    cookies: {},
+                  });
+                  if (result instanceof globalThis.Response) {
+                    matchedResponse = result;
+                    break;
+                  }
+                }
+              }
+            }
+
+            if (matchedResponse) {
+              const contentType =
+                matchedResponse.headers.get('content-type') || '';
               let data: any;
 
               if (contentType.includes('application/json')) {
-                data = await response.json();
+                data = await matchedResponse.json();
               } else if (contentType.includes('text/')) {
-                data = await response.text();
+                data = await matchedResponse.text();
               } else {
-                // Для бинарных данных или других типов
-                data = await response.arrayBuffer();
+                data = await matchedResponse.arrayBuffer();
               }
 
-              // Копируем заголовки из MSW response
-              response.headers.forEach((value: string, key: string) => {
+              matchedResponse.headers.forEach((value: string, key: string) => {
                 res.setHeader(key, value);
               });
 
-              // Отправляем ответ с правильным типом контента
+              const status = matchedResponse.status;
               if (contentType.includes('application/json')) {
-                res.status(response.status).json(data);
+                res.status(status).json(data);
               } else if (contentType.includes('text/')) {
-                res.status(response.status).send(data);
+                res.status(status).send(data);
               } else {
-                res.status(response.status).send(Buffer.from(data));
+                res.status(status).send(Buffer.from(data));
               }
               return;
             }
           } catch (error) {
-            console.error(`[ProxyServer] MSW failed for ${moduleName}:`, error);
+            console.error(
+              `[ProxyServer] Handler failed for ${moduleName}:`,
+              error,
+            );
           }
-          res.status(404).json({ error: 'No mock handlers available' });
+          res.status(404).json({ error: 'No matching mock handler found' });
           return;
         } else {
           res.status(404).json({ error: 'No mock handlers available' });
@@ -518,6 +601,7 @@ async function createProxyServer() {
         }
 
         // Для остальных методов проксируем с body (если есть)
+        // validateStatus: 304 (Not Modified) - это нормальный ответ, не ошибка
         const response = await axios({
           method: req.method as any,
           url: targetUrl,
@@ -527,7 +611,22 @@ async function createProxyServer() {
             ? req.body
             : undefined,
           params: req.query,
+          validateStatus: (status) => {
+            // Считаем успешными статусы 200-299 и 304 (Not Modified)
+            return (status >= 200 && status < 300) || status === 304;
+          },
         });
+
+        // Копируем заголовки из ответа
+        Object.entries(response.headers).forEach(([key, value]) => {
+          if (value) res.setHeader(key, String(value));
+        });
+
+        // Для 304 (Not Modified) не нужно тело ответа
+        if (response.status === 304) {
+          res.status(304).send();
+          return;
+        }
 
         // Определяем Content-Type ответа и отправляем соответствующим образом
         const contentType = response.headers['content-type'] || '';
@@ -541,21 +640,54 @@ async function createProxyServer() {
         return;
       }
     } catch (error: any) {
-      console.error(`[ProxyServer] Error handling ${urlPath}:`, error);
+      // Если ошибка связана с ответом (например, 304 без validateStatus)
       if (error.response) {
-        res.status(error.response.status).json(error.response.data);
-      } else {
-        res.status(500).json({
-          error: 'Internal server error',
-          message: error.message,
+        const status = error.response.status;
+        // Копируем заголовки из ответа
+        Object.entries(error.response.headers).forEach(([key, value]) => {
+          if (value) res.setHeader(key, String(value));
         });
+
+        // Для 304 (Not Modified) не нужно тело ответа
+        if (status === 304) {
+          res.status(304).send();
+          return;
+        }
+
+        // Для других статусов отправляем данные
+        res.status(status).json(error.response.data || {});
+        return;
       }
+
+      console.error(`[ProxyServer] Error handling ${urlPath}:`, error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error.message,
+      });
     }
   });
 
-  app.listen(PROXY_PORT, () => {
+  const server = app.listen(PROXY_PORT, () => {
     console.log(`[ProxyServer] Running on port ${PROXY_PORT}`);
   });
+
+  // Обработка сигналов для корректного завершения
+  const gracefulShutdown = (signal: string) => {
+    console.log(`\n[ProxyServer] Получен ${signal}, завершаем работу...`);
+    server.close(() => {
+      console.log('[ProxyServer] Сервер остановлен');
+      process.exit(0);
+    });
+
+    // Принудительное завершение через 5 секунд
+    setTimeout(() => {
+      console.error('[ProxyServer] Принудительное завершение');
+      process.exit(1);
+    }, 5000);
+  };
+
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 }
 
 // Запускаем сервер

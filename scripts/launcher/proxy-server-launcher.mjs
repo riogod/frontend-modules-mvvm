@@ -19,8 +19,8 @@ export class ProxyServerLauncher {
 
     console.log('[ProxyServerLauncher] Запуск proxy-server на порту 1337...');
 
-    // Запускаем proxy-server через tsx
-    const proxyProcess = spawn('npm', ['run', 'start'], {
+    // Запускаем proxy-server напрямую через tsx, чтобы избежать ошибок npm при SIGINT
+    const proxyProcess = spawn('npx', ['tsx', 'index.ts'], {
       cwd: proxyServerDir,
       stdio: 'inherit',
       shell: process.platform === 'win32',
@@ -28,7 +28,9 @@ export class ProxyServerLauncher {
 
     // Обработка завершения процесса
     proxyProcess.on('close', (code) => {
-      if (code !== 0) {
+      // Коды 130 (SIGINT) и 143 (SIGTERM) - нормальное завершение по сигналу
+      // null - процесс был убит сигналом
+      if (code !== 0 && code !== 130 && code !== 143 && code !== null) {
         console.error(`[ProxyServerLauncher] Proxy-server process exited with code ${code}`);
       }
     });

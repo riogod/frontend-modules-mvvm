@@ -465,7 +465,7 @@ async function showSettings(configManager) {
   while (true) {
     process.stdout.write('\x1B[2J\x1B[0f');
 
-    const isRemoteAvailable = configManager.isRemoteAvailable();
+  const isRemoteAvailable = configManager.isRemoteAvailable();
 
     console.log(chalk.cyan.bold('\n⚙️ Настройки Remote Server URL\n'));
     console.log(
@@ -474,13 +474,13 @@ async function showSettings(configManager) {
       ),
     );
 
-    if (isRemoteAvailable) {
-      console.log(
-        chalk.green(`Remote Server URL: ${configManager.getRemoteServerUrl()}\n`),
-      );
-    } else {
-      console.log(chalk.yellow('Remote Server URL: ⚠️ Не настроен\n'));
-    }
+  if (isRemoteAvailable) {
+    console.log(
+      chalk.green(`Remote Server URL: ${configManager.getRemoteServerUrl()}\n`),
+    );
+  } else {
+    console.log(chalk.yellow('Remote Server URL: ⚠️ Не настроен\n'));
+  }
 
     const choices = [
       {
@@ -559,144 +559,144 @@ async function editConfigurationSettings(configManager, configId) {
     const useLocalMocks = settings.useLocalMocks !== undefined ? settings.useLocalMocks : true;
     const apiUrl = settings.apiUrl || '';
 
-    // Показываем уровень логирования
-    if (envLogLevel) {
-      console.log(
-        chalk.yellow(
-          `Уровень логирования: ${envLogLevel} (из переменной окружения LOG_LEVEL)\n`,
-        ),
-      );
-      console.log(
-        chalk.gray(
+  // Показываем уровень логирования
+  if (envLogLevel) {
+    console.log(
+      chalk.yellow(
+        `Уровень логирования: ${envLogLevel} (из переменной окружения LOG_LEVEL)\n`,
+      ),
+    );
+    console.log(
+      chalk.gray(
           `💡 Переменная окружения имеет приоритет над настройками конфигурации\n`,
-        ),
-      );
-    } else {
-      console.log(
-        chalk.green(`Уровень логирования: ${currentLogLevel}\n`),
-      );
-    }
+      ),
+    );
+  } else {
+    console.log(
+      chalk.green(`Уровень логирования: ${currentLogLevel}\n`),
+    );
+  }
 
-    // Показываем настройку моков
-    const mocksStatus = useLocalMocks
-      ? chalk.green('Да (используются локальные моки MSW)')
-      : chalk.yellow(`Нет (используется API: ${apiUrl || 'не настроен'})`);
-    console.log(`Использовать локальные моки: ${mocksStatus}\n`);
+  // Показываем настройку моков
+  const mocksStatus = useLocalMocks
+    ? chalk.green('Да (используются локальные моки MSW)')
+    : chalk.yellow(`Нет (используется API: ${apiUrl || 'не настроен'})`);
+  console.log(`Использовать локальные моки: ${mocksStatus}\n`);
 
-    const choices = [
-      {
-        title: `→ Настроить уровень логирования ${envLogLevel ? '(заблокировано - используется переменная окружения)' : `(текущий: ${currentLogLevel})`}`,
-        value: 'set-log-level',
+  const choices = [
+    {
+      title: `→ Настроить уровень логирования ${envLogLevel ? '(заблокировано - используется переменная окружения)' : `(текущий: ${currentLogLevel})`}`,
+      value: 'set-log-level',
         disabled: !!envLogLevel,
-      },
-      {
+    },
+    {
         title: `→ Использовать локальные моки для host (текущее: ${useLocalMocks ? 'Да' : 'Нет'})`,
-        value: 'set-use-mocks',
-      },
-    ];
+      value: 'set-use-mocks',
+    },
+  ];
 
-    // Добавляем пункт настройки API URL только если моки отключены
-    if (!useLocalMocks) {
-      choices.push({
-        title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : '(не настроен)'}`,
-        value: 'set-api-url',
-      });
-    }
-
-    choices.push({ title: '→ Назад', value: 'back' });
-
-    const { action } = await prompts({
-      type: 'select',
-      name: 'action',
-      message: 'Выберите действие:',
-      choices,
+  // Добавляем пункт настройки API URL только если моки отключены
+  if (!useLocalMocks) {
+    choices.push({
+      title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : '(не настроен)'}`,
+      value: 'set-api-url',
     });
+  }
+
+  choices.push({ title: '→ Назад', value: 'back' });
+
+  const { action } = await prompts({
+    type: 'select',
+    name: 'action',
+    message: 'Выберите действие:',
+    choices,
+  });
 
     if (!action || action === 'back') {
       return;
     }
 
     if (action === 'set-log-level') {
-      const levelChoices = [
-        { title: 'NONE - Отключить все логи', value: 'NONE' },
-        { title: 'ERROR - Только ошибки', value: 'ERROR' },
-        { title: 'WARN - Предупреждения и ошибки', value: 'WARN' },
-        { title: 'INFO - Информация, предупреждения и ошибки', value: 'INFO' },
-        { title: 'DEBUG - Отладочная информация', value: 'DEBUG' },
-        { title: 'TRACE - Полная трассировка', value: 'TRACE' },
-      ];
+    const levelChoices = [
+      { title: 'NONE - Отключить все логи', value: 'NONE' },
+      { title: 'ERROR - Только ошибки', value: 'ERROR' },
+      { title: 'WARN - Предупреждения и ошибки', value: 'WARN' },
+      { title: 'INFO - Информация, предупреждения и ошибки', value: 'INFO' },
+      { title: 'DEBUG - Отладочная информация', value: 'DEBUG' },
+      { title: 'TRACE - Полная трассировка', value: 'TRACE' },
+    ];
 
-      const choicesWithCurrent = levelChoices.map((choice) => {
-        const isCurrent = choice.value === currentLogLevel;
-        return {
-          ...choice,
-          title: isCurrent ? `${choice.title} ← текущий` : choice.title,
-        };
-      });
+    const choicesWithCurrent = levelChoices.map((choice) => {
+      const isCurrent = choice.value === currentLogLevel;
+      return {
+        ...choice,
+        title: isCurrent ? `${choice.title} ← текущий` : choice.title,
+      };
+    });
 
-      const { level } = await prompts({
-        type: 'select',
-        name: 'level',
-        message: `Выберите уровень логирования (текущий: ${currentLogLevel}):`,
-        choices: choicesWithCurrent,
-        initial: ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].indexOf(
-          currentLogLevel,
-        ),
-      });
+    const { level } = await prompts({
+      type: 'select',
+      name: 'level',
+      message: `Выберите уровень логирования (текущий: ${currentLogLevel}):`,
+      choices: choicesWithCurrent,
+      initial: ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].indexOf(
+        currentLogLevel,
+      ),
+    });
 
-      if (level) {
+    if (level) {
         configManager.setConfigSettings(configId, { logLevel: level });
-        console.log(chalk.green(`\n✅ Уровень логирования установлен: ${level}\n`));
+      console.log(chalk.green(`\n✅ Уровень логирования установлен: ${level}\n`));
+      console.log(
+        chalk.yellow(
+          '💡 Примечание: переменная окружения LOG_LEVEL имеет приоритет над этой настройкой\n',
+        ),
+      );
+    }
+  } else if (action === 'set-use-mocks') {
+    const { useMocks } = await prompts({
+      type: 'confirm',
+      name: 'useMocks',
+      message: 'Использовать локальные моки для host?',
+      initial: useLocalMocks,
+    });
+
+    if (useMocks !== undefined) {
+        configManager.setConfigSettings(configId, { useLocalMocks: useMocks });
+      const status = useMocks ? 'включены' : 'отключены';
+      console.log(chalk.green(`\n✅ Локальные моки ${status}\n`));
+      
+      if (!useMocks && !apiUrl) {
         console.log(
           chalk.yellow(
-            '💡 Примечание: переменная окружения LOG_LEVEL имеет приоритет над этой настройкой\n',
+            '⚠️  Внимание: API URL не настроен. Настройте его в следующем пункте меню.\n',
           ),
         );
       }
-    } else if (action === 'set-use-mocks') {
-      const { useMocks } = await prompts({
-        type: 'confirm',
-        name: 'useMocks',
-        message: 'Использовать локальные моки для host?',
-        initial: useLocalMocks,
-      });
-
-      if (useMocks !== undefined) {
-        configManager.setConfigSettings(configId, { useLocalMocks: useMocks });
-        const status = useMocks ? 'включены' : 'отключены';
-        console.log(chalk.green(`\n✅ Локальные моки ${status}\n`));
-        
-        if (!useMocks && !apiUrl) {
-          console.log(
-            chalk.yellow(
-              '⚠️  Внимание: API URL не настроен. Настройте его в следующем пункте меню.\n',
-            ),
-          );
+    }
+  } else if (action === 'set-api-url') {
+    const { url } = await prompts({
+      type: 'text',
+      name: 'url',
+      message: 'Введите API URL:',
+      initial: apiUrl || 'http://localhost:3000',
+      validate: (value) => {
+        if (!value || value.trim() === '') {
+          return 'URL не может быть пустым';
         }
-      }
-    } else if (action === 'set-api-url') {
-      const { url } = await prompts({
-        type: 'text',
-        name: 'url',
-        message: 'Введите API URL:',
-        initial: apiUrl || 'http://localhost:3000',
-        validate: (value) => {
-          if (!value || value.trim() === '') {
-            return 'URL не может быть пустым';
-          }
-          try {
-            new URL(value);
-            return true;
-          } catch {
-            return 'Введите корректный URL';
-          }
-        },
-      });
+        try {
+          new URL(value);
+          return true;
+        } catch {
+          return 'Введите корректный URL';
+        }
+      },
+    });
 
-      if (url) {
+    if (url) {
         configManager.setConfigSettings(configId, { apiUrl: url.trim() });
-        console.log(chalk.green(`\n✅ API URL сохранен: ${url}\n`));
-      }
+      console.log(chalk.green(`\n✅ API URL сохранен: ${url}\n`));
+    }
     }
 
     await new Promise((resolve) => setTimeout(resolve, 500));

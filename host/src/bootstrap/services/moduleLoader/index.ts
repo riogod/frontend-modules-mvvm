@@ -354,20 +354,57 @@ export class BootstrapModuleLoader {
         }
       }
 
-      // Если не нашли модулей для текущего уровня, значит есть циклические зависимости
+      // Если не нашли модулей для текущего уровня, проверяем причину
       if (currentLevel.length === 0) {
         const unprocessed = modules
           .filter((m) => !processed.has(m.name))
           .map((m) => m.name);
+        
+        // Проверяем, есть ли отсутствующие зависимости
+        const modulesWithMissingDeps: string[] = [];
+        for (const moduleName of unprocessed) {
+          const module = modules.find((m) => m.name === moduleName);
+          if (module) {
+            const deps = getDependencies(module);
+            const missingDeps = deps.filter((depName) => {
+              // Проверяем, существует ли зависимость в реестре
+              const depModule = this.registry.getModule(depName);
+              return !depModule && !this.isModuleLoaded(depName);
+            });
+            if (missingDeps.length > 0) {
+              modulesWithMissingDeps.push(
+                `${moduleName} (missing: ${missingDeps.join(', ')})`,
+              );
+            }
+          }
+        }
+        
+        if (modulesWithMissingDeps.length > 0) {
+          // Есть модули с отсутствующими зависимостями - это нормально, просто пропускаем их
+          log.warn(
+            `Skipping modules with missing dependencies: ${modulesWithMissingDeps.join(', ')}`,
+            {
+              prefix: 'bootstrap.moduleLoader.groupModulesByDependencyLevels',
+            },
+          );
+          // Помечаем эти модули как обработанные, чтобы не зациклиться
+          for (const moduleName of unprocessed) {
+            processed.add(moduleName);
+          }
+          // Прерываем цикл, так как больше нечего обрабатывать
+          break;
+        } else {
+          // Нет отсутствующих зависимостей - значит циклическая зависимость
         log.error(
-          `Circular dependency detected or missing dependencies. Unprocessed modules: ${unprocessed.join(', ')}`,
+            `Circular dependency detected. Unprocessed modules: ${unprocessed.join(', ')}`,
           {
             prefix: 'bootstrap.moduleLoader.groupModulesByDependencyLevels',
           },
         );
         throw new Error(
-          `Circular dependency detected or missing dependencies. Unprocessed modules: ${unprocessed.join(', ')}`,
+            `Circular dependency detected. Unprocessed modules: ${unprocessed.join(', ')}`,
         );
+        }
       }
 
       log.debug(

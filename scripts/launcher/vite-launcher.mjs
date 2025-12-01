@@ -50,7 +50,7 @@ export class ViteLauncher {
     // Настройка использования моков
     const useLocalMocks =
       process.env.VITE_USE_LOCAL_MOCKS !== undefined
-        ? process.env.VITE_USE_LOCAL_MOCKS === 'true'
+      ? process.env.VITE_USE_LOCAL_MOCKS === 'true'
         : configSettings.useLocalMocks !== undefined
           ? configSettings.useLocalMocks
           : true;
@@ -80,7 +80,7 @@ export class ViteLauncher {
         console.error(
           `[ViteLauncher] Proxy-server process exited with code ${code}`,
         );
-      }
+    }
     });
 
     // 6. Запустить Vite
@@ -95,7 +95,10 @@ export class ViteLauncher {
     viteProcess.on('close', (code) => {
       // Останавливаем proxy-server при завершении Vite
       proxyLauncher.stop(proxyProcess);
-      if (code !== 0) {
+      // null - процесс был убит сигналом (нормальное завершение)
+      // 0 - нормальное завершение
+      // 130 (SIGINT) и 143 (SIGTERM) - завершение по сигналу
+      if (code !== 0 && code !== 130 && code !== 143 && code !== null) {
         console.error(`[ViteLauncher] Vite process exited with code ${code}`);
       }
     });
