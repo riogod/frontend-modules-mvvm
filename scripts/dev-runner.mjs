@@ -72,7 +72,7 @@ async function showMainMenu(configManager) {
       value: { action: 'create-module' },
     },
     {
-      title: '→ Общие настройки проекта',
+      title: '→ Настройки Remote Server URL',
       value: { action: 'settings' },
     },
     {
@@ -382,125 +382,12 @@ async function createConfiguration(configManager, moduleDiscovery) {
     message: 'Описание (необязательно):',
   });
 
-  // Создаем конфигурацию
-  const configId = configManager.create(
-    name.trim(),
-    resultModules,
-    description?.trim() || '',
-  );
-  console.log(chalk.green(`\n✅ Конфигурация "${name}" сохранена!\n`));
+  // Запрашиваем настройки конфигурации
+  console.log(chalk.cyan('\n⚙️ Настройки конфигурации\n'));
 
-  return configId;
-}
-
-/**
- * Меню настроек проекта
- */
-async function showSettings(configManager) {
-  const isRemoteAvailable = configManager.isRemoteAvailable();
-  const currentLogLevel = configManager.getLogLevel();
   const envLogLevel = process.env.LOG_LEVEL;
-  const useLocalMocks = configManager.getUseLocalMocks();
-  const apiUrl = configManager.getApiUrl();
-
-  console.log(chalk.cyan.bold('\n⚙️ Настройки проекта\n'));
-
-  if (isRemoteAvailable) {
-    console.log(
-      chalk.green(`Remote Server URL: ${configManager.getRemoteServerUrl()}\n`),
-    );
-  } else {
-    console.log(chalk.yellow('Remote Server URL: ⚠️ Не настроен\n'));
-  }
-
-  // Показываем уровень логирования
-  if (envLogLevel) {
-    console.log(
-      chalk.yellow(
-        `Уровень логирования: ${envLogLevel} (из переменной окружения LOG_LEVEL)\n`,
-      ),
-    );
-    console.log(
-      chalk.gray(
-        `💡 Переменная окружения имеет приоритет над настройками лаунчера\n`,
-      ),
-    );
-  } else {
-    console.log(
-      chalk.green(`Уровень логирования: ${currentLogLevel}\n`),
-    );
-  }
-
-  // Показываем настройку моков
-  const mocksStatus = useLocalMocks
-    ? chalk.green('Да (используются локальные моки MSW)')
-    : chalk.yellow(`Нет (используется API: ${apiUrl || 'не настроен'})`);
-  console.log(`Использовать локальные моки: ${mocksStatus}\n`);
-
-  const choices = [
-    {
-      title: isRemoteAvailable ? '→ Изменить URL' : '→ Настроить URL',
-      value: 'set-url',
-    },
-    {
-      title: `→ Настроить уровень логирования ${envLogLevel ? '(заблокировано - используется переменная окружения)' : `(текущий: ${currentLogLevel})`}`,
-      value: 'set-log-level',
-      disabled: !!envLogLevel, // Отключаем, если установлена переменная окружения
-    },
-    {
-      title: `→ Использовать локальные моки (текущее: ${useLocalMocks ? 'Да' : 'Нет'})`,
-      value: 'set-use-mocks',
-    },
-  ];
-
-  // Добавляем пункт настройки API URL только если моки отключены
-  if (!useLocalMocks) {
-    choices.push({
-      title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : '(не настроен)'}`,
-      value: 'set-api-url',
-    });
-  }
-
-  if (isRemoteAvailable) {
-    choices.push({ title: '→ Очистить URL', value: 'clear-url' });
-  }
-
-  choices.push({ title: '→ Назад', value: 'back' });
-
-  const { action } = await prompts({
-    type: 'select',
-    name: 'action',
-    message: 'Выберите действие:',
-    choices,
-  });
-
-  if (action === 'set-url') {
-    const { url } = await prompts({
-      type: 'text',
-      name: 'url',
-      message: 'Введите Remote Server URL:',
-      initial: configManager.getRemoteServerUrl() || 'https://',
-      validate: (value) => {
-        if (!value || value.trim() === '') {
-          return 'URL не может быть пустым';
-        }
-        try {
-          new URL(value);
-          return true;
-        } catch {
-          return 'Введите корректный URL';
-        }
-      },
-    });
-
-    if (url) {
-      configManager.setRemoteServerUrl(url);
-      console.log(chalk.green('\n✅ URL сохранен\n'));
-    }
-  } else if (action === 'clear-url') {
-    configManager.setRemoteServerUrl('');
-    console.log(chalk.yellow('\nURL очищен. REMOTE модули недоступны.\n'));
-  } else if (action === 'set-log-level') {
+  let logLevel = 'INFO';
+  if (!envLogLevel) {
     const levelChoices = [
       { title: 'NONE - Отключить все логи', value: 'NONE' },
       { title: 'ERROR - Только ошибки', value: 'ERROR' },
@@ -510,61 +397,36 @@ async function showSettings(configManager) {
       { title: 'TRACE - Полная трассировка', value: 'TRACE' },
     ];
 
-    // Добавляем индикатор текущего уровня
-    const choicesWithCurrent = levelChoices.map((choice) => {
-      const isCurrent = choice.value === currentLogLevel;
-      return {
-        ...choice,
-        title: isCurrent ? `${choice.title} ← текущий` : choice.title,
-      };
-    });
-
     const { level } = await prompts({
       type: 'select',
       name: 'level',
-      message: `Выберите уровень логирования (текущий: ${currentLogLevel}):`,
-      choices: choicesWithCurrent,
-      initial: ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].indexOf(
-        currentLogLevel,
+      message: 'Выберите уровень логирования:',
+      choices: levelChoices,
+      initial: 3, // INFO по умолчанию
+    });
+    logLevel = level || 'INFO';
+  } else {
+    console.log(
+      chalk.yellow(
+        `Уровень логирования: ${envLogLevel} (из переменной окружения LOG_LEVEL)\n`,
       ),
-    });
+    );
+  }
 
-    if (level) {
-      configManager.setLogLevel(level);
-      console.log(chalk.green(`\n✅ Уровень логирования установлен: ${level}\n`));
-      console.log(
-        chalk.yellow(
-          '💡 Примечание: переменная окружения LOG_LEVEL имеет приоритет над этой настройкой\n',
-        ),
-      );
-    }
-  } else if (action === 'set-use-mocks') {
-    const { useMocks } = await prompts({
-      type: 'confirm',
-      name: 'useMocks',
-      message: 'Использовать локальные моки для host?',
-      initial: useLocalMocks,
-    });
+  const { useLocalMocks } = await prompts({
+    type: 'confirm',
+    name: 'useLocalMocks',
+    message: 'Использовать локальные моки для host?',
+    initial: true,
+  });
 
-    if (useMocks !== undefined) {
-      configManager.setUseLocalMocks(useMocks);
-      const status = useMocks ? 'включены' : 'отключены';
-      console.log(chalk.green(`\n✅ Локальные моки ${status}\n`));
-      
-      if (!useMocks && !apiUrl) {
-        console.log(
-          chalk.yellow(
-            '⚠️  Внимание: API URL не настроен. Настройте его в следующем пункте меню.\n',
-          ),
-        );
-      }
-    }
-  } else if (action === 'set-api-url') {
+  let apiUrl = '';
+  if (!useLocalMocks) {
     const { url } = await prompts({
       type: 'text',
       name: 'url',
       message: 'Введите API URL:',
-      initial: apiUrl || 'http://localhost:3000',
+      initial: 'http://localhost:3000',
       validate: (value) => {
         if (!value || value.trim() === '') {
           return 'URL не может быть пустым';
@@ -577,11 +439,267 @@ async function showSettings(configManager) {
         }
       },
     });
+    apiUrl = url?.trim() || '';
+  }
 
-    if (url) {
-      configManager.setApiUrl(url);
-      console.log(chalk.green(`\n✅ API URL сохранен: ${url}\n`));
+  // Создаем конфигурацию с настройками
+  const configId = configManager.create(
+    name.trim(),
+    resultModules,
+    description?.trim() || '',
+    {
+      logLevel,
+      useLocalMocks,
+      apiUrl,
+    },
+  );
+  console.log(chalk.green(`\n✅ Конфигурация "${name}" сохранена!\n`));
+
+  return configId;
+}
+
+/**
+ * Меню настроек Remote Server URL (глобальная настройка)
+ */
+async function showSettings(configManager) {
+  while (true) {
+    process.stdout.write('\x1B[2J\x1B[0f');
+
+    const isRemoteAvailable = configManager.isRemoteAvailable();
+
+    console.log(chalk.cyan.bold('\n⚙️ Настройки Remote Server URL\n'));
+    console.log(
+      chalk.gray(
+        '💡 Remote Server URL используется для загрузки REMOTE модулей из удаленного сервера\n',
+      ),
+    );
+
+    if (isRemoteAvailable) {
+      console.log(
+        chalk.green(`Remote Server URL: ${configManager.getRemoteServerUrl()}\n`),
+      );
+    } else {
+      console.log(chalk.yellow('Remote Server URL: ⚠️ Не настроен\n'));
     }
+
+    const choices = [
+      {
+        title: isRemoteAvailable ? '→ Изменить URL' : '→ Настроить URL',
+        value: 'set-url',
+      },
+    ];
+
+    if (isRemoteAvailable) {
+      choices.push({ title: '→ Очистить URL', value: 'clear-url' });
+    }
+
+    choices.push({ title: '→ Назад', value: 'back' });
+
+    const { action } = await prompts({
+      type: 'select',
+      name: 'action',
+      message: 'Выберите действие:',
+      choices,
+    });
+
+    if (!action || action === 'back') {
+      return;
+    }
+
+    if (action === 'set-url') {
+      const { url } = await prompts({
+        type: 'text',
+        name: 'url',
+        message: 'Введите Remote Server URL:',
+        initial: configManager.getRemoteServerUrl() || 'https://',
+        validate: (value) => {
+          if (!value || value.trim() === '') {
+            return 'URL не может быть пустым';
+          }
+          try {
+            new URL(value);
+            return true;
+          } catch {
+            return 'Введите корректный URL';
+          }
+        },
+      });
+
+      if (url) {
+        configManager.setRemoteServerUrl(url);
+        console.log(chalk.green('\n✅ URL сохранен\n'));
+      }
+    } else if (action === 'clear-url') {
+      configManager.setRemoteServerUrl('');
+      console.log(chalk.yellow('\nURL очищен. REMOTE модули недоступны.\n'));
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+}
+
+/**
+ * Редактирование настроек конфигурации
+ */
+async function editConfigurationSettings(configManager, configId) {
+  const config = configManager.get(configId);
+  if (!config) {
+    console.log(chalk.red(`\nКонфигурация "${configId}" не найдена.\n`));
+    return;
+  }
+
+  const settings = configManager.getConfigSettings(configId);
+
+  while (true) {
+    process.stdout.write('\x1B[2J\x1B[0f');
+    console.log(chalk.cyan.bold(`\n⚙️ Настройки конфигурации: "${config.name}"\n`));
+
+    const envLogLevel = process.env.LOG_LEVEL;
+    const currentLogLevel = settings.logLevel || 'INFO';
+    const useLocalMocks = settings.useLocalMocks !== undefined ? settings.useLocalMocks : true;
+    const apiUrl = settings.apiUrl || '';
+
+    // Показываем уровень логирования
+    if (envLogLevel) {
+      console.log(
+        chalk.yellow(
+          `Уровень логирования: ${envLogLevel} (из переменной окружения LOG_LEVEL)\n`,
+        ),
+      );
+      console.log(
+        chalk.gray(
+          `💡 Переменная окружения имеет приоритет над настройками конфигурации\n`,
+        ),
+      );
+    } else {
+      console.log(
+        chalk.green(`Уровень логирования: ${currentLogLevel}\n`),
+      );
+    }
+
+    // Показываем настройку моков
+    const mocksStatus = useLocalMocks
+      ? chalk.green('Да (используются локальные моки MSW)')
+      : chalk.yellow(`Нет (используется API: ${apiUrl || 'не настроен'})`);
+    console.log(`Использовать локальные моки: ${mocksStatus}\n`);
+
+    const choices = [
+      {
+        title: `→ Настроить уровень логирования ${envLogLevel ? '(заблокировано - используется переменная окружения)' : `(текущий: ${currentLogLevel})`}`,
+        value: 'set-log-level',
+        disabled: !!envLogLevel,
+      },
+      {
+        title: `→ Использовать локальные моки для host (текущее: ${useLocalMocks ? 'Да' : 'Нет'})`,
+        value: 'set-use-mocks',
+      },
+    ];
+
+    // Добавляем пункт настройки API URL только если моки отключены
+    if (!useLocalMocks) {
+      choices.push({
+        title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : '(не настроен)'}`,
+        value: 'set-api-url',
+      });
+    }
+
+    choices.push({ title: '→ Назад', value: 'back' });
+
+    const { action } = await prompts({
+      type: 'select',
+      name: 'action',
+      message: 'Выберите действие:',
+      choices,
+    });
+
+    if (!action || action === 'back') {
+      return;
+    }
+
+    if (action === 'set-log-level') {
+      const levelChoices = [
+        { title: 'NONE - Отключить все логи', value: 'NONE' },
+        { title: 'ERROR - Только ошибки', value: 'ERROR' },
+        { title: 'WARN - Предупреждения и ошибки', value: 'WARN' },
+        { title: 'INFO - Информация, предупреждения и ошибки', value: 'INFO' },
+        { title: 'DEBUG - Отладочная информация', value: 'DEBUG' },
+        { title: 'TRACE - Полная трассировка', value: 'TRACE' },
+      ];
+
+      const choicesWithCurrent = levelChoices.map((choice) => {
+        const isCurrent = choice.value === currentLogLevel;
+        return {
+          ...choice,
+          title: isCurrent ? `${choice.title} ← текущий` : choice.title,
+        };
+      });
+
+      const { level } = await prompts({
+        type: 'select',
+        name: 'level',
+        message: `Выберите уровень логирования (текущий: ${currentLogLevel}):`,
+        choices: choicesWithCurrent,
+        initial: ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'].indexOf(
+          currentLogLevel,
+        ),
+      });
+
+      if (level) {
+        configManager.setConfigSettings(configId, { logLevel: level });
+        console.log(chalk.green(`\n✅ Уровень логирования установлен: ${level}\n`));
+        console.log(
+          chalk.yellow(
+            '💡 Примечание: переменная окружения LOG_LEVEL имеет приоритет над этой настройкой\n',
+          ),
+        );
+      }
+    } else if (action === 'set-use-mocks') {
+      const { useMocks } = await prompts({
+        type: 'confirm',
+        name: 'useMocks',
+        message: 'Использовать локальные моки для host?',
+        initial: useLocalMocks,
+      });
+
+      if (useMocks !== undefined) {
+        configManager.setConfigSettings(configId, { useLocalMocks: useMocks });
+        const status = useMocks ? 'включены' : 'отключены';
+        console.log(chalk.green(`\n✅ Локальные моки ${status}\n`));
+        
+        if (!useMocks && !apiUrl) {
+          console.log(
+            chalk.yellow(
+              '⚠️  Внимание: API URL не настроен. Настройте его в следующем пункте меню.\n',
+            ),
+          );
+        }
+      }
+    } else if (action === 'set-api-url') {
+      const { url } = await prompts({
+        type: 'text',
+        name: 'url',
+        message: 'Введите API URL:',
+        initial: apiUrl || 'http://localhost:3000',
+        validate: (value) => {
+          if (!value || value.trim() === '') {
+            return 'URL не может быть пустым';
+          }
+          try {
+            new URL(value);
+            return true;
+          } catch {
+            return 'Введите корректный URL';
+          }
+        },
+      });
+
+      if (url) {
+        configManager.setConfigSettings(configId, { apiUrl: url.trim() });
+        console.log(chalk.green(`\n✅ API URL сохранен: ${url}\n`));
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
 
@@ -627,13 +745,29 @@ async function selectConfiguration(configManager, configId) {
     }
   }
 
+  // Показываем настройки конфигурации
+  const settings = configManager.getConfigSettings(configId);
+  console.log(chalk.yellow('\nНастройки конфигурации:'));
+  console.log(
+    `  Уровень логирования: ${settings.logLevel || 'INFO'}`,
+  );
+  console.log(
+    `  Использовать локальные моки: ${settings.useLocalMocks !== false ? 'Да' : 'Нет'}`,
+  );
+  if (!settings.useLocalMocks && settings.apiUrl) {
+    console.log(`  API URL: ${settings.apiUrl}`);
+  } else if (!settings.useLocalMocks && !settings.apiUrl) {
+    console.log(chalk.yellow('  API URL: ⚠️ не настроен'));
+  }
+
   const { action } = await prompts({
     type: 'select',
     name: 'action',
     message: '\nЧто сделать?',
     choices: [
       { title: '→ Запустить', value: 'run' },
-      { title: '→ Редактировать', value: 'edit' },
+      { title: '→ Редактировать модули', value: 'edit' },
+      { title: '→ Настроить параметры', value: 'settings' },
       { title: '→ Удалить', value: 'delete' },
       { title: '→ Назад', value: 'back' },
     ],
@@ -735,7 +869,11 @@ async function ensureDefaultConfig(configManager, moduleDiscovery) {
       };
     }
 
-    configManager.create('Development', modules, 'Все модули локально с HMR');
+    configManager.create('Development', modules, 'Все модули локально с HMR', {
+      logLevel: 'INFO',
+      useLocalMocks: true,
+      apiUrl: '',
+    });
     console.log(
       chalk.green('✅ Создана конфигурация "Development" по умолчанию\n'),
     );
@@ -827,6 +965,12 @@ async function main() {
               menuChoice.config,
             );
             return; // Выходим после запуска Vite
+          } else if (action === 'settings') {
+            // Редактирование настроек конфигурации
+            await editConfigurationSettings(
+              configManager,
+              menuChoice.config,
+            );
           } else if (action === 'edit') {
             // Редактирование конфигурации
             const normalModules = await moduleDiscovery.getNormalModules();

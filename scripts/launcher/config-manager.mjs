@@ -95,7 +95,7 @@ export class ConfigManager {
    * @param {string} description
    * @returns {string} ID созданной конфигурации
    */
-  create(name, modules, description = '') {
+  create(name, modules, description = '', settings = {}) {
     const id = this.generateId(name);
     this.config.configurations[id] = {
       name,
@@ -104,6 +104,14 @@ export class ConfigManager {
       updatedAt: new Date().toISOString(),
       usageCount: 0,
       modules,
+      // Настройки конфигурации
+      settings: {
+        logLevel: settings.logLevel || 'INFO',
+        useLocalMocks:
+          settings.useLocalMocks !== undefined ? settings.useLocalMocks : true,
+        apiUrl: settings.apiUrl || '',
+        ...settings,
+      },
     };
     this.save();
     return id;
@@ -247,38 +255,76 @@ export class ConfigManager {
   }
 
   /**
-   * Получить настройку использования локальных моков
+   * Получить настройки конфигурации
+   * @param {string} configId - ID конфигурации
+   * @returns {Object} Настройки конфигурации
+   */
+  getConfigSettings(configId) {
+    const config = this.get(configId);
+    if (!config) {
+      return {
+        logLevel: 'INFO',
+        useLocalMocks: true,
+        apiUrl: '',
+      };
+    }
+    return (
+      config.settings || {
+        logLevel: 'INFO',
+        useLocalMocks: true,
+        apiUrl: '',
+      }
+    );
+  }
+
+  /**
+   * Установить настройки конфигурации
+   * @param {string} configId - ID конфигурации
+   * @param {Object} settings - Настройки
+   */
+  setConfigSettings(configId, settings) {
+    const config = this.get(configId);
+    if (!config) {
+      throw new Error(`Configuration ${configId} not found`);
+    }
+    config.settings = {
+      ...(config.settings || {}),
+      ...settings,
+    };
+    config.updatedAt = new Date().toISOString();
+    this.save();
+  }
+
+  // Оставляем глобальные методы для обратной совместимости, но они теперь используют дефолтные значения
+  /**
+   * Получить настройку использования локальных моков (deprecated - используйте getConfigSettings)
    * @returns {boolean}
    */
   getUseLocalMocks() {
-    return this.config.useLocalMocks !== undefined
-      ? this.config.useLocalMocks
-      : true; // По умолчанию true
+    return true; // По умолчанию true
   }
 
   /**
-   * Установить настройку использования локальных моков
+   * Установить настройку использования локальных моков (deprecated - используйте setConfigSettings)
    * @param {boolean} useLocalMocks - Использовать локальные моки (true) или реальный API (false)
    */
   setUseLocalMocks(useLocalMocks) {
-    this.config.useLocalMocks = Boolean(useLocalMocks);
-    this.save();
+    // Deprecated - настройки теперь в конфигурациях
   }
 
   /**
-   * Получить URL API сервера
+   * Получить URL API сервера (deprecated - используйте getConfigSettings)
    * @returns {string}
    */
   getApiUrl() {
-    return this.config.apiUrl || '';
+    return '';
   }
 
   /**
-   * Установить URL API сервера
+   * Установить URL API сервера (deprecated - используйте setConfigSettings)
    * @param {string} url - URL API сервера
    */
   setApiUrl(url) {
-    this.config.apiUrl = url.trim();
-    this.save();
+    // Deprecated - настройки теперь в конфигурациях
   }
 }
