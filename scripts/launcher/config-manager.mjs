@@ -200,12 +200,13 @@ export class ConfigManager {
    * @param {string} url
    */
   setRemoteServerUrl(url) {
-    this.config.remoteServerUrl = url.trim();
+    // Нормализуем URL: убираем пробелы и завершающие слеши
+    this.config.remoteServerUrl = url.trim().replace(/\/+$/, '');
     this.save();
   }
 
   /**
-   * Получить URL для remote модуля
+   * Получить URL для remote модуля (стандартный путь)
    * @param {string} moduleName
    * @returns {string}
    */
@@ -213,8 +214,13 @@ export class ConfigManager {
     if (!this.isRemoteAvailable()) {
       throw new Error('Remote Server URL не настроен');
     }
-    const baseUrl = this.config.remoteServerUrl.replace(/\/$/, '');
-    return `${baseUrl}/modules/${moduleName}/remoteEntry.js`;
+    // Убираем завершающий слеш и нормализуем URL
+    const baseUrl = this.config.remoteServerUrl.trim().replace(/\/+$/, '');
+    // Убираем начальный слеш из пути модуля, чтобы избежать двойных слешей
+    return `${baseUrl}/modules/${moduleName}/latest/remoteEntry.js`.replace(
+      /\/+/g,
+      '/',
+    );
   }
 
   /**

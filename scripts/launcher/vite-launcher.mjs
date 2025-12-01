@@ -25,7 +25,15 @@ export class ViteLauncher {
     fs.mkdirSync(launcherDir, { recursive: true });
 
     // 2. Сохранить манифест в .launcher/current-manifest.json
+    // Манифест всегда генерируется заново при каждом запуске конфигурации,
+    // поэтому мы всегда перезаписываем файл актуальными данными
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8');
+    console.log(
+      `[ViteLauncher] Манифест сохранен: ${manifest.modules.length} модулей, ` +
+        `${Object.keys(manifest.data?.features || {}).length} features, ` +
+        `${Object.keys(manifest.data?.permissions || {}).length} permissions, ` +
+        `${Object.keys(manifest.data?.params || {}).length} params`,
+    );
 
     // 3. Определить локальные модули для ENV
     const localModules = manifest.modules

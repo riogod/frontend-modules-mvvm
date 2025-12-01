@@ -95,7 +95,7 @@ async function showMainMenu(configManager) {
 /**
  * Получить отображаемое имя источника модуля
  */
-function getSourceDisplayName(source, isRemoteAvailable, remoteUrl) {
+function getSourceDisplayName(source, isRemoteAvailable, remoteUrl, customUrl) {
   switch (source) {
     case 'local':
       return '🟢 LOCAL';
@@ -103,6 +103,10 @@ function getSourceDisplayName(source, isRemoteAvailable, remoteUrl) {
       return isRemoteAvailable
         ? `🔵 REMOTE (${remoteUrl})`
         : '🔒 REMOTE (недоступно)';
+    case 'remote_custom':
+      return customUrl
+        ? `🟣 REMOTE_CUSTOM (${customUrl})`
+        : '🟣 REMOTE_CUSTOM (не настроено)';
     case 'skip':
     default:
       return '⏭️  Пропустить';
@@ -122,8 +126,11 @@ async function selectModuleSource(moduleName, currentSource, configManager) {
   ];
 
   if (isRemoteAvailable) {
+    // Нормализуем URL для отображения
+    const normalizedUrl = remoteUrl.trim().replace(/\/+$/, '');
+    const displayUrl = `${normalizedUrl}/modules/${moduleName}/latest/remoteEntry.js`.replace(/\/+/g, '/');
     choices.splice(1, 0, {
-      title: `🔵 REMOTE (${remoteUrl})`,
+      title: `🔵 REMOTE (${displayUrl})`,
       value: 'remote',
     });
   } else {
@@ -133,6 +140,12 @@ async function selectModuleSource(moduleName, currentSource, configManager) {
       disabled: true,
     });
   }
+
+  // REMOTE_CUSTOM всегда доступен
+  choices.splice(choices.length - 1, 0, {
+    title: '🟣 REMOTE_CUSTOM (кастомный URL)',
+    value: 'remote_custom',
+  });
 
   // Находим текущий выбор
   const currentIndex = choices.findIndex((c) => c.value === currentSource);
@@ -178,26 +191,46 @@ async function editModulesMenu(normalModules, modules, configManager) {
 
     // Показываем список модулей с текущими настройками
     normalModules.forEach((module) => {
-      const currentSource = modules[module.name]?.source || 'skip';
+      const moduleConfig = modules[module.name] || {};
+      const currentSource = moduleConfig.source || 'skip';
+      const customUrl = moduleConfig.customUrl || '';
+      const useLocalMocks = moduleConfig.useLocalMocks !== undefined 
+        ? moduleConfig.useLocalMocks 
+        : true;
       const displayName = getSourceDisplayName(
         currentSource,
         isRemoteAvailable,
         remoteUrl,
+        customUrl,
       );
-      console.log(`  ${module.name}: ${displayName}`);
+      // Показываем статус моков только если модуль не пропущен
+      const mocksStatus = currentSource === 'skip' 
+        ? '' 
+        : (useLocalMocks ? ' ✅ моки' : ' 🔵 удаленный сервис');
+      console.log(`  ${module.name}: ${displayName}${mocksStatus}`);
     });
 
     console.log(''); // Пустая строка для разделения
 
     const choices = normalModules.map((module) => {
-      const currentSource = modules[module.name]?.source || 'skip';
+      const moduleConfig = modules[module.name] || {};
+      const currentSource = moduleConfig.source || 'skip';
+      const customUrl = moduleConfig.customUrl || '';
+      const useLocalMocks = moduleConfig.useLocalMocks !== undefined 
+        ? moduleConfig.useLocalMocks 
+        : true;
       const displayName = getSourceDisplayName(
         currentSource,
         isRemoteAvailable,
         remoteUrl,
+        customUrl,
       );
+      // Показываем статус моков только если модуль не пропущен
+      const mocksStatus = currentSource === 'skip' 
+        ? '' 
+        : (useLocalMocks ? ' ✅ моки' : ' 🔵 удаленный сервис');
       return {
-        title: `${module.name}: ${displayName}`,
+        title: `${module.name}: ${displayName}${mocksStatus}`,
         value: module.name,
       };
     });
@@ -233,7 +266,8 @@ async function editModulesMenu(normalModules, modules, configManager) {
     }
 
     // Редактируем выбранный модуль
-    const currentSource = modules[selectedModule]?.source || 'skip';
+    const moduleConfig = modules[selectedModule] || {};
+    const currentSource = moduleConfig.source || 'skip';
     const newSource = await selectModuleSource(
       selectedModule,
       currentSource,
@@ -247,7 +281,10 @@ async function editModulesMenu(normalModules, modules, configManager) {
       // Обновляем или добавляем модуль
       modules[selectedModule] = {
         source: newSource,
-        priority: 1,
+        priority: moduleConfig.priority || 1,
+        useLocalMocks: moduleConfig.useLocalMocks !== undefined 
+          ? moduleConfig.useLocalMocks 
+          : true, // По умолчанию используем моки
       };
 
       if (newSource === 'local') {
@@ -255,7 +292,43 @@ async function editModulesMenu(normalModules, modules, configManager) {
       } else if (newSource === 'remote') {
         modules[selectedModule].url =
           configManager.getRemoteModuleUrl(selectedModule);
+      } else if (newSource === 'remote_custom') {
+        // Запрашиваем кастомный URL
+        const { customUrl } = await prompts({
+          type: 'text',
+          name: 'customUrl',
+          message: 'Введите URL до remoteEntry.js:',
+          initial: moduleConfig.customUrl || 'https://',
+          validate: (value) => {
+            if (!value || value.trim() === '') {
+              return 'URL не может быть пустым';
+            }
+            try {
+              new URL(value);
+              return true;
+            } catch {
+              return 'Введите корректный URL';
+            }
+          },
+        });
+
+        if (customUrl) {
+          modules[selectedModule].customUrl = customUrl.trim();
+          modules[selectedModule].url = customUrl.trim();
+        }
       }
+
+      // Запрашиваем использование локальных моков для всех типов модулей
+      const { useLocalMocks } = await prompts({
+        type: 'confirm',
+        name: 'useLocalMocks',
+        message: 'Использовать локальные моки для этого модуля? (Нет = использовать удаленный сервис)',
+        initial: moduleConfig.useLocalMocks !== undefined 
+          ? moduleConfig.useLocalMocks 
+          : true,
+      });
+
+      modules[selectedModule].useLocalMocks = useLocalMocks;
     }
   }
 }
@@ -534,9 +607,23 @@ async function selectConfiguration(configManager, configId) {
     console.log(chalk.gray('  (нет модулей)'));
   } else {
     for (const [name, moduleConfig] of Object.entries(config.modules || {})) {
-      const icon = moduleConfig.source === 'local' ? '🟢' : '🔵';
-      const source = moduleConfig.source === 'local' ? 'LOCAL' : 'REMOTE';
-      console.log(`  ${icon} ${name}: ${source}`);
+      let icon = '⏭️';
+      let source = 'SKIP';
+      if (moduleConfig.source === 'local') {
+        icon = '🟢';
+        source = 'LOCAL';
+      } else if (moduleConfig.source === 'remote') {
+        icon = '🔵';
+        source = 'REMOTE';
+      } else if (moduleConfig.source === 'remote_custom') {
+        icon = '🟣';
+        source = 'REMOTE_CUSTOM';
+      }
+      // Показываем статус моков только если модуль не пропущен
+      const mocksStatus = source === 'SKIP' 
+        ? '' 
+        : (moduleConfig.useLocalMocks !== false ? ' ✅ моки' : ' 🔵 удаленный сервис');
+      console.log(`  ${icon} ${name}: ${source}${mocksStatus}`);
     }
   }
 
@@ -616,8 +703,11 @@ async function runConfiguration(
     }
   }
 
-  // Генерируем манифест (передаем moduleDiscovery для проверки существования модулей)
+  // Генерируем манифест заново при каждом запуске
+  // Это гарантирует, что манифест всегда содержит актуальные данные из конфигов модулей
+  console.log(chalk.cyan('📋 Генерация манифеста с актуальными данными из модулей...\n'));
   const manifest = manifestGenerator.generate(config, moduleDiscovery);
+  console.log(chalk.green('✅ Манифест сгенерирован\n'));
 
   // Увеличиваем счетчик использования
   configManager.incrementUsage(configId);
@@ -641,6 +731,7 @@ async function ensureDefaultConfig(configManager, moduleDiscovery) {
         source: 'local',
         path: `packages/${module.name}`,
         priority: 1,
+        useLocalMocks: true, // По умолчанию используем моки
       };
     }
 
@@ -747,7 +838,12 @@ async function main() {
             for (const [name, moduleConfig] of Object.entries(currentModules)) {
               if (moduleConfig.source === 'local') {
                 if (moduleDiscovery.moduleExists(name)) {
-                  filteredModules[name] = moduleConfig;
+                  filteredModules[name] = {
+                    ...moduleConfig,
+                    useLocalMocks: moduleConfig.useLocalMocks !== undefined 
+                      ? moduleConfig.useLocalMocks 
+                      : true, // По умолчанию используем моки
+                  };
                 } else {
                   removedCount++;
                   console.log(
@@ -757,7 +853,7 @@ async function main() {
                   );
                 }
               } else {
-                // REMOTE модули не проверяем
+                // REMOTE и REMOTE_CUSTOM модули не проверяем
                 filteredModules[name] = moduleConfig;
               }
             }
