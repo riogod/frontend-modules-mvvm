@@ -17,4 +17,25 @@ export default {
     i18n.addResourceBundle('ru', 'api', ru_api);
   },
   mockHandlers: handlers,
+  mockModuleInfo: {
+    name: 'api_example',
+    version: '1.0.0',
+    loadType: 'normal',
+    loadPriority: 2,
+    remoteEntry: '',
+  },
+  mockModuleData: {
+    features: {
+      'api.module.load.feature': true,
+      'api.module.request.feature': true,
+    },
+    permissions: {
+      'api.module.load.permission': true,
+      'api.module.request.permission': true,
+    },
+    params: {
+      'api.module.load.param': 'SomeValue',
+      'api.module.request.param': 'SomeValue',
+    },
+  },
 } as ModuleConfig;

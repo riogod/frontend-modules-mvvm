@@ -37,4 +37,10 @@ export interface ModuleConfig {
    */
   onModuleInit?: (bootstrap: Bootstrap) => void | Promise<void>;
   mockHandlers?: RequestHandler[];
+  mockModuleData?: {
+    features?: Record<string, boolean>;
+    permissions?: Record<string, boolean>;
+    params?: Record<string, unknown>;
+  };
+  mockModuleInfo: ModuleManifestEntry;
 }

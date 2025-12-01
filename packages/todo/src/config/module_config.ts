@@ -16,4 +16,25 @@ export default {
     i18n.addResourceBundle('en', 'todo', en_todo);
     i18n.addResourceBundle('ru', 'todo', ru_todo);
   },
+  mockModuleInfo: {
+    name: 'todo',
+    version: '1.0.1',
+    loadType: 'normal',
+    loadPriority: 1,
+    remoteEntry: '',
+    dependencies: [],
+    featureFlags: ['todo.module.load.feature'],
+    accessPermissions: ['todo.module.load.permission'],
+  },
+  mockModuleData: {
+    features: {
+      'todo.module.load.feature': true,
+    },
+    permissions: {
+      'todo.module.load.permission': true,
+    },
+    params: {
+      'todo.module.load.param': 'SomeValue',
+    },
+  },
 } as ModuleConfig;
