@@ -14,7 +14,7 @@ import {
 import { type Bootstrap } from '..';
 import { AbstractInitHandler } from './AbstractInitHandler';
 import { IOC_CORE_TOKENS, log } from '@platform/core';
-import { AppStartRepository } from '../services/accessControl/data/app.repository';
+import { AppStartRepository } from '../services/appStart/data/app.repository';
 
 /**
  * Обработчик инициализации DI контейнера.
