@@ -19,10 +19,10 @@ import { AppStartRepository } from '../services/appStart/data/app.repository';
 /**
  * Обработчик инициализации DI контейнера.
  */
-export class AccessControlHandler extends AbstractInitHandler {
+export class OnAppStartHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
-    log.debug('AccessControlHandler: starting', {
-      prefix: 'bootstrap.handlers.AccessControlHandler',
+    log.debug('OnAppStartHandler: starting', {
+      prefix: 'bootstrap.handlers.OnAppStartHandler',
     });
 
     // Binding Repositories to DI container
@@ -80,10 +80,19 @@ export class AccessControlHandler extends AbstractInitHandler {
     );
 
     // Используем user данные из манифеста, если они есть
+    // Используем сохраненный манифест, если он есть, чтобы избежать повторного запроса
+    const manifest = bootstrap.getAppStartManifest();
     const userData = bootstrap.getUserData();
 
-    if (userData) {
-      // Используем данные из манифеста
+    if (manifest && manifest.data) {
+      // Используем данные из сохраненного манифеста
+      accessControlModel.setFeatureFlags(manifest.data.features || {});
+      accessControlModel.setPermissions(manifest.data.permissions || {});
+      log.debug('AccessControlHandler: using data from cached manifest', {
+        prefix: 'bootstrap.handlers.OnAppStartHandler',
+      });
+    } else if (userData) {
+      // Fallback: используем user данные из манифеста (если манифест не содержит data)
       // Преобразуем массивы строк в объекты Record<string, boolean>
       const permissions: Record<string, boolean> = {};
       for (const perm of userData.permissions) {
@@ -98,10 +107,10 @@ export class AccessControlHandler extends AbstractInitHandler {
       accessControlModel.setPermissions(permissions);
       accessControlModel.setFeatureFlags(featureFlags);
       log.debug('AccessControlHandler: using user data from manifest', {
-        prefix: 'bootstrap.handlers.AccessControlHandler',
+        prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
     } else {
-      // Fallback: загружаем из API или используем defaults
+      // Последний fallback: загружаем из API только если нет данных в манифесте
       const appStartRepository = bootstrap.di.get<AppStartRepository>(
         IOC_CORE_TOKENS.REPOSITORY_APP_START,
       );
@@ -109,13 +118,13 @@ export class AccessControlHandler extends AbstractInitHandler {
 
       accessControlModel.setFeatureFlags(appStart.data.features);
       accessControlModel.setPermissions(appStart.data.permissions);
-      log.debug('AccessControlHandler: using user data from API', {
-        prefix: 'bootstrap.handlers.AccessControlHandler',
+      log.debug('AccessControlHandler: using user data from API (fallback)', {
+        prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
     }
 
-    log.debug('AccessControlHandler: completed', {
-      prefix: 'bootstrap.handlers.AccessControlHandler',
+    log.debug('OnAppStartHandler: completed', {
+      prefix: 'bootstrap.handlers.OnAppStartHandler',
     });
     return await super.handle(bootstrap);
   }

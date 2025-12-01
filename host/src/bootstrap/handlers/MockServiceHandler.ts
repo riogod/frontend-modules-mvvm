@@ -30,6 +30,9 @@ export class MockServiceHandler extends AbstractInitHandler {
         prefix: 'bootstrap.handlers.MockServiceHandler',
       });
     } else if (process.env.NODE_ENV === 'development' && !useLocalMocks) {
+      // Останавливаем MSW worker, если он был запущен ранее
+      // Это гарантирует, что запросы будут идти на реальный сервер
+      bootstrap.mockService?.stop();
       log.debug(
         'MockServiceHandler: моки отключены, используется реальный API',
         {

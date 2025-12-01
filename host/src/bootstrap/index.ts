@@ -15,7 +15,8 @@ import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { type IAppConfig } from '../config/app';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
 import { type Module } from '../modules/interface';
-import { AccessControlHandler } from './handlers/AccessControlHandler';
+import type { AppStartDTO } from './services/appStart/data/app.dto';
+import { OnAppStartHandler } from './handlers/OnAppStartHandler';
 import { ModulesDiscoveryHandler } from './handlers/ModulesDiscoveryHandler';
 
 /**
@@ -41,7 +42,7 @@ export const initBootstrap = async (
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))
     .setNext(new MockServiceHandler(config))
-    .setNext(new AccessControlHandler(config))
+    .setNext(new OnAppStartHandler(config))
     .setNext(new ModulesHandler(config))
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
@@ -77,6 +78,7 @@ export class Bootstrap {
   private discoveredModules: Module[] = [];
   private userData: { permissions: string[]; featureFlags: string[] } | null =
     null;
+  private appStartManifest: AppStartDTO | null = null;
 
   /**
    * @return {APIClient} Клиент для взаимодействия с api
@@ -214,5 +216,22 @@ export class Bootstrap {
       prefix: 'bootstrap.getDiscoveredModules',
     });
     return this.discoveredModules;
+  }
+
+  /**
+   * Сохраняет манифест приложения для повторного использования
+   */
+  setAppStartManifest(manifest: AppStartDTO): void {
+    log.debug('Setting app start manifest', {
+      prefix: 'bootstrap.setAppStartManifest',
+    });
+    this.appStartManifest = manifest;
+  }
+
+  /**
+   * Получает сохраненный манифест приложения
+   */
+  getAppStartManifest(): AppStartDTO | null {
+    return this.appStartManifest;
   }
 }

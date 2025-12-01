@@ -10,11 +10,11 @@ export class APIClient {
   api: AxiosInstance;
   errorCb = new Map<string, (error: AxiosError) => void>();
 
-  constructor(private baseURL: string) {
+  constructor(private baseURL: string, withCredentials: boolean = false) {
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
-      withCredentials: true,
+      withCredentials: withCredentials,
     });
   }
 

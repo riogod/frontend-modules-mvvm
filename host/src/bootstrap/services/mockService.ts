@@ -7,6 +7,7 @@ import { log } from '@platform/core';
  */
 export class BootstrapMockService {
   mswWorker: SetupWorker = setupWorker();
+  private isStarted: boolean = false;
 
   /**
    * Инициализирует запуск сервиса
@@ -29,9 +30,36 @@ export class BootstrapMockService {
     await this.mswWorker.start({
       onUnhandledRequest: 'bypass',
     });
+    this.isStarted = true;
     log.debug('MSW worker started successfully', {
       prefix: 'bootstrap.mockService',
     });
+  }
+
+  /**
+   * Останавливает MSW worker
+   * Используется когда моки отключены, чтобы гарантировать, что запросы идут на реальный сервер
+   *
+   * @return {void}
+   */
+  stop(): void {
+    if (!this.isStarted || !this.mswWorker) {
+      return;
+    }
+
+    log.debug('Stopping MSW worker', { prefix: 'bootstrap.mockService' });
+    try {
+      this.mswWorker.stop();
+      this.isStarted = false;
+      log.debug('MSW worker stopped successfully', {
+        prefix: 'bootstrap.mockService',
+      });
+    } catch (error) {
+      log.warn('Failed to stop MSW worker', {
+        prefix: 'bootstrap.mockService',
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   /**

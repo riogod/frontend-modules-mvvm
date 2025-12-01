@@ -1,6 +1,7 @@
 import { AbstractInitHandler } from './AbstractInitHandler';
 import type { Bootstrap } from '..';
 import type { AppStartResponse } from '../interface';
+import type { AppStartDTO } from '../services/appStart/data/app.dto';
 import { HttpMethod, log } from '@platform/core';
 // Типы манифеста из единого источника
 import type { ModuleManifestEntry } from '@platform/vite-config/plugins/types';
@@ -36,7 +37,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
 
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
     try {
-      // 1. Загружаем манифест
+      // 1. Загружаем манифест (он автоматически сохраняется в loadManifest)
       const manifest = await this.loadManifest(bootstrap);
       log.debug(
         `ModulesDiscoveryHandler: manifest loaded, modules=${(manifest.modules || []).length}, hasUser=${!!manifest.user}`,
@@ -48,7 +49,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
         bootstrap.setUserData(manifest.user);
       }
 
-      // 3. Обрабатываем модули из манифеста
+      // 4. Обрабатываем модули из манифеста
       const manifestModules: ModuleManifestEntry[] = manifest.modules || [];
       const modules = await this.processModules(manifestModules);
       log.debug(
@@ -56,7 +57,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
         { prefix: 'bootstrap.handlers.ModulesDiscoveryHandler' },
       );
 
-      // 4. Сохраняем модули в Bootstrap
+      // 5. Сохраняем модули в Bootstrap
       bootstrap.setDiscoveredModules(modules);
     } catch (error) {
       log.error(
@@ -84,10 +85,59 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadManifest',
     });
     const apiClient = bootstrap.getAPIClient;
-    return apiClient.request<never, AppStartResponse>({
+    const response = await apiClient.request<never, AppStartResponse>({
       method: HttpMethod.GET,
       route: this.apiEndpoint,
     });
+
+    // Преобразуем AppStartResponse в AppStartDTO для сохранения
+    // Если ответ уже имеет структуру AppStartDTO (с data), используем его
+    // Иначе преобразуем AppStartResponse в AppStartDTO
+    const manifestDTO = this.responseToDTO(response);
+
+    // Сохраняем манифест для повторного использования
+    bootstrap.setAppStartManifest(manifestDTO);
+
+    return response;
+  }
+
+  /**
+   * Преобразует AppStartResponse в AppStartDTO
+   */
+  private responseToDTO(response: AppStartResponse): AppStartDTO {
+    // Если ответ уже имеет структуру AppStartDTO (с data), возвращаем как есть
+    if (
+      'data' in response &&
+      response.data &&
+      typeof response.data === 'object'
+    ) {
+      return response as unknown as AppStartDTO;
+    }
+
+    // Иначе преобразуем AppStartResponse в AppStartDTO
+    // Извлекаем features и permissions из user данных, если они есть
+    const features: Record<string, boolean> = {};
+    const permissions: Record<string, boolean> = {};
+
+    if (response.user) {
+      // Преобразуем массивы строк в объекты Record<string, boolean>
+      for (const flag of response.user.featureFlags || []) {
+        features[flag] = true;
+      }
+      for (const perm of response.user.permissions || []) {
+        permissions[perm] = true;
+      }
+    }
+
+    return {
+      status: 'success',
+      data: {
+        features,
+        permissions,
+        params: {},
+        modules: response.modules || [],
+      },
+    };
   }
 
   private async processModules(
