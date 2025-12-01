@@ -208,40 +208,10 @@ export class ModuleLifecycleManager {
       return;
     }
 
-    // Добавляем мок-обработчики ПЕРЕД вызовом onModuleInit
-    // Это важно, чтобы handlers были доступны, когда onModuleInit делает запросы к API
-    if (process.env.NODE_ENV === 'development' && config.mockHandlers) {
-      if (!bootstrap.mockService) {
-        log.warn(`Mock service not available for module: ${module.name}`, {
-          prefix: 'bootstrap.moduleLoader.lifecycleManager',
-        });
-      } else if (this.initializedModules.has(module.name)) {
-        log.debug(
-          `Mock handlers for module ${module.name} already added, skipping`,
-          { prefix: 'bootstrap.moduleLoader.lifecycleManager' },
-        );
-      } else {
-        try {
-          log.debug(
-            `Adding mock handlers for module: ${module.name} (${config.mockHandlers.length} handlers)`,
-            { prefix: 'bootstrap.moduleLoader.lifecycleManager' },
-          );
-          bootstrap.mockService.addHandlers(config.mockHandlers);
-          this.initializedModules.add(module.name);
-          log.debug(
-            `Mock handlers added successfully for module: ${module.name}`,
-            { prefix: 'bootstrap.moduleLoader.lifecycleManager' },
-          );
-        } catch (error) {
-          log.error(
-            `Failed to add mock handlers for module: ${module.name}`,
-            { prefix: 'bootstrap.moduleLoader.lifecycleManager' },
-            error,
-          );
-          // Не прерываем выполнение, продолжаем инициализацию модуля
-        }
-      }
-    } else if (config.mockHandlers && process.env.NODE_ENV !== 'development') {
+    // Mock handlers теперь регистрируются в proxy-server (порт 1337)
+    // Proxy-server загружает handlers из packages/{moduleName}/src/config/mocks/index.ts
+    // Браузерный MSW worker не используется, так как все запросы идут через Vite proxy на proxy-server
+    if (config.mockHandlers && process.env.NODE_ENV !== 'development') {
       log.debug(
         `Mock handlers skipped for module: ${module.name} (not in development mode)`,
         { prefix: 'bootstrap.moduleLoader.lifecycleManager' },

@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ProxyServerLauncher } from './proxy-server-launcher.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,32 +45,45 @@ export class ViteLauncher {
     // Приоритет: переменная окружения > настройка из конфигурации > значение по умолчанию
     // Получаем настройки из конфигурации (config.settings)
     const configSettings = config.settings || {};
-    const logLevel = process.env.LOG_LEVEL 
-      || configSettings.logLevel 
-      || 'INFO';
+    const logLevel = process.env.LOG_LEVEL || configSettings.logLevel || 'INFO';
 
     // Настройка использования моков
-    const useLocalMocks = process.env.VITE_USE_LOCAL_MOCKS !== undefined
-      ? process.env.VITE_USE_LOCAL_MOCKS === 'true'
-      : (configSettings.useLocalMocks !== undefined ? configSettings.useLocalMocks : true);
+    const useLocalMocks =
+      process.env.VITE_USE_LOCAL_MOCKS !== undefined
+        ? process.env.VITE_USE_LOCAL_MOCKS === 'true'
+        : configSettings.useLocalMocks !== undefined
+          ? configSettings.useLocalMocks
+          : true;
 
-    // Настройка API URL (используется, если моки отключены)
-    const apiUrl = process.env.VITE_API_URL
-      || (configSettings.apiUrl || '');
-
+    // В dev режиме всегда используем пустой API URL, чтобы запросы шли через Vite proxy на proxy-server
+    // Vite proxy перенаправит запросы на localhost:1337
+    // Proxy-server сам решит, использовать моки или проксировать на реальный сервер
+    // Отключаем MSW в браузере, так как proxy-server использует MSW для Node.js
     const env = {
       ...process.env,
       VITE_LOCAL_MODULES: localModules.join(','),
       LOG_LEVEL: logLevel,
       VITE_USE_LOCAL_MOCKS: String(useLocalMocks),
+      // В dev режиме всегда используем пустой URL для работы через Vite proxy
+      VITE_API_URL: '',
+      // Отключаем MSW в браузере, так как используется proxy-server
+      VITE_USE_PROXY_SERVER: 'true',
     };
 
-    // Добавляем API URL только если он задан
-    if (apiUrl) {
-      env.VITE_API_URL = apiUrl;
-    }
+    // 5. Запустить proxy-server параллельно
+    const proxyLauncher = new ProxyServerLauncher();
+    const proxyProcess = await proxyLauncher.start();
 
-    // 5. Запустить Vite
+    // Обработка завершения proxy-server
+    proxyProcess.on('close', (code) => {
+      if (code !== 0) {
+        console.error(
+          `[ViteLauncher] Proxy-server process exited with code ${code}`,
+        );
+      }
+    });
+
+    // 6. Запустить Vite
     const viteProcess = spawn('vite', ['--config', 'host/vite.config.mts'], {
       cwd: rootDir,
       env,
@@ -77,14 +91,30 @@ export class ViteLauncher {
       shell: process.platform === 'win32',
     });
 
-    // Обработка завершения процесса
+    // Обработка завершения процесса Vite
     viteProcess.on('close', (code) => {
+      // Останавливаем proxy-server при завершении Vite
+      proxyLauncher.stop(proxyProcess);
       if (code !== 0) {
-        console.error(`Vite process exited with code ${code}`);
+        console.error(`[ViteLauncher] Vite process exited with code ${code}`);
       }
+    });
+
+    // Обработка сигналов для корректного завершения
+    process.on('SIGINT', () => {
+      console.log('\n[ViteLauncher] Получен SIGINT, останавливаем процессы...');
+      proxyLauncher.stop(proxyProcess);
+      viteProcess.kill('SIGTERM');
+    });
+
+    process.on('SIGTERM', () => {
+      console.log(
+        '\n[ViteLauncher] Получен SIGTERM, останавливаем процессы...',
+      );
+      proxyLauncher.stop(proxyProcess);
+      viteProcess.kill('SIGTERM');
     });
 
     return viteProcess;
   }
 }
-

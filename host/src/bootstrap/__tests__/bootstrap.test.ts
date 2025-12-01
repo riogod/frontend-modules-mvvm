@@ -5,12 +5,6 @@ import { APIClient, IOC_CORE_TOKENS } from '@platform/core';
 
 let bootstrap: Bootstrap;
 
-vi.mock('../services/mockService', () => ({
-  BootstrapMockService: class {
-    init = vi.fn();
-    addHandlers = vi.fn();
-  },
-}));
 
 const addRoutes = vi.fn();
 const registerRoutes = vi.fn();
@@ -93,13 +87,11 @@ describe('bootstrap', () => {
 
   describe('constructor', () => {
     test('should not call mock service if not in development ', () => {
-      expect(bootstrap.mockService).toBeNull();
+      // mockService больше не используется, так как все моки обрабатываются через proxy-server
     });
 
-    test('should call mock service if in development ', () => {
-      process.env.NODE_ENV = 'development';
-      bootstrap = new Bootstrap([]);
-      expect(bootstrap.mockService).not.toBeNull();
+    test.skip('should call mock service if in development ', () => {
+      // Тест пропущен: mockService больше не используется, моки обрабатываются через proxy-server
     });
   });
 
@@ -196,7 +188,8 @@ describe('bootstrap', () => {
       expect(moduleConfig.I18N).toBeCalled();
     });
 
-    test('should add mock handlers if  NODE_ENV is development, mockHandlers and mockService is defined', async () => {
+    test.skip('should add mock handlers if  NODE_ENV is development, mockHandlers and mockService is defined', async () => {
+      // Тест пропущен: mockService больше не используется, моки обрабатываются через proxy-server
       process.env.NODE_ENV = 'development';
       bootstrap = new Bootstrap(modules);
       bootstrap.initAPIClient('test');
@@ -206,7 +199,7 @@ describe('bootstrap', () => {
       await bootstrap.moduleLoader.addModules(modules);
       await bootstrap.moduleLoader.initInitModules();
 
-      expect(bootstrap.mockService).not.toBeNull();
+      // mockService больше не используется, моки обрабатываются через proxy-server
     });
   });
 });

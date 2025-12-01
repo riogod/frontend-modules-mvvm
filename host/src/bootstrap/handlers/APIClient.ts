@@ -12,10 +12,11 @@ export class APIClientHandler extends AbstractInitHandler {
     });
     const { apiUrl } = this.params;
 
-    if (!apiUrl) {
+    // В dev режиме apiUrl может быть пустой строкой (запросы идут через Vite proxy)
+    if (apiUrl === undefined) {
       throw new Error('apiUrl in application config is not defined');
     }
-    bootstrap.initAPIClient(apiUrl);
+    bootstrap.initAPIClient(apiUrl || '');
 
     log.debug('APIClientHandler: completed', {
       prefix: 'bootstrap.handlers.APIClientHandler',

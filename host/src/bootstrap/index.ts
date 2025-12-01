@@ -8,8 +8,6 @@ import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
 import { InitI18nHandler } from './handlers/InitI18nHandler';
 import i18next, { type i18n } from 'i18next';
-import { MockServiceHandler } from './handlers/MockServiceHandler';
-import { BootstrapMockService } from './services/mockService';
 import { BootstrapRouterService } from './services/routerService';
 import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { type IAppConfig } from '../config/app';
@@ -41,7 +39,6 @@ export const initBootstrap = async (
     .setNext(new RouterHandler(config))
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))
-    .setNext(new MockServiceHandler(config))
     .setNext(new OnAppStartHandler(config))
     .setNext(new ModulesHandler(config))
     .setNext(new RouterPostHandler(config))
@@ -69,7 +66,6 @@ export class Bootstrap {
   i18n: i18n = i18next;
   routerService = new BootstrapRouterService();
   moduleLoader = new BootstrapModuleLoader();
-  mockService: BootstrapMockService | null = null;
 
   private _APIClient: APIClient | null = null;
   private _di: Container = new Container({
@@ -112,12 +108,6 @@ export class Bootstrap {
     log.debug(`Bootstrap constructor: modules=${modules.length}`, {
       prefix: 'bootstrap.constructor',
     });
-    if (process.env.NODE_ENV === 'development') {
-      this.mockService = new BootstrapMockService();
-      log.debug('Bootstrap: mockService created (development mode)', {
-        prefix: 'bootstrap.constructor',
-      });
-    }
     // Модули будут добавлены в реестр при вызове initModuleLoader()
     // Это гарантирует, что все модули будут добавлены до загрузки INIT модулей
   }

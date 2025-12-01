@@ -33,13 +33,37 @@ export default defineConfig(
       }),
 
       // Middleware для /app/start (только в dev)
-      createManifestMiddleware({
-        manifest,
-        defaultUser: {
-          permissions: ['api.module.load.permission'],
-          featureFlags: ['api.module.load.feature'],
-        },
-      }),
+      // Примечание: middleware отключен, так как теперь используется proxy-server
+      // createManifestMiddleware({
+      //   manifest,
+      //   defaultUser: {
+      //     permissions: ['api.module.load.permission'],
+      //     featureFlags: ['api.module.load.feature'],
+      //   },
+      // }),
     ],
+    server: {
+      port: 4200,
+      host: 'localhost',
+      // Проксируем все API запросы на proxy-server (порт 1337)
+      // Proxy-server обрабатывает запросы через MSW или проксирует на реальный сервер
+      proxy: {
+        // Проксируем /app/start на proxy-server
+        '/app/start': {
+          target: 'http://localhost:1337',
+          changeOrigin: true,
+          secure: false,
+        },
+        // Проксируем все остальные API запросы
+        // Добавляем пути по мере необходимости или используем общий паттерн
+        '/jokes': {
+          target: 'http://localhost:1337',
+          changeOrigin: true,
+          secure: false,
+        },
+        // Можно добавить другие API пути здесь
+        // Или использовать более общий паттерн для всех API запросов
+      },
+    },
   }),
 );
