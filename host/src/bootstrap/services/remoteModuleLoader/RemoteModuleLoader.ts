@@ -18,6 +18,12 @@ export class RemoteModuleLoader {
   private cache = new Map<string, Promise<ModuleConfig>>();
   private loadedScripts = new Set<string>();
 
+  constructor() {
+    log.debug('RemoteModuleLoader: constructor', {
+      prefix: 'bootstrap.services.remoteModuleLoader',
+    });
+  }
+
   /**
    * Загружает конфиг Remote модуля
    */
@@ -26,16 +32,30 @@ export class RemoteModuleLoader {
     remoteEntry: string,
     options: LoadRemoteModuleOptions = {},
   ): Promise<ModuleConfig> {
+    log.debug(`Loading remote module: ${name} from ${remoteEntry}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+    });
     const { retries = 3, timeout = 10000, retryDelay = 1000 } = options;
     const cacheKey = `${name}:${remoteEntry}`;
 
+    log.debug(
+      `Remote module options: retries=${retries}, timeout=${timeout}ms, retryDelay=${retryDelay}ms`,
+      {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+      },
+    );
+
     // Проверяем кеш
     if (this.cache.has(cacheKey)) {
-      log.debug(`[RemoteModuleLoader] Using cached module: ${name}`, {
-        prefix: 'bootstrap.services.remoteModuleLoader',
+      log.debug(`Using cached module: ${name}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
       });
       return this.cache.get(cacheKey)!;
     }
+
+    log.debug(`Module not in cache, loading: ${name}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+    });
 
     // Создаем promise для загрузки
     const loadPromise = this.loadWithRetry(
@@ -47,12 +67,22 @@ export class RemoteModuleLoader {
     );
 
     this.cache.set(cacheKey, loadPromise);
+    log.debug(`Added to cache: ${cacheKey}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+    });
 
     try {
-      return await loadPromise;
+      const result = await loadPromise;
+      log.debug(`Remote module loaded successfully: ${name}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+      });
+      return result;
     } catch (error) {
       // Удаляем из кеша при ошибке для возможности повторной попытки
       this.cache.delete(cacheKey);
+      log.debug(`Removed from cache due to error: ${cacheKey}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+      });
       throw error;
     }
   }
@@ -64,14 +94,22 @@ export class RemoteModuleLoader {
     timeout: number,
     retryDelay: number,
   ): Promise<ModuleConfig> {
+    log.debug(
+      `Starting load with retry: ${name}, retries=${retries}, timeout=${timeout}ms`,
+      {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadWithRetry',
+      },
+    );
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        log.info(
-          `[RemoteModuleLoader] Loading ${name} (attempt ${attempt}/${retries})`,
+        log.debug(
+          `Loading ${name} (attempt ${attempt}/${retries})`,
           {
-            prefix: 'bootstrap.services.remoteModuleLoader',
+            prefix: 'bootstrap.services.remoteModuleLoader.loadWithRetry',
+          },
+          {
             remoteEntry,
             attempt,
           },
@@ -79,16 +117,18 @@ export class RemoteModuleLoader {
 
         const config = await this.loadWithTimeout(name, remoteEntry, timeout);
 
-        log.info(`[RemoteModuleLoader] Successfully loaded ${name}`, {
-          prefix: 'bootstrap.services.remoteModuleLoader',
+        log.debug(`Successfully loaded ${name}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.loadWithRetry',
         });
         return config;
       } catch (error) {
         lastError = error as Error;
-        log.warn(
-          `[RemoteModuleLoader] Failed to load ${name} (attempt ${attempt}/${retries}): ${lastError.message}`,
+        log.debug(
+          `Failed to load ${name} (attempt ${attempt}/${retries}): ${lastError.message}`,
           {
-            prefix: 'bootstrap.services.remoteModuleLoader',
+            prefix: 'bootstrap.services.remoteModuleLoader.loadWithRetry',
+          },
+          {
             error: lastError.message,
             attempt,
             retries,
@@ -96,6 +136,12 @@ export class RemoteModuleLoader {
         );
 
         if (attempt < retries) {
+          log.debug(
+            `Waiting ${retryDelay}ms before retry ${attempt + 1}/${retries}`,
+            {
+              prefix: 'bootstrap.services.remoteModuleLoader.loadWithRetry',
+            },
+          );
           await this.delay(retryDelay);
         }
       }
@@ -124,6 +170,9 @@ export class RemoteModuleLoader {
     remoteEntry: string,
     timeout: number,
   ): Promise<ModuleConfig> {
+    log.debug(`Loading with timeout: ${name}, timeout=${timeout}ms`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.loadWithTimeout',
+    });
     return Promise.race([
       this.doLoad(name, remoteEntry),
       this.createTimeoutPromise(timeout, name),
@@ -134,8 +183,14 @@ export class RemoteModuleLoader {
     timeout: number,
     name: string,
   ): Promise<never> {
+    log.debug(`Creating timeout promise: ${name}, timeout=${timeout}ms`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.createTimeoutPromise',
+    });
     return new Promise((_, reject) => {
       setTimeout(() => {
+        log.debug(`Timeout reached for module: ${name}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.createTimeoutPromise',
+        });
         const error = new RemoteModuleTimeoutError(name, timeout);
         reject(error);
       }, timeout);
@@ -146,36 +201,78 @@ export class RemoteModuleLoader {
     name: string,
     remoteEntry: string,
   ): Promise<ModuleConfig> {
+    log.debug(`Starting doLoad for module: ${name}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
     const scope = createScopeName(name);
+    log.debug(`Created scope name: ${scope} for module: ${name}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
 
     // 1. Загружаем remoteEntry.js
+    log.debug(`Loading script: ${remoteEntry}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
     await this.loadScript(remoteEntry);
+    log.debug(`Script loaded: ${remoteEntry}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
 
     // 2. Получаем контейнер
+    log.debug(`Getting container from window[${scope}]`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
     const container = window[scope] as RemoteContainer;
     if (!container) {
+      log.error(`Container not found: ${scope}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+      });
       throw new RemoteContainerNotFoundError(scope);
     }
+    log.debug(`Container found: ${scope}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
 
     // 3. Инициализируем контейнер с shared scope
+    log.debug(`Initializing container: ${scope}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
     await this.initContainer(container, scope);
+    log.debug(`Container initialized: ${scope}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
 
     // 4. Получаем модуль ./Config
+    log.debug(`Getting module ./Config from container: ${scope}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
     const factory = await container.get('./Config');
+    log.debug(`Factory obtained, calling factory()`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
     const moduleExports = factory();
+    log.debug(`Module config obtained for: ${name}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+    });
 
     return moduleExports.default || moduleExports;
   }
 
   private async loadScript(url: string): Promise<void> {
+    log.debug(`Loading script: ${url}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.loadScript',
+    });
     // Проверяем, загружен ли уже скрипт
     if (this.loadedScripts.has(url)) {
-      log.debug(`[RemoteModuleLoader] Script already loaded: ${url}`, {
-        prefix: 'bootstrap.services.remoteModuleLoader',
+      log.debug(`Script already loaded: ${url}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadScript',
       });
       return;
     }
 
+    log.debug(`Creating script element for: ${url}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.loadScript',
+    });
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = url;
@@ -184,21 +281,24 @@ export class RemoteModuleLoader {
 
       script.onload = () => {
         this.loadedScripts.add(url);
-        log.debug(`[RemoteModuleLoader] Script loaded: ${url}`, {
-          prefix: 'bootstrap.services.remoteModuleLoader',
+        log.debug(`Script loaded successfully: ${url}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.loadScript',
         });
         resolve();
       };
 
       script.onerror = () => {
         const error = new Error(`Failed to load script: ${url}`);
-        log.error(`[RemoteModuleLoader] Script load error: ${url}`, {
-          prefix: 'bootstrap.services.remoteModuleLoader',
+        log.error(`Script load error: ${url}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.loadScript',
           error: error.message,
         });
         reject(error);
       };
 
+      log.debug(`Appending script to document.head: ${url}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.loadScript',
+      });
       document.head.appendChild(script);
     });
   }
@@ -207,32 +307,57 @@ export class RemoteModuleLoader {
     container: RemoteContainer,
     scope: string,
   ): Promise<void> {
+    log.debug(`Initializing container: ${scope}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+    });
     // Получаем shared scope от webpack/vite
     // Типы определены в federation.d.ts
-    const shareScope = typeof __webpack_share_scopes__ !== 'undefined' 
-      ? __webpack_share_scopes__ 
-      : {};
+    const hasWebpackShareScopes =
+      typeof __webpack_share_scopes__ !== 'undefined';
+    const shareScope = hasWebpackShareScopes ? __webpack_share_scopes__ : {};
+
+    log.debug(
+      `Share scope available: ${hasWebpackShareScopes}, has default: ${!!shareScope.default}`,
+      {
+        prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+      },
+    );
 
     try {
       // Инициализируем default scope если не инициализирован
-      if (typeof __webpack_init_sharing__ !== 'undefined' && !shareScope.default) {
+      const hasWebpackInitSharing =
+        typeof __webpack_init_sharing__ !== 'undefined';
+      if (hasWebpackInitSharing && !shareScope.default) {
+        log.debug(`Initializing webpack sharing for default scope`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+        });
         await __webpack_init_sharing__('default');
+        log.debug(`Webpack sharing initialized for default scope`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+        });
       }
 
       // Инициализируем контейнер
+      log.debug(`Calling container.init() for: ${scope}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+      });
       await container.init(shareScope.default || {});
+      log.debug(`Container initialized successfully: ${scope}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+      });
     } catch (error) {
       // Контейнер может быть уже инициализирован
       const errorMessage = (error as Error).message || '';
       if (!errorMessage.includes('already been initialized')) {
+        log.error(`Failed to initialize container: ${scope}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+          error: errorMessage,
+        });
         throw error;
       }
-      log.debug(
-        `[RemoteModuleLoader] Container already initialized: ${scope}`,
-        {
-          prefix: 'bootstrap.services.remoteModuleLoader',
-        },
-      );
+      log.debug(`Container already initialized: ${scope}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+      });
     }
   }
 
@@ -244,9 +369,10 @@ export class RemoteModuleLoader {
    * Очищает кеш загруженных модулей
    */
   clearCache(): void {
+    const cacheSize = this.cache.size;
     this.cache.clear();
-    log.debug('[RemoteModuleLoader] Cache cleared', {
-      prefix: 'bootstrap.services.remoteModuleLoader',
+    log.debug(`Cache cleared (removed ${cacheSize} entries)`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.clearCache',
     });
   }
 
@@ -254,14 +380,22 @@ export class RemoteModuleLoader {
    * Удаляет конкретный модуль из кеша
    */
   invalidateCache(name: string): void {
+    log.debug(`Invalidating cache for module: ${name}`, {
+      prefix: 'bootstrap.services.remoteModuleLoader.invalidateCache',
+    });
+    let deletedCount = 0;
     for (const key of this.cache.keys()) {
       if (key.startsWith(`${name}:`)) {
         this.cache.delete(key);
+        deletedCount++;
       }
     }
-    log.debug(`[RemoteModuleLoader] Cache invalidated for: ${name}`, {
-      prefix: 'bootstrap.services.remoteModuleLoader',
-    });
+    log.debug(
+      `Cache invalidated for: ${name} (removed ${deletedCount} entries)`,
+      {
+        prefix: 'bootstrap.services.remoteModuleLoader.invalidateCache',
+      },
+    );
   }
 }
 

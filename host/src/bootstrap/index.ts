@@ -29,8 +29,11 @@ export const initBootstrap = async (
   bootstrap: Bootstrap,
   config: IAppConfig,
 ): Promise<Bootstrap> => {
-  log.debug('Bootstrap initialization started', { prefix: 'bootstrap' });
+  log.debug('Bootstrap initialization started', {
+    prefix: 'bootstrap.initBootstrap',
+  });
 
+  log.debug('Creating handler chain', { prefix: 'bootstrap.initBootstrap' });
   const handler = new APIClientHandler(config);
   handler
     .setNext(new ModulesDiscoveryHandler(config)) // Загрузка манифеста
@@ -42,10 +45,15 @@ export const initBootstrap = async (
     .setNext(new ModulesHandler(config))
     .setNext(new RouterPostHandler(config))
     .setNext(new HTTPErrorHandler(config));
+  log.debug('Handler chain created', { prefix: 'bootstrap.initBootstrap' });
 
+  log.debug('Executing handler chain', { prefix: 'bootstrap.initBootstrap' });
   const result = await handler.handle(bootstrap);
+  log.debug('Handler chain executed', { prefix: 'bootstrap.initBootstrap' });
 
-  log.debug('Bootstrap initialization completed', { prefix: 'bootstrap' });
+  log.debug('Bootstrap initialization completed', {
+    prefix: 'bootstrap.initBootstrap',
+  });
 
   return result;
 };
@@ -75,8 +83,12 @@ export class Bootstrap {
    */
   get getAPIClient(): APIClient {
     if (!this._APIClient) {
+      log.error('APIClient not initialized', {
+        prefix: 'bootstrap.getAPIClient',
+      });
       throw new Error('APIClient not initialized');
     }
+    log.debug('APIClient accessed', { prefix: 'bootstrap.getAPIClient' });
     return this._APIClient;
   }
 
@@ -95,8 +107,14 @@ export class Bootstrap {
    * @param {Module[]} modules - Принимает массив конфигураций модулей
    */
   constructor(private modules: Module[] = []) {
+    log.debug(`Bootstrap constructor: modules=${modules.length}`, {
+      prefix: 'bootstrap.constructor',
+    });
     if (process.env.NODE_ENV === 'development') {
       this.mockService = new BootstrapMockService();
+      log.debug('Bootstrap: mockService created (development mode)', {
+        prefix: 'bootstrap.constructor',
+      });
     }
     // Модули будут добавлены в реестр при вызове initModuleLoader()
     // Это гарантирует, что все модули будут добавлены до загрузки INIT модулей
@@ -110,10 +128,10 @@ export class Bootstrap {
    */
   initAPIClient(baseURL: string): void {
     log.debug(`Initializing APIClient with baseURL: ${baseURL}`, {
-      prefix: 'bootstrap',
+      prefix: 'bootstrap.initAPIClient',
     });
     this._APIClient = new APIClient(baseURL);
-    log.debug('APIClient initialized', { prefix: 'bootstrap' });
+    log.debug('APIClient initialized', { prefix: 'bootstrap.initAPIClient' });
   }
 
   /**
@@ -123,7 +141,7 @@ export class Bootstrap {
    * @return {void}
    */
   initDI(): void {
-    log.debug('Initializing DI container', { prefix: 'bootstrap' });
+    log.debug('Initializing DI container', { prefix: 'bootstrap.initDI' });
     // Автоматическая регистрация всех классов с @injectable и @provide через @inversifyjs/binding-decorators
     void this._di.load(buildProviderModule());
 
@@ -131,9 +149,11 @@ export class Bootstrap {
       this._di
         .bind<APIClient>(IOC_CORE_TOKENS.APIClient)
         .toConstantValue(this._APIClient);
-      log.debug('APIClient bound to DI container', { prefix: 'bootstrap' });
+      log.debug('APIClient bound to DI container', {
+        prefix: 'bootstrap.initDI',
+      });
     }
-    log.debug('DI container initialized', { prefix: 'bootstrap' });
+    log.debug('DI container initialized', { prefix: 'bootstrap.initDI' });
   }
 
   /**
@@ -146,11 +166,11 @@ export class Bootstrap {
   initModuleLoader(): void {
     // Модули теперь добавляются в ModulesHandler после получения discovered modules
     log.debug('Initializing ModuleLoader', {
-      prefix: 'bootstrap',
+      prefix: 'bootstrap.initModuleLoader',
     });
     this.moduleLoader.init(this);
     log.debug('ModuleLoader initialized', {
-      prefix: 'bootstrap',
+      prefix: 'bootstrap.initModuleLoader',
     });
   }
 
@@ -158,6 +178,10 @@ export class Bootstrap {
    * Устанавливает данные пользователя из манифеста
    */
   setUserData(user: { permissions: string[]; featureFlags: string[] }): void {
+    log.debug(
+      `Setting user data: permissions=${user.permissions.length}, featureFlags=${user.featureFlags.length}`,
+      { prefix: 'bootstrap.setUserData' },
+    );
     this.userData = user;
   }
 
@@ -165,6 +189,10 @@ export class Bootstrap {
    * Получает данные пользователя из манифеста
    */
   getUserData(): { permissions: string[]; featureFlags: string[] } | null {
+    const hasUserData = this.userData !== null;
+    log.debug(`Getting user data: ${hasUserData ? 'present' : 'null'}`, {
+      prefix: 'bootstrap.getUserData',
+    });
     return this.userData;
   }
 
@@ -172,6 +200,9 @@ export class Bootstrap {
    * Устанавливает модули, обнаруженные через манифест
    */
   setDiscoveredModules(modules: Module[]): void {
+    log.debug(`Setting discovered modules: ${modules.length}`, {
+      prefix: 'bootstrap.setDiscoveredModules',
+    });
     this.discoveredModules = modules;
   }
 
@@ -179,6 +210,9 @@ export class Bootstrap {
    * Получает модули, обнаруженные через манифест
    */
   getDiscoveredModules(): Module[] {
+    log.debug(`Getting discovered modules: ${this.discoveredModules.length}`, {
+      prefix: 'bootstrap.getDiscoveredModules',
+    });
     return this.discoveredModules;
   }
 }

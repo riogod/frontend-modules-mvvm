@@ -7,7 +7,11 @@ import { log } from '@platform/core';
  * Резолвер зависимостей модулей
  */
 export class ModuleDependencyResolver {
-  constructor(private registry: ModuleRegistry) {}
+  constructor(private registry: ModuleRegistry) {
+    log.debug('ModuleDependencyResolver: constructor', {
+      prefix: 'bootstrap.moduleLoader.dependencyResolver',
+    });
+  }
 
   /**
    * Получает модули зависимостей и проверяет их наличие

@@ -7,7 +7,9 @@ import { log } from '@platform/core';
  */
 export class APIClientHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
-    log.debug('APIClientHandler: starting', { prefix: 'bootstrap.handlers' });
+    log.debug('APIClientHandler: starting', {
+      prefix: 'bootstrap.handlers.APIClientHandler',
+    });
     const { apiUrl } = this.params;
 
     if (!apiUrl) {
@@ -15,7 +17,9 @@ export class APIClientHandler extends AbstractInitHandler {
     }
     bootstrap.initAPIClient(apiUrl);
 
-    log.debug('APIClientHandler: completed', { prefix: 'bootstrap.handlers' });
+    log.debug('APIClientHandler: completed', {
+      prefix: 'bootstrap.handlers.APIClientHandler',
+    });
     return await super.handle(bootstrap);
   }
 }

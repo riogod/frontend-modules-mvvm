@@ -14,7 +14,11 @@ import { type ModuleRegistry } from './ModuleRegistry';
 export class ModuleLifecycleManager {
   private initializedModules: Set<string> = new Set();
 
-  constructor(private registry: ModuleRegistry) {}
+  constructor(private registry: ModuleRegistry) {
+    log.debug('ModuleLifecycleManager: constructor', {
+      prefix: 'bootstrap.moduleLoader.lifecycleManager',
+    });
+  }
   /**
    * Регистрирует маршруты модуля в роутере
    * Защита от дублирования реализована в routerService.registerRoutes()
@@ -71,6 +75,9 @@ export class ModuleLifecycleManager {
     routes: IRoutes,
     autoLoadHandler: (routeName: string) => Promise<void>,
   ): IRoutes {
+    log.debug(`Wrapping ${routes.length} routes with auto-load handler`, {
+      prefix: 'bootstrap.moduleLoader.lifecycleManager.wrapRoutesWithAutoLoad',
+    });
     return routes.map((route) => {
       const existingOnEnterNode = route.onEnterNode;
 
@@ -82,9 +89,17 @@ export class ModuleLifecycleManager {
           routeDeps: RouteDependencies,
         ) => {
           const routeName = toState?.name || route.name;
+          log.debug(`Auto-loading module for route: ${routeName}`, {
+            prefix:
+              'bootstrap.moduleLoader.lifecycleManager.wrapRoutesWithAutoLoad.onEnterNode',
+          });
           await autoLoadHandler(routeName);
 
           if (existingOnEnterNode) {
+            log.debug(`Calling existing onEnterNode for route: ${routeName}`, {
+              prefix:
+                'bootstrap.moduleLoader.lifecycleManager.wrapRoutesWithAutoLoad.onEnterNode',
+            });
             await existingOnEnterNode(toState, fromState, routeDeps);
           }
         },
@@ -149,12 +164,18 @@ export class ModuleLifecycleManager {
     isModuleLoadedFn: (name: string) => boolean,
     autoLoadHandler?: (routeName: string) => Promise<void>,
   ): Promise<void> {
+    log.debug(`Registering resources for module: ${module.name}`, {
+      prefix: 'bootstrap.moduleLoader.lifecycleManager.registerModuleResources',
+    });
     // Используем единый метод для регистрации маршрутов (включая обработку модулей с динамическим конфигом)
     await this.registerModuleRoutes(module, bootstrap, autoLoadHandler);
 
     // Регистрируем i18n только если еще не зарегистрирован
     // Для модулей с динамическим конфигом автоматически загружает конфигурацию
     await this.registerModuleI18n(module, bootstrap, isModuleLoadedFn);
+    log.debug(`Resources registered for module: ${module.name}`, {
+      prefix: 'bootstrap.moduleLoader.lifecycleManager.registerModuleResources',
+    });
   }
 
   /**

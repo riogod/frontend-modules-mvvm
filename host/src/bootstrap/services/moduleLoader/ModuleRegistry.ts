@@ -10,6 +10,12 @@ export class ModuleRegistry {
   private routesCache: Map<string, IRoutes> = new Map();
   private initModulesLoaded: boolean = false;
 
+  constructor() {
+    log.debug('ModuleRegistry: constructor', {
+      prefix: 'bootstrap.moduleLoader.registry',
+    });
+  }
+
   /**
    * Добавление модуля в реестр
    * Для INIT модулей кеширует маршруты сразу
@@ -180,7 +186,11 @@ export class ModuleRegistry {
    * @return {Module | undefined} - Модуль или undefined, если не найден.
    */
   getModule(name: string): Module | undefined {
-    return this.modules.find((m) => m.name === name);
+    const module = this.modules.find((m) => m.name === name);
+    log.debug(`Getting module: ${name} (${module ? 'found' : 'not found'})`, {
+      prefix: 'bootstrap.moduleLoader.registry.getModule',
+    });
+    return module;
   }
 
   /**
@@ -189,6 +199,9 @@ export class ModuleRegistry {
    * @return {Module[]} - Массив всех модулей.
    */
   getModules(): Module[] {
+    log.debug(`Getting all modules: ${this.modules.length}`, {
+      prefix: 'bootstrap.moduleLoader.registry.getModules',
+    });
     return [...this.modules];
   }
 
@@ -199,7 +212,14 @@ export class ModuleRegistry {
    * @return {boolean} - true, если модуль существует.
    */
   hasModule(name: string): boolean {
-    return this.modules.some((m) => m.name === name);
+    const has = this.modules.some((m) => m.name === name);
+    log.debug(
+      `Checking module existence: ${name} (${has ? 'exists' : 'not found'})`,
+      {
+        prefix: 'bootstrap.moduleLoader.registry.hasModule',
+      },
+    );
+    return has;
   }
 
   /**
@@ -209,9 +229,13 @@ export class ModuleRegistry {
    * @return {Module[]} - Массив модулей указанного типа.
    */
   getModulesByType(loadType: ModuleLoadType): Module[] {
-    return this.modules.filter(
+    const filtered = this.modules.filter(
       (m) => (m.loadType ?? ModuleLoadType.NORMAL) === loadType,
     );
+    log.debug(`Getting modules by type ${loadType}: ${filtered.length}`, {
+      prefix: 'bootstrap.moduleLoader.registry.getModulesByType',
+    });
+    return filtered;
   }
 
   /**
@@ -223,15 +247,37 @@ export class ModuleRegistry {
    * @return {Module | undefined} - Модуль или undefined, если не найден.
    */
   getModuleByRouteName(routeName: string): Module | undefined {
+    log.debug(`Getting module by route name: ${routeName}`, {
+      prefix: 'bootstrap.moduleLoader.registry.getModuleByRouteName',
+    });
     // Сначала проверяем кеш по полному имени маршрута
     const cachedModule = this.routeToModuleCache.get(routeName);
     if (cachedModule) {
+      log.debug(
+        `Module found in cache by full route name: ${cachedModule.name}`,
+        {
+          prefix: 'bootstrap.moduleLoader.registry.getModuleByRouteName',
+        },
+      );
       return cachedModule;
     }
 
     // Затем проверяем по первому сегменту
     const firstSegment = routeName.split('.')[0];
-    return this.routeToModuleCache.get(firstSegment);
+    const segmentModule = this.routeToModuleCache.get(firstSegment);
+    if (segmentModule) {
+      log.debug(
+        `Module found in cache by first segment: ${segmentModule.name}`,
+        {
+          prefix: 'bootstrap.moduleLoader.registry.getModuleByRouteName',
+        },
+      );
+    } else {
+      log.debug(`No module found for route: ${routeName}`, {
+        prefix: 'bootstrap.moduleLoader.registry.getModuleByRouteName',
+      });
+    }
+    return segmentModule;
   }
 
   /**
@@ -241,11 +287,21 @@ export class ModuleRegistry {
    * @return {Module[]} - Отсортированный массив модулей.
    */
   sortModulesByPriority(modules: Module[]): Module[] {
-    return [...modules].sort((a, b) => {
+    log.debug(`Sorting ${modules.length} modules by priority`, {
+      prefix: 'bootstrap.moduleLoader.registry.sortModulesByPriority',
+    });
+    const sorted = [...modules].sort((a, b) => {
       const priorityA = a.loadPriority ?? 0;
       const priorityB = b.loadPriority ?? 0;
       return priorityA - priorityB;
     });
+    log.debug(
+      `Modules sorted by priority (range: ${Math.min(...sorted.map((m) => m.loadPriority ?? 0))} - ${Math.max(...sorted.map((m) => m.loadPriority ?? 0))})`,
+      {
+        prefix: 'bootstrap.moduleLoader.registry.sortModulesByPriority',
+      },
+    );
+    return sorted;
   }
 
   /**
@@ -255,6 +311,9 @@ export class ModuleRegistry {
    * @return {void}
    */
   setInitModulesLoaded(value: boolean): void {
+    log.debug(`Setting initModulesLoaded: ${value}`, {
+      prefix: 'bootstrap.moduleLoader.registry.setInitModulesLoaded',
+    });
     this.initModulesLoaded = value;
   }
 

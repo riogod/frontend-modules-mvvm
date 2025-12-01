@@ -1,6 +1,7 @@
 import { remoteModuleLoader } from './RemoteModuleLoader';
 import type { ModuleConfig } from '../../interface';
 import type { LoadRemoteModuleOptions } from './types';
+import { log } from '@platform/core';
 
 /**
  * Упрощенная функция для загрузки remote модуля
@@ -11,6 +12,17 @@ export async function loadRemoteModule(
   remoteEntry: string,
   options?: LoadRemoteModuleOptions,
 ): Promise<ModuleConfig> {
-  return remoteModuleLoader.loadRemoteModule(name, remoteEntry, options);
+  log.debug(`loadRemoteModule called: ${name} from ${remoteEntry}`, {
+    prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+  });
+  const result = await remoteModuleLoader.loadRemoteModule(
+    name,
+    remoteEntry,
+    options,
+  );
+  log.debug(`loadRemoteModule completed: ${name}`, {
+    prefix: 'bootstrap.services.remoteModuleLoader.loadRemoteModule',
+  });
+  return result;
 }
 

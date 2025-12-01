@@ -1,7 +1,7 @@
 import { AbstractInitHandler } from './AbstractInitHandler';
 import type { Bootstrap } from '..';
 import type { AppStartResponse } from '../interface';
-import { HttpMethod } from '@platform/core';
+import { HttpMethod, log } from '@platform/core';
 // Типы манифеста из единого источника
 import type { ModuleManifestEntry } from '@platform/vite-config/plugins/types';
 import type {
@@ -38,6 +38,10 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     try {
       // 1. Загружаем манифест
       const manifest = await this.loadManifest(bootstrap);
+      log.debug(
+        `ModulesDiscoveryHandler: manifest loaded, modules=${(manifest.modules || []).length}, hasUser=${!!manifest.user}`,
+        { prefix: 'bootstrap.handlers.ModulesDiscoveryHandler' },
+      );
 
       // 2. Сохраняем user данные для AccessControl
       if (manifest.user) {
@@ -47,23 +51,38 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       // 3. Обрабатываем модули из манифеста
       const manifestModules: ModuleManifestEntry[] = manifest.modules || [];
       const modules = await this.processModules(manifestModules);
+      log.debug(
+        `ModulesDiscoveryHandler: processed modules = ${modules.length}`,
+        { prefix: 'bootstrap.handlers.ModulesDiscoveryHandler' },
+      );
 
       // 4. Сохраняем модули в Bootstrap
       bootstrap.setDiscoveredModules(modules);
     } catch (error) {
-      console.error(
-        '[ModulesDiscoveryHandler] Failed to load manifest:',
-        error,
+      log.error(
+        'ModulesDiscoveryHandler: failed to load manifest',
+        {
+          prefix: 'bootstrap.handlers.ModulesDiscoveryHandler',
+        },
+        {
+          error,
+        },
       );
       // В случае ошибки используем fallback (пустой список)
       // INIT модули загрузятся из локальных sources
       bootstrap.setDiscoveredModules([]);
     }
 
+    log.debug('ModulesDiscoveryHandler: completed', {
+      prefix: 'bootstrap.handlers.ModulesDiscoveryHandler',
+    });
     return super.handle(bootstrap);
   }
 
   private async loadManifest(bootstrap: Bootstrap): Promise<AppStartResponse> {
+    log.debug('ModulesDiscoveryHandler: loading manifest', {
+      prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadManifest',
+    });
     const apiClient = bootstrap.getAPIClient;
     return apiClient.request<never, AppStartResponse>({
       method: HttpMethod.GET,
@@ -74,10 +93,23 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
   private async processModules(
     manifestEntries: ModuleManifestEntry[],
   ): Promise<Module[]> {
+    log.debug('ModulesDiscoveryHandler: processing modules', {
+      prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.processModules',
+    });
     const modules: Module[] = [];
 
     for (const entry of manifestEntries) {
       const module = await this.createModule(entry);
+      log.debug(
+        'ModulesDiscoveryHandler: creating module',
+        {
+          prefix:
+            'bootstrap.handlers.ModulesDiscoveryHandler.processModules.createModule',
+        },
+        {
+          moduleName: entry.name,
+        },
+      );
       if (module) {
         modules.push(module);
       }
@@ -102,6 +134,12 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       },
     };
 
+    log.debug('ModulesDiscoveryHandler: base module created', {
+      prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+      moduleName: entry.name,
+      baseModule,
+    });
+
     if (entry.loadType === 'init') {
       // INIT модули всегда локальные, их конфиги уже загружены
       // Они обрабатываются отдельно в ModulesHandler
@@ -117,16 +155,32 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
         config = await this.loadLocalConfig(moduleName);
       } catch (error) {
         // Если модуль не найден, пропускаем его с предупреждением
-        console.warn(
-          `[ModulesDiscoveryHandler] Skipping module ${moduleName}: module not found. ` +
+        log.warn(
+          `ModulesDiscoveryHandler: skipping module ${moduleName}: module not found. ` +
             `Make sure the module exists in packages/${moduleName}/src/config/module_config.ts`,
-          error,
+          {
+            prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+          },
+          {
+            error,
+            moduleName: entry.name,
+          },
         );
         return null;
       }
     } else {
       const remoteEntry = String(entry.remoteEntry);
       config = this.createRemoteConfigLoader(moduleName, remoteEntry);
+      log.debug(
+        'ModulesDiscoveryHandler: remote config loader created',
+        {
+          prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+        },
+        {
+          moduleName: entry.name,
+          remoteEntry,
+        },
+      );
     }
 
     const normalModule: NormalModule = {
@@ -141,6 +195,16 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
         entry: entry.remoteEntry,
         scope: `module-${entry.name}`,
       };
+      log.debug(
+        'ModulesDiscoveryHandler: remote module created',
+        {
+          prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+        },
+        {
+          moduleName: entry.name,
+          normalModule,
+        },
+      );
     }
 
     return normalModule;
@@ -152,6 +216,10 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
    * @throws Error если модуль не найден
    */
   private async loadLocalConfig(moduleName: string): Promise<ModuleConfig> {
+    log.debug('ModulesDiscoveryHandler: loading local config', {
+      prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
+      moduleName: moduleName,
+    });
     // Ищем модуль в предзагруженных конфигах
     // Путь должен соответствовать паттерну в import.meta.glob
     // От host/src/bootstrap/handlers/ до packages/{name}/src/config/module_config.ts
@@ -168,6 +236,17 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
         path.includes(`packages/${moduleName}/src/config/module_config`),
       );
       if (matchingPath) {
+        log.debug(
+          'ModulesDiscoveryHandler: using fallback path for local config',
+          {
+            prefix:
+              'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
+          },
+          {
+            moduleName,
+            matchingPath,
+          },
+        );
         moduleLoader = this.moduleConfigs[matchingPath];
       }
     }
@@ -192,6 +271,10 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     }
 
     const module = await moduleLoader();
+    log.debug('ModulesDiscoveryHandler: local config module loaded', {
+      prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
+      moduleName,
+    });
     return module.default;
   }
 
@@ -203,6 +286,13 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     moduleName: string,
     remoteEntry: string,
   ): Promise<ModuleConfig> {
+    log.debug('ModulesDiscoveryHandler: creating remote config loader', {
+      prefix:
+        'bootstrap.handlers.ModulesDiscoveryHandler.createRemoteConfigLoader',
+      moduleName,
+      remoteEntry,
+    });
+
     return loadRemoteModule(moduleName, remoteEntry, {
       retries: 3,
       timeout: 15000,

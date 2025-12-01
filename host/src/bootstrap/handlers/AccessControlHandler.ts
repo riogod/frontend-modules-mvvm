@@ -22,7 +22,7 @@ import { AppStartRepository } from '../services/appStart/data/app.repository';
 export class AccessControlHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
     log.debug('AccessControlHandler: starting', {
-      prefix: 'bootstrap.handlers',
+      prefix: 'bootstrap.handlers.AccessControlHandler',
     });
 
     // Binding Repositories to DI container
@@ -98,7 +98,7 @@ export class AccessControlHandler extends AbstractInitHandler {
       accessControlModel.setPermissions(permissions);
       accessControlModel.setFeatureFlags(featureFlags);
       log.debug('AccessControlHandler: using user data from manifest', {
-        prefix: 'bootstrap.handlers',
+        prefix: 'bootstrap.handlers.AccessControlHandler',
       });
     } else {
       // Fallback: загружаем из API или используем defaults
@@ -110,12 +110,12 @@ export class AccessControlHandler extends AbstractInitHandler {
       accessControlModel.setFeatureFlags(appStart.data.features);
       accessControlModel.setPermissions(appStart.data.permissions);
       log.debug('AccessControlHandler: using user data from API', {
-        prefix: 'bootstrap.handlers',
+        prefix: 'bootstrap.handlers.AccessControlHandler',
       });
     }
 
     log.debug('AccessControlHandler: completed', {
-      prefix: 'bootstrap.handlers',
+      prefix: 'bootstrap.handlers.AccessControlHandler',
     });
     return await super.handle(bootstrap);
   }

@@ -7,6 +7,12 @@ import { IOC_CORE_TOKENS, log } from '@platform/core';
  * Валидатор условий загрузки модулей
  */
 export class ModuleConditionValidator {
+  constructor() {
+    log.debug('ModuleConditionValidator: constructor', {
+      prefix: 'bootstrap.moduleLoader.conditionValidator',
+    });
+  }
+
   /**
    * Проверка feature flags
    *

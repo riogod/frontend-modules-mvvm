@@ -11,10 +11,16 @@ import { app_modules } from '../../modules/modules';
  */
 export class ModulesHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
-    log.debug('ModulesHandler: starting', { prefix: 'bootstrap.handlers' });
+    log.debug('ModulesHandler: starting', {
+      prefix: 'bootstrap.handlers.ModulesHandler',
+    });
 
     // Получаем discovered modules (NORMAL модули из манифеста)
     const discoveredModules = bootstrap.getDiscoveredModules();
+    log.debug(
+      `ModulesHandler: discovered NORMAL modules = ${discoveredModules.length}`,
+      { prefix: 'bootstrap.handlers.ModulesHandler' },
+    );
 
     // Загружаем INIT модули (они определены локально в modules.ts)
     const initModules = app_modules.filter(
@@ -23,6 +29,10 @@ export class ModulesHandler extends AbstractInitHandler {
 
     // Объединяем: INIT модули + discovered NORMAL модули
     const allModules: Module[] = [...initModules, ...discoveredModules];
+    log.debug(
+      `ModulesHandler: total modules to register = ${allModules.length} (INIT=${initModules.length}, NORMAL=${discoveredModules.length})`,
+      { prefix: 'bootstrap.handlers.ModulesHandler' },
+    );
 
     // Инициализируем ModuleLoader с зависимостями
     // Должен быть вызван после инициализации router и DI
@@ -35,14 +45,16 @@ export class ModulesHandler extends AbstractInitHandler {
     // чтобы они могли установить feature flags и permissions, которые нужны для проверки
     // условий загрузки других модулей
     log.debug('ModulesHandler: loading INIT modules', {
-      prefix: 'bootstrap.handlers',
+      prefix: 'bootstrap.handlers.ModulesHandler',
     });
     await bootstrap.moduleLoader.initInitModules();
     log.debug('ModulesHandler: INIT modules loaded', {
-      prefix: 'bootstrap.handlers',
+      prefix: 'bootstrap.handlers.ModulesHandler',
     });
 
-    log.debug('ModulesHandler: completed', { prefix: 'bootstrap.handlers' });
+    log.debug('ModulesHandler: completed', {
+      prefix: 'bootstrap.handlers.ModulesHandler',
+    });
     return await super.handle(bootstrap);
   }
 }
