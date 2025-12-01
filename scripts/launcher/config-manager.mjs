@@ -59,6 +59,8 @@ export class ConfigManager {
       lastUsed: null,
       remoteServerUrl: '',
       logLevel: 'INFO', // Уровень логирования по умолчанию
+      useLocalMocks: true, // Использовать локальные моки по умолчанию
+      apiUrl: '', // URL API сервера (используется, если моки отключены)
       configurations: {},
     };
   }
@@ -235,6 +237,42 @@ export class ConfigManager {
       );
     }
     this.config.logLevel = level.toUpperCase();
+    this.save();
+  }
+
+  /**
+   * Получить настройку использования локальных моков
+   * @returns {boolean}
+   */
+  getUseLocalMocks() {
+    return this.config.useLocalMocks !== undefined
+      ? this.config.useLocalMocks
+      : true; // По умолчанию true
+  }
+
+  /**
+   * Установить настройку использования локальных моков
+   * @param {boolean} useLocalMocks - Использовать локальные моки (true) или реальный API (false)
+   */
+  setUseLocalMocks(useLocalMocks) {
+    this.config.useLocalMocks = Boolean(useLocalMocks);
+    this.save();
+  }
+
+  /**
+   * Получить URL API сервера
+   * @returns {string}
+   */
+  getApiUrl() {
+    return this.config.apiUrl || '';
+  }
+
+  /**
+   * Установить URL API сервера
+   * @param {string} url - URL API сервера
+   */
+  setApiUrl(url) {
+    this.config.apiUrl = url.trim();
     this.save();
   }
 }

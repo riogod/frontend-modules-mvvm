@@ -33,15 +33,30 @@ export class ViteLauncher {
       .map((m) => m.name);
 
     // 4. Подготовить переменные окружения
-    // Приоритет: переменная окружения > настройка из конфига > INFO по умолчанию
+    // Приоритет: переменная окружения > настройка из конфига > значение по умолчанию
     const logLevel = process.env.LOG_LEVEL 
       || (configManager ? configManager.getLogLevel() : 'INFO');
+
+    // Настройка использования моков
+    const useLocalMocks = process.env.VITE_USE_LOCAL_MOCKS !== undefined
+      ? process.env.VITE_USE_LOCAL_MOCKS === 'true'
+      : (configManager ? configManager.getUseLocalMocks() : true);
+
+    // Настройка API URL (используется, если моки отключены)
+    const apiUrl = process.env.VITE_API_URL
+      || (configManager && !useLocalMocks ? configManager.getApiUrl() : '');
 
     const env = {
       ...process.env,
       VITE_LOCAL_MODULES: localModules.join(','),
       LOG_LEVEL: logLevel,
+      VITE_USE_LOCAL_MOCKS: String(useLocalMocks),
     };
+
+    // Добавляем API URL только если он задан
+    if (apiUrl) {
+      env.VITE_API_URL = apiUrl;
+    }
 
     // 5. Запустить Vite
     const viteProcess = spawn('vite', ['--config', 'host/vite.config.mts'], {

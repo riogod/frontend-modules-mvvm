@@ -9,13 +9,24 @@ import { handlers } from 'host/src/mocks/index';
 export class MockServiceHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
     log.debug('MockServiceHandler: starting', { prefix: 'bootstrap.handlers' });
-    if (process.env.NODE_ENV === 'development') {
+    
+    // Проверяем, нужно ли использовать локальные моки
+    const useLocalMocks = import.meta.env.VITE_USE_LOCAL_MOCKS !== undefined
+      ? import.meta.env.VITE_USE_LOCAL_MOCKS === 'true'
+      : true; // По умолчанию используем моки
+
+    if (process.env.NODE_ENV === 'development' && useLocalMocks) {
       await bootstrap.mockService?.init();
       bootstrap.mockService?.addHandlers(handlers);
       log.debug('MockServiceHandler: mock service initialized', {
         prefix: 'bootstrap.handlers',
       });
+    } else if (process.env.NODE_ENV === 'development' && !useLocalMocks) {
+      log.debug('MockServiceHandler: моки отключены, используется реальный API', {
+        prefix: 'bootstrap.handlers',
+      });
     }
+    
     log.debug('MockServiceHandler: completed', {
       prefix: 'bootstrap.handlers',
     });

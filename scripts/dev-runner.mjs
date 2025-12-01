@@ -327,6 +327,8 @@ async function showSettings(configManager) {
   const isRemoteAvailable = configManager.isRemoteAvailable();
   const currentLogLevel = configManager.getLogLevel();
   const envLogLevel = process.env.LOG_LEVEL;
+  const useLocalMocks = configManager.getUseLocalMocks();
+  const apiUrl = configManager.getApiUrl();
 
   console.log(chalk.cyan.bold('\n⚙️ Настройки проекта\n'));
 
@@ -356,6 +358,12 @@ async function showSettings(configManager) {
     );
   }
 
+  // Показываем настройку моков
+  const mocksStatus = useLocalMocks
+    ? chalk.green('Да (используются локальные моки MSW)')
+    : chalk.yellow(`Нет (используется API: ${apiUrl || 'не настроен'})`);
+  console.log(`Использовать локальные моки: ${mocksStatus}\n`);
+
   const choices = [
     {
       title: isRemoteAvailable ? '→ Изменить URL' : '→ Настроить URL',
@@ -366,7 +374,19 @@ async function showSettings(configManager) {
       value: 'set-log-level',
       disabled: !!envLogLevel, // Отключаем, если установлена переменная окружения
     },
+    {
+      title: `→ Использовать локальные моки (текущее: ${useLocalMocks ? 'Да' : 'Нет'})`,
+      value: 'set-use-mocks',
+    },
   ];
+
+  // Добавляем пункт настройки API URL только если моки отключены
+  if (!useLocalMocks) {
+    choices.push({
+      title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : '(не настроен)'}`,
+      value: 'set-api-url',
+    });
+  }
 
   if (isRemoteAvailable) {
     choices.push({ title: '→ Очистить URL', value: 'clear-url' });
@@ -444,6 +464,50 @@ async function showSettings(configManager) {
           '💡 Примечание: переменная окружения LOG_LEVEL имеет приоритет над этой настройкой\n',
         ),
       );
+    }
+  } else if (action === 'set-use-mocks') {
+    const { useMocks } = await prompts({
+      type: 'confirm',
+      name: 'useMocks',
+      message: 'Использовать локальные моки для host?',
+      initial: useLocalMocks,
+    });
+
+    if (useMocks !== undefined) {
+      configManager.setUseLocalMocks(useMocks);
+      const status = useMocks ? 'включены' : 'отключены';
+      console.log(chalk.green(`\n✅ Локальные моки ${status}\n`));
+      
+      if (!useMocks && !apiUrl) {
+        console.log(
+          chalk.yellow(
+            '⚠️  Внимание: API URL не настроен. Настройте его в следующем пункте меню.\n',
+          ),
+        );
+      }
+    }
+  } else if (action === 'set-api-url') {
+    const { url } = await prompts({
+      type: 'text',
+      name: 'url',
+      message: 'Введите API URL:',
+      initial: apiUrl || 'http://localhost:3000',
+      validate: (value) => {
+        if (!value || value.trim() === '') {
+          return 'URL не может быть пустым';
+        }
+        try {
+          new URL(value);
+          return true;
+        } catch {
+          return 'Введите корректный URL';
+        }
+      },
+    });
+
+    if (url) {
+      configManager.setApiUrl(url);
+      console.log(chalk.green(`\n✅ API URL сохранен: ${url}\n`));
     }
   }
 }
