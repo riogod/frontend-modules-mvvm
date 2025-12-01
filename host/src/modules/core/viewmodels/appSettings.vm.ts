@@ -1,6 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { AppModel } from '../models/app.model.ts';
+import { AppModel } from '../models/app.model';
 import { IOC_CORE_TOKENS } from '@platform/core';
 
 @injectable()

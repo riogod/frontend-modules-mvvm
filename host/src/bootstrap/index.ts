@@ -6,16 +6,16 @@ import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
-import { InitI18nHandler } from './handlers/InitI18nHandler.ts';
+import { InitI18nHandler } from './handlers/InitI18nHandler';
 import i18next, { type i18n } from 'i18next';
-import { MockServiceHandler } from './handlers/MockServiceHandler.ts';
-import { BootstrapMockService } from './services/mockService.ts';
-import { BootstrapRouterService } from './services/routerService.ts';
+import { MockServiceHandler } from './handlers/MockServiceHandler';
+import { BootstrapMockService } from './services/mockService';
+import { BootstrapRouterService } from './services/routerService';
 import { BootstrapModuleLoader } from './services/moduleLoader/';
-import { type IAppConfig } from '../config/app.ts';
+import { type IAppConfig } from '../config/app';
 import { buildProviderModule } from '@inversifyjs/binding-decorators';
-import { type Module } from '../modules/interface.ts';
-import { AccessControlHandler } from './handlers/AccessControlHandler.ts';
+import { type Module } from '../modules/interface';
+import { AccessControlHandler } from './handlers/AccessControlHandler';
 import { ModulesDiscoveryHandler } from './handlers/ModulesDiscoveryHandler';
 
 /**
@@ -157,10 +157,7 @@ export class Bootstrap {
   /**
    * Устанавливает данные пользователя из манифеста
    */
-  setUserData(user: {
-    permissions: string[];
-    featureFlags: string[];
-  }): void {
+  setUserData(user: { permissions: string[]; featureFlags: string[] }): void {
     this.userData = user;
   }
 

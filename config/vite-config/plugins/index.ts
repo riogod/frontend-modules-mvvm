@@ -1,11 +1,10 @@
-export { createModuleAliasesPlugin } from './moduleAliases.ts';
-export { createManifestMiddleware } from './manifestMiddleware.ts';
-export { loadManifest } from './loadManifest.ts';
+export { createModuleAliasesPlugin } from './moduleAliases';
+export { createManifestMiddleware } from './manifestMiddleware';
+export { loadManifest } from './loadManifest';
 export type {
   AppManifest,
   ModuleManifestEntry,
   ModuleAliasesOptions,
   ManifestMiddlewareOptions,
-} from './types.ts';
-export type { LoadManifestOptions } from './loadManifest.ts';
-
+} from './types';
+export type { LoadManifestOptions } from './loadManifest';

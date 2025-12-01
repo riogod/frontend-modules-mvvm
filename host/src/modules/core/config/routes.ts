@@ -1,5 +1,5 @@
 import { type IRoutes } from '@platform/core';
-import { TODO_ROUTES } from '@platform/module-todo/config/routes.ts';
+import { TODO_ROUTES } from '@platform/module-todo/config/routes';
 
 export const CORE_ROUTES = {
   HOME: 'home',

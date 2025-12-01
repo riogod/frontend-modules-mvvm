@@ -1,5 +1,5 @@
-import { InitI18nHandler } from '../InitI18nHandler.ts';
-import { type Bootstrap } from '../../index.ts';
+import { InitI18nHandler } from '../InitI18nHandler';
+import { type Bootstrap } from '../../index';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 

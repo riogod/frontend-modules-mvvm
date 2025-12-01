@@ -1,6 +1,6 @@
-import { type Bootstrap } from '../../index.ts';
-import { AbstractInitHandler } from '../AbstractInitHandler.ts';
-import { type IAppConfig } from '../../../config/app.ts';
+import { type Bootstrap } from '../../index';
+import { AbstractInitHandler } from '../AbstractInitHandler';
+import { type IAppConfig } from '../../../config/app';
 
 class TestHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {

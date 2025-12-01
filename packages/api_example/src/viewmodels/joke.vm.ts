@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { JokesModel } from '../models/jokes.model.ts';
-import { GetJokeUsecase } from '../usecases/getJoke.usecase.ts';
+import { JokesModel } from '../models/jokes.model';
+import { GetJokeUsecase } from '../usecases/getJoke.usecase';
 import { API_EXAMPLE_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()

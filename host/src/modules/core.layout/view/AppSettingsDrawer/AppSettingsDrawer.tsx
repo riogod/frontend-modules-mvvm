@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { type IProps } from './interfaces.tsx';
+import { type IProps } from './interfaces';
 import {
   Typography,
   MuiIconButton,
@@ -8,9 +8,9 @@ import {
   Box,
   Drawer,
 } from '@platform/ui';
-import ThemeModeToggle from './components/ThemeModeToggle/index.tsx';
+import ThemeModeToggle from './components/ThemeModeToggle/index';
 import { useTranslation } from 'react-i18next';
-import LanguageSelect from './components/LanguageSelect/index.tsx';
+import LanguageSelect from './components/LanguageSelect/index';
 
 const AppSettingsDrawer: FC<IProps> = ({ drawerWidth, open, closeHandler }) => {
   const { t } = useTranslation('common');

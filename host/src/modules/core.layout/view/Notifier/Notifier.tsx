@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 import { observer } from 'mobx-react-lite';
-import type { AppSettingsViewModel } from '../../../core/viewmodels/appSettings.vm.ts';
+import type { AppSettingsViewModel } from '../../../core/viewmodels/appSettings.vm';
 import { useVM, Alert, Slide, Snackbar } from '@platform/ui';
 import { IOC_CORE_TOKENS } from '@platform/core';
 

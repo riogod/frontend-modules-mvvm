@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { type ICompleteActions } from './interface.ts';
+import { type ICompleteActions } from './interface';
 import {
   RadioButtonUncheckedIcon,
   CheckCircleIcon,

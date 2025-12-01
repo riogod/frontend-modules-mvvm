@@ -7,10 +7,10 @@ import {
   Box,
   Divider,
 } from '@platform/ui';
-import { type IProps } from './interfaces.tsx';
-import { AppBarStyled } from './components/AppBarStyled.tsx';
+import { type IProps } from './interfaces';
+import { AppBarStyled } from './components/AppBarStyled';
 import { useTranslation } from 'react-i18next';
-import MenuBuilder from '../MenuBuilder/index.tsx';
+import MenuBuilder from '../MenuBuilder/index';
 
 const Header: FC<IProps> = ({ open, handleAppSettingsOpen }) => {
   const { t } = useTranslation('common');

@@ -1,5 +1,5 @@
 import { delay, http, HttpResponse, type RequestHandler } from 'msw';
-import { EAPIExampleEndpoints } from '../endpoints.ts';
+import { EAPIExampleEndpoints } from '../endpoints';
 import jokes from './data/getJoke.json';
 
 export const handlers: RequestHandler[] = [

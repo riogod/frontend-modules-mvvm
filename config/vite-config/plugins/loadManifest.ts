@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { AppManifest } from './types.ts';
+import type { AppManifest } from './types';
 
 export interface LoadManifestOptions {
   /**
@@ -30,9 +30,7 @@ export interface LoadManifestOptions {
 /**
  * Загружает манифест из файла или создает fallback
  */
-export function loadManifest(
-  options: LoadManifestOptions,
-): AppManifest | null {
+export function loadManifest(options: LoadManifestOptions): AppManifest | null {
   const {
     dirname,
     manifestPath = '../.launcher/current-manifest.json',
@@ -119,4 +117,3 @@ function createFallbackManifest(
 
   return { modules };
 }
-

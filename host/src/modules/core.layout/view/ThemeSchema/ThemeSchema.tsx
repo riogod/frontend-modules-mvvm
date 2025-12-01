@@ -1,7 +1,7 @@
 import { type FC, type ReactNode } from 'react';
 import { Observer } from 'mobx-react-lite';
 import { themeDark, themeLight, ThemeProvider, useVM } from '@platform/ui';
-import type { UiSettingsViewModel } from '../../../core/viewmodels/uiSettings.vm.ts';
+import type { UiSettingsViewModel } from '../../../core/viewmodels/uiSettings.vm';
 import { IOC_CORE_TOKENS } from '@platform/core';
 
 interface IProps {

@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { AppModel } from '../models/app.model.ts';
-import { ThemeMode } from '../models/app.interface.ts';
+import { AppModel } from '../models/app.model';
+import { ThemeMode } from '../models/app.interface';
 import { IOC_CORE_TOKENS } from '@platform/core';
 
 @injectable()

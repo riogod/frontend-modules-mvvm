@@ -1,8 +1,8 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
 
-import { LocalStorageRepository } from '../data/localStorage.repository.ts';
-import { ThemeMode } from './app.interface.ts';
+import { LocalStorageRepository } from '../data/localStorage.repository';
+import { ThemeMode } from './app.interface';
 import { IOC_CORE_TOKENS } from '@platform/core';
 
 @injectable()

@@ -1,4 +1,4 @@
-import { BootstrapRouterService } from '../routerService.ts';
+import { BootstrapRouterService } from '../routerService';
 import { type Router } from '@riogz/router';
 import { type IMenuItem, type IRoutes } from '@platform/core';
 

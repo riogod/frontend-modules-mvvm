@@ -1,7 +1,7 @@
 import { AbstractInitHandler } from './AbstractInitHandler';
-import { type Bootstrap } from '../index.ts';
+import { type Bootstrap } from '../index';
 import { log } from '@platform/core';
-import { handlers } from 'host/src/mocks/index.ts';
+import { handlers } from 'host/src/mocks/index';
 
 /**
  * Обработчик инициализации мок сервиса

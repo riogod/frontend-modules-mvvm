@@ -1,13 +1,13 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { TodoListModel } from '../models/todo_list.model.ts';
-import { UpdateTodoList } from '../models/todo_list.interface.ts';
+import { TodoListModel } from '../models/todo_list.model';
+import { UpdateTodoList } from '../models/todo_list.interface';
 import {
   AddTaskUsecase,
   GetTaskListUsecase,
   RemoveTaskUsecase,
   UpdateTaskUsecase,
-} from '../usecases/index.ts';
+} from '../usecases/index';
 import { TODO_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()

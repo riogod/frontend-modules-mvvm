@@ -2,8 +2,8 @@ import { type FC } from 'react';
 import type React from 'react';
 import { Observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
-import { type ThemeMode } from '../../../../../core/models/app.interface.ts';
-import type { UiSettingsViewModel } from '../../../../../core/viewmodels/uiSettings.vm.ts';
+import { type ThemeMode } from '../../../../../core/models/app.interface';
+import type { UiSettingsViewModel } from '../../../../../core/viewmodels/uiSettings.vm';
 import {
   useVM,
   Box,

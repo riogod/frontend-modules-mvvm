@@ -1,5 +1,5 @@
-import { type Bootstrap } from '../../index.ts';
-import { RouterPostHandler } from '../RouterPostHandler.ts';
+import { type Bootstrap } from '../../index';
+import { RouterPostHandler } from '../RouterPostHandler';
 
 describe('RouterPostHandler', () => {
   const preloadRoutes = vi.fn();

@@ -1,9 +1,9 @@
 import { type FC, memo } from 'react';
 import { useVM, Box, Card } from '@platform/ui';
-import { type IProps } from './interface.ts';
-import TodoItemActions from './TodoItemActions.tsx';
-import TodoItemActionComplete from './TodoItemComplete.tsx';
-import type { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
+import { type IProps } from './interface';
+import TodoItemActions from './TodoItemActions';
+import TodoItemActionComplete from './TodoItemComplete';
+import type { TodoListViewModel } from '../../viewmodels/todo_list.vm';
 import TodoItemDescription from './TodoItemDescription';
 import TodoItemDate from './TodoItemDate';
 import { TODO_DI_TOKENS } from '../../config/di.tokens';

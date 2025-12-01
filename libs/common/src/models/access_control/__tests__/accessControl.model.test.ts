@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AccessControlModel } from '../accessControl.model.ts';
+import { AccessControlModel } from '../accessControl.model';
 
 describe('AccessControlModel', () => {
   let model: AccessControlModel;
@@ -67,7 +67,7 @@ describe('AccessControlModel', () => {
     });
 
     it('должен возвращать пустой объект для пустого enum', () => {
-      enum EmptyEnum { }
+      enum EmptyEnum {}
 
       const result = model.getFeatureFlags(EmptyEnum);
 
@@ -108,9 +108,9 @@ describe('AccessControlModel', () => {
   describe('setFeatureFlags', () => {
     it('должен устанавливать feature flags', () => {
       const flags = {
-        'flag1': true,
-        'flag2': false,
-        'flag3': true,
+        flag1: true,
+        flag2: false,
+        flag3: true,
       };
 
       model.setFeatureFlags(flags);
@@ -120,24 +120,24 @@ describe('AccessControlModel', () => {
 
     it('должен перезаписывать существующие feature flags', () => {
       model.setFeatureFlags({
-        'flag1': true,
-        'flag2': false,
+        flag1: true,
+        flag2: false,
       });
 
       model.setFeatureFlags({
-        'flag1': false,
-        'flag3': true,
+        flag1: false,
+        flag3: true,
       });
 
       expect(model.allFeatureFlags).toEqual({
-        'flag1': false,
-        'flag3': true,
+        flag1: false,
+        flag3: true,
       });
     });
 
     it('должен устанавливать пустой объект', () => {
       model.setFeatureFlags({
-        'flag1': true,
+        flag1: true,
       });
 
       model.setFeatureFlags({});
@@ -149,9 +149,9 @@ describe('AccessControlModel', () => {
   describe('includesFeatureFlags', () => {
     beforeEach(() => {
       model.setFeatureFlags({
-        'flag1': true,
-        'flag2': true,
-        'flag3': false,
+        flag1: true,
+        flag2: true,
+        flag3: false,
       });
     });
 
@@ -187,8 +187,8 @@ describe('AccessControlModel', () => {
   describe('featureFlags getter', () => {
     it('должен возвращать текущие feature flags', () => {
       const flags = {
-        'flag1': true,
-        'flag2': false,
+        flag1: true,
+        flag2: false,
       };
 
       model.setFeatureFlags(flags);
@@ -236,8 +236,12 @@ describe('AccessControlModel', () => {
       expect(model.getFeatureFlag('feature.three')).toBe(false);
 
       // Проверяем наличие через includesFeatureFlags
-      expect(model.includesFeatureFlags(['feature.one', 'feature.two'])).toBe(true);
-      expect(model.includesFeatureFlags(['feature.one', 'feature.three'])).toBe(false);
+      expect(model.includesFeatureFlags(['feature.one', 'feature.two'])).toBe(
+        true,
+      );
+      expect(model.includesFeatureFlags(['feature.one', 'feature.three'])).toBe(
+        false,
+      );
     });
 
     it('должен корректно обрабатывать обновление feature flags', () => {
@@ -369,7 +373,7 @@ describe('AccessControlModel', () => {
       expect(result2).not.toEqual(result1);
     });
 
-    it('должен кешировать результаты для разных enum\'ов независимо', () => {
+    it("должен кешировать результаты для разных enum'ов независимо", () => {
       enum Features1 {
         feature1 = 'feature.one',
         feature2 = 'feature.two',
@@ -409,7 +413,7 @@ describe('AccessControlModel', () => {
       expect(result2Cached).toEqual(result2);
     });
 
-    it('должен инвалидировать кеш для всех enum\'ов при изменении feature flags', () => {
+    it("должен инвалидировать кеш для всех enum'ов при изменении feature flags", () => {
       enum Features1 {
         feature1 = 'feature.one',
       }
@@ -503,7 +507,7 @@ describe('AccessControlModel', () => {
     });
 
     it('должен возвращать пустой объект для пустого enum', () => {
-      enum EmptyEnum { }
+      enum EmptyEnum {}
 
       const result = model.getPermissions(EmptyEnum);
 
@@ -544,9 +548,9 @@ describe('AccessControlModel', () => {
   describe('setPermissions', () => {
     it('должен устанавливать permissions', () => {
       const permissions = {
-        'permission1': true,
-        'permission2': false,
-        'permission3': true,
+        permission1: true,
+        permission2: false,
+        permission3: true,
       };
 
       model.setPermissions(permissions);
@@ -556,24 +560,24 @@ describe('AccessControlModel', () => {
 
     it('должен перезаписывать существующие permissions', () => {
       model.setPermissions({
-        'permission1': true,
-        'permission2': false,
+        permission1: true,
+        permission2: false,
       });
 
       model.setPermissions({
-        'permission1': false,
-        'permission3': true,
+        permission1: false,
+        permission3: true,
       });
 
       expect(model.allPermissions).toEqual({
-        'permission1': false,
-        'permission3': true,
+        permission1: false,
+        permission3: true,
       });
     });
 
     it('должен устанавливать пустой объект', () => {
       model.setPermissions({
-        'permission1': true,
+        permission1: true,
       });
 
       model.setPermissions({});
@@ -585,9 +589,9 @@ describe('AccessControlModel', () => {
   describe('includesPermissions', () => {
     beforeEach(() => {
       model.setPermissions({
-        'permission1': true,
-        'permission2': true,
-        'permission3': false,
+        permission1: true,
+        permission2: true,
+        permission3: false,
       });
     });
 
@@ -604,15 +608,21 @@ describe('AccessControlModel', () => {
     });
 
     it('должен возвращать true если все permissions в массиве включены', () => {
-      expect(model.includesPermissions(['permission1', 'permission2'])).toBe(true);
+      expect(model.includesPermissions(['permission1', 'permission2'])).toBe(
+        true,
+      );
     });
 
     it('должен возвращать false если хотя бы один permission в массиве отключен', () => {
-      expect(model.includesPermissions(['permission1', 'permission3'])).toBe(false);
+      expect(model.includesPermissions(['permission1', 'permission3'])).toBe(
+        false,
+      );
     });
 
     it('должен возвращать false если хотя бы один permission в массиве не существует', () => {
-      expect(model.includesPermissions(['permission1', 'non.existent'])).toBe(false);
+      expect(model.includesPermissions(['permission1', 'non.existent'])).toBe(
+        false,
+      );
     });
 
     it('должен возвращать true для пустого массива', () => {
@@ -623,8 +633,8 @@ describe('AccessControlModel', () => {
   describe('allPermissions getter', () => {
     it('должен возвращать текущие permissions', () => {
       const permissions = {
-        'permission1': true,
-        'permission2': false,
+        permission1: true,
+        permission2: false,
       };
 
       model.setPermissions(permissions);
@@ -734,7 +744,7 @@ describe('AccessControlModel', () => {
       expect(result2).not.toEqual(result1);
     });
 
-    it('должен кешировать результаты для разных enum\'ов независимо', () => {
+    it("должен кешировать результаты для разных enum'ов независимо", () => {
       enum Permissions1 {
         permission1 = 'permission.one',
         permission2 = 'permission.two',
@@ -774,7 +784,7 @@ describe('AccessControlModel', () => {
       expect(result2Cached).toEqual(result2);
     });
 
-    it('должен инвалидировать кеш для всех enum\'ов при изменении permissions', () => {
+    it("должен инвалидировать кеш для всех enum'ов при изменении permissions", () => {
       enum Permissions1 {
         permission1 = 'permission.one',
       }
@@ -809,4 +819,3 @@ describe('AccessControlModel', () => {
     });
   });
 });
-

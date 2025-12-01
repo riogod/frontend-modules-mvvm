@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 import { APIClient, HttpMethod, IOC_CORE_TOKENS } from '@platform/core';
-import { AppStartDTO } from './app.dto.ts';
-import { appStartResponseSchema } from './validation/appStart.response.schema.ts';
-import { ECoreEndpoints } from 'host/src/config/endpoints.ts';
+import { AppStartDTO } from './app.dto';
+import { appStartResponseSchema } from './validation/appStart.response.schema';
+import { ECoreEndpoints } from 'host/src/config/endpoints';
 
 @injectable()
 export class AppStartRepository {

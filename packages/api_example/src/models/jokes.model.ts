@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { JokesRepository } from '../data/jokes.repository.ts';
-import { Joke } from './jokes.interface.ts';
+import { JokesRepository } from '../data/jokes.repository';
+import { Joke } from './jokes.interface';
 import { API_EXAMPLE_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()

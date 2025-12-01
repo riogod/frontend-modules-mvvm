@@ -1,6 +1,6 @@
 import * as path from 'path';
 import type { Plugin, UserConfig } from 'vite';
-import type { ModuleAliasesOptions } from './types.ts';
+import type { ModuleAliasesOptions } from './types';
 
 /**
  * Vite плагин для создания алиасов LOCAL модулей
@@ -76,4 +76,3 @@ export function createModuleAliasesPlugin(
     },
   };
 }
-

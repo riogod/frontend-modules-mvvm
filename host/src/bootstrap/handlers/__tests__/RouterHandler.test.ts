@@ -1,5 +1,5 @@
-import { type Bootstrap } from '../../index.ts';
-import { RouterHandler } from '../RouterHandler.ts';
+import { type Bootstrap } from '../../index';
+import { RouterHandler } from '../RouterHandler';
 import { type IRoutes } from '@platform/core';
 
 describe('RouterHandler', () => {

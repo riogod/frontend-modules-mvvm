@@ -28,6 +28,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
   // Используем import.meta.glob для статического анализа всех модулей
   // Путь относительно host/src/bootstrap/handlers/ModulesDiscoveryHandler.ts
   // От host/src/bootstrap/handlers/ до packages/ это ../../../../packages/
+  // Указываем расширение .ts явно для надежности
   private readonly moduleConfigs = import.meta.glob<{ default: ModuleConfig }>(
     '../../../../packages/*/src/config/module_config.ts',
     { eager: false },
@@ -49,10 +50,6 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
 
       // 4. Сохраняем модули в Bootstrap
       bootstrap.setDiscoveredModules(modules);
-
-      console.log(
-        `[ModulesDiscoveryHandler] Discovered ${modules.length} modules`,
-      );
     } catch (error) {
       console.error(
         '[ModulesDiscoveryHandler] Failed to load manifest:',
@@ -118,11 +115,12 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     if (isLocal) {
       try {
         config = await this.loadLocalConfig(moduleName);
-      } catch {
+      } catch (error) {
         // Если модуль не найден, пропускаем его с предупреждением
         console.warn(
           `[ModulesDiscoveryHandler] Skipping module ${moduleName}: module not found. ` +
             `Make sure the module exists in packages/${moduleName}/src/config/module_config.ts`,
+          error,
         );
         return null;
       }
@@ -157,8 +155,22 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     // Ищем модуль в предзагруженных конфигах
     // Путь должен соответствовать паттерну в import.meta.glob
     // От host/src/bootstrap/handlers/ до packages/{name}/src/config/module_config.ts
+    // Теперь glob паттерн включает .ts, поэтому ключи будут с расширением
     const modulePath = `../../../../packages/${moduleName}/src/config/module_config.ts`;
-    const moduleLoader = this.moduleConfigs[modulePath];
+
+    // Сначала ищем по точному пути
+    let moduleLoader = this.moduleConfigs[modulePath];
+
+    // Если не нашли, ищем по частичному совпадению (на случай разных форматов пути)
+    if (!moduleLoader) {
+      const availablePaths = Object.keys(this.moduleConfigs);
+      const matchingPath = availablePaths.find((path) =>
+        path.includes(`packages/${moduleName}/src/config/module_config`),
+      );
+      if (matchingPath) {
+        moduleLoader = this.moduleConfigs[matchingPath];
+      }
+    }
 
     if (!moduleLoader) {
       // Выводим доступные модули для отладки
@@ -175,7 +187,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
           : 'none';
 
       throw new Error(
-        `Module config not found for ${moduleName}. Available modules: ${availableModules}`,
+        `Module config not found for ${moduleName}. Available modules: ${availableModules}. Available paths: ${availablePaths.join(', ')}`,
       );
     }
 

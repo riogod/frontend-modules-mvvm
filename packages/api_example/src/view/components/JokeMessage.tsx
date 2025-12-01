@@ -9,7 +9,7 @@ import {
   CardContent,
   CardActions,
 } from '@platform/ui';
-import type { JokeViewModel } from '../../viewmodels/joke.vm.ts';
+import type { JokeViewModel } from '../../viewmodels/joke.vm';
 import { useTranslation } from 'react-i18next';
 import { API_EXAMPLE_DI_TOKENS } from '../../config/di.tokens';
 

@@ -1,11 +1,11 @@
-import { Bootstrap } from '../index.ts';
-import { type Module, ModuleLoadType } from '../../modules/interface.ts';
+import { Bootstrap } from '../index';
+import { type Module, ModuleLoadType } from '../../modules/interface';
 import { Container } from 'inversify';
 import { APIClient, IOC_CORE_TOKENS } from '@platform/core';
 
 let bootstrap: Bootstrap;
 
-vi.mock('../services/mockService.ts', () => ({
+vi.mock('../services/mockService', () => ({
   BootstrapMockService: class {
     init = vi.fn();
     addHandlers = vi.fn();
@@ -14,7 +14,7 @@ vi.mock('../services/mockService.ts', () => ({
 
 const addRoutes = vi.fn();
 const registerRoutes = vi.fn();
-vi.mock('../services/routerService.ts', () => ({
+vi.mock('../services/routerService', () => ({
   BootstrapRouterService: class {
     routes: any[] = [];
     router = {
@@ -28,60 +28,62 @@ vi.mock('../services/routerService.ts', () => ({
   },
 }));
 
-const modules: Module[] = [
-  {
-    name: 'core',
-    loadType: ModuleLoadType.INIT,
-    config: {
-      ROUTES: () => [
-        {
-          name: 'home',
-          path: '/',
-        },
-        {
-          name: '404',
-          path: '/404',
-        },
-      ],
-      I18N: vi.fn(),
-      onModuleInit: vi.fn(),
-    },
-  },
-  {
-    name: 'todo',
-    config: {
-      ROUTES: () => [
-        {
-          name: 'todo',
-          path: '/',
-        },
-      ],
-      I18N: vi.fn(),
-    },
-  },
-  {
-    name: 'api',
-    config: {
-      ROUTES: () => [
-        {
-          name: 'api',
-          path: '/api-example',
-        },
-      ],
-    },
-  },
-  {
-    name: 'demo',
-    config: {
-      ROUTES: () => [],
-      mockHandlers: [],
-    },
-  },
-];
+let modules: Module[];
 
 describe('bootstrap', () => {
   beforeEach(() => {
     process.env.NODE_ENV = 'test';
+    // Создаем модули заново в каждом тесте, чтобы моки были свежими
+    modules = [
+      {
+        name: 'core',
+        loadType: ModuleLoadType.INIT,
+        config: {
+          ROUTES: () => [
+            {
+              name: 'home',
+              path: '/',
+            },
+            {
+              name: '404',
+              path: '/404',
+            },
+          ],
+          I18N: vi.fn(),
+          onModuleInit: vi.fn(),
+        },
+      },
+      {
+        name: 'todo',
+        config: {
+          ROUTES: () => [
+            {
+              name: 'todo',
+              path: '/',
+            },
+          ],
+          I18N: vi.fn(),
+        },
+      },
+      {
+        name: 'api',
+        config: {
+          ROUTES: () => [
+            {
+              name: 'api',
+              path: '/api-example',
+            },
+          ],
+        },
+      },
+      {
+        name: 'demo',
+        config: {
+          ROUTES: () => [],
+          mockHandlers: [],
+        },
+      },
+    ];
     bootstrap = new Bootstrap(modules);
   });
 
@@ -160,6 +162,8 @@ describe('bootstrap', () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
       bootstrap.initModuleLoader();
+      // Модули должны быть добавлены в ModuleLoader перед вызовом initInitModules
+      await bootstrap.moduleLoader.addModules(modules);
       await bootstrap.moduleLoader.initInitModules();
     });
 
@@ -198,6 +202,8 @@ describe('bootstrap', () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
       bootstrap.initModuleLoader();
+      // Модули должны быть добавлены в ModuleLoader перед вызовом initInitModules
+      await bootstrap.moduleLoader.addModules(modules);
       await bootstrap.moduleLoader.initInitModules();
 
       expect(bootstrap.mockService).not.toBeNull();

@@ -26,6 +26,13 @@ export const createLibConfig = (options: {
     } = options;
 
     const tsconfig = tsconfigPath || path.join(process.cwd(), 'tsconfig.base.json');
+    
+    // Определяем путь к tsconfig.spec.json для тестовых файлов
+    // Если tsconfigPath указывает на tsconfig.lib.json, используем tsconfig.spec.json из той же директории
+    // Используем resolve для получения абсолютного пути
+    const tsconfigSpec = tsconfigPath 
+        ? path.resolve(path.dirname(tsconfigPath), 'tsconfig.spec.json')
+        : path.resolve(process.cwd(), 'tsconfig.spec.json');
 
     const config: ESLintConfig = {
         ...baseConfig,
@@ -35,35 +42,22 @@ export const createLibConfig = (options: {
         },
         overrides: [
             ...(baseConfig.overrides || []),
+            // Сначала обрабатываем тестовые файлы с tsconfig.spec.json
             {
                 parserOptions: {
                     ecmaVersion: 'latest',
                     sourceType: 'module',
-                    project: [tsconfig],
-                },
-                files: ['*.ts', '*.tsx', '*.js', '*.jsx'],
-                rules: {
-                    '@typescript-eslint/no-for-in-array': 'off',
-                    '@typescript-eslint/ban-ts-comment': 'off',
-                    '@typescript-eslint/no-unsafe-return': 'off',
-                    ...localRules,
-                },
-            },
-            {
-                parserOptions: {
-                    ecmaVersion: 'latest',
-                    sourceType: 'module',
-                    project: [tsconfig],
+                    project: [tsconfigSpec],
                 },
                 files: [
-                    'src/**/*.test.ts',
-                    'src/**/*.spec.ts',
-                    'src/**/*.test.tsx',
-                    'src/**/*.spec.tsx',
-                    'src/**/*.test.js',
-                    'src/**/*.spec.js',
-                    'src/**/*.test.jsx',
-                    'src/**/*.spec.jsx',
+                    '**/*.test.ts',
+                    '**/*.spec.ts',
+                    '**/*.test.tsx',
+                    '**/*.spec.tsx',
+                    '**/*.test.js',
+                    '**/*.spec.js',
+                    '**/*.test.jsx',
+                    '**/*.spec.jsx',
                 ],
                 rules: {
                     '@typescript-eslint/ban-ts-comment': 'off',
@@ -77,6 +71,31 @@ export const createLibConfig = (options: {
                     '@typescript-eslint/no-unsafe-member-access': 'off',
                     '@typescript-eslint/no-unsafe-call': 'off',
                     'no-native-reassign': 'off',
+                },
+            },
+            // Затем обрабатываем остальные файлы с tsconfig.lib.json
+            {
+                parserOptions: {
+                    ecmaVersion: 'latest',
+                    sourceType: 'module',
+                    project: [tsconfig],
+                },
+                files: ['*.ts', '*.tsx', '*.js', '*.jsx'],
+                excludedFiles: [
+                    '**/*.test.ts',
+                    '**/*.spec.ts',
+                    '**/*.test.tsx',
+                    '**/*.spec.tsx',
+                    '**/*.test.js',
+                    '**/*.spec.js',
+                    '**/*.test.jsx',
+                    '**/*.spec.jsx',
+                ],
+                rules: {
+                    '@typescript-eslint/no-for-in-array': 'off',
+                    '@typescript-eslint/ban-ts-comment': 'off',
+                    '@typescript-eslint/no-unsafe-return': 'off',
+                    ...localRules,
                 },
             },
             ...(localOverrides || []),

@@ -1,10 +1,10 @@
 import { type FC } from 'react';
-import TodoInput from './components/TodoInput.tsx';
+import TodoInput from './components/TodoInput';
 import { useVM, Container, Box } from '@platform/ui';
-import type { TodoListViewModel } from '../viewmodels/todo_list.vm.ts';
+import type { TodoListViewModel } from '../viewmodels/todo_list.vm';
 import { Observer } from 'mobx-react-lite';
-import TodoItem from './components/TodoItem.tsx';
-import TodoListFilter from './components/TodoListFilter.tsx';
+import TodoItem from './components/TodoItem';
+import TodoListFilter from './components/TodoListFilter';
 import { TODO_DI_TOKENS } from '../config/di.tokens';
 
 const TodoPage: FC = () => {

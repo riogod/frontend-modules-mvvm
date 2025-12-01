@@ -1,4 +1,4 @@
-import merge from '../merge.ts';
+import merge from '../merge';
 import { beforeEach, describe, it, expect } from 'vitest';
 
 describe('merge', () => {

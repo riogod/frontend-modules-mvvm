@@ -1,5 +1,5 @@
-import { type Bootstrap } from '../../index.ts';
-import { DIHandler } from '../DIHandler.ts';
+import { type Bootstrap } from '../../index';
+import { DIHandler } from '../DIHandler';
 
 describe('DIHandler', () => {
   const bootstrapMock: Bootstrap = {

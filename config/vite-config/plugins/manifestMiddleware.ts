@@ -1,5 +1,5 @@
 import type { Plugin, ViteDevServer } from 'vite';
-import type { ManifestMiddlewareOptions } from './types.ts';
+import type { ManifestMiddlewareOptions } from './types';
 
 /**
  * Vite плагин для создания /app/start endpoint в dev режиме
@@ -48,8 +48,7 @@ export function createManifestMiddleware(
         // Добавляем user данные для dev режима
         const devManifest = {
           ...manifest,
-          user:
-            manifest.user ||
+          user: manifest.user ||
             defaultUser || {
               permissions: [],
               featureFlags: [],
@@ -67,4 +66,3 @@ export function createManifestMiddleware(
     },
   };
 }
-

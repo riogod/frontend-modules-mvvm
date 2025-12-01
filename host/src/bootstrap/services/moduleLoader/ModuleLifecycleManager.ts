@@ -1,4 +1,4 @@
-import { type Module } from '../../../modules/interface.ts';
+import { type Module } from '../../../modules/interface';
 import { type Bootstrap } from '../../index';
 import { type IRoutes, log } from '@platform/core';
 import {

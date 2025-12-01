@@ -1,5 +1,5 @@
 import { type Router } from '@riogz/router';
-import { i18nOptions } from './i18n.ts';
+import { i18nOptions } from './i18n';
 import { type InitOptions } from 'i18next';
 import { type IRoutes, type RouterDependencies } from '@platform/core';
 

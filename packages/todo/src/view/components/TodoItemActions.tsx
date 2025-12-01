@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react';
 import { Box, MuiIconButton, DeleteForeverIcon } from '@platform/ui';
-import { type IActions } from './interface.ts';
+import { type IActions } from './interface';
 import { useTranslation } from 'react-i18next';
 
 const TodoItemActions: FC<IActions> = ({ removeItemHandler }) => {

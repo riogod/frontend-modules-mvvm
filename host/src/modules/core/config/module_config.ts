@@ -1,8 +1,8 @@
-import { type ModuleConfig } from '../../../bootstrap/interface.ts';
-import { routes } from './routes.ts';
-import { HttpErrorHandler } from './http_errors.ts';
+import { type ModuleConfig } from '../../../bootstrap/interface';
+import { routes } from './routes';
+import { HttpErrorHandler } from './http_errors';
 import { log } from '@platform/core';
-import { DI_CONFIG } from './di.config.ts';
+import { DI_CONFIG } from './di.config';
 
 export default {
   ROUTES: () => routes,

@@ -1,5 +1,5 @@
-import { type Bootstrap } from '../../index.ts';
-import { APIClientHandler } from '../APIClient.ts';
+import { type Bootstrap } from '../../index';
+import { APIClientHandler } from '../APIClient';
 
 describe('APIClientHandler', () => {
   const bootstrapMock: Bootstrap = {

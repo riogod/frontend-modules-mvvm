@@ -8,7 +8,7 @@ import {
   TextField,
   AddIcon,
 } from '@platform/ui';
-import type { TodoListViewModel } from '../../viewmodels/todo_list.vm.ts';
+import type { TodoListViewModel } from '../../viewmodels/todo_list.vm';
 import { useTranslation } from 'react-i18next';
 import { TODO_DI_TOKENS } from '../../config/di.tokens';
 

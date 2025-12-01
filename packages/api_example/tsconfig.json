@@ -7,7 +7,6 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["node"],
-    "composite": true,
     "declaration": true,
     "declarationMap": true
   },
@@ -26,4 +25,3 @@
   ],
   "extends": "../../tsconfig.base.json"
 }
-

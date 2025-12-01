@@ -1,4 +1,4 @@
-import { findSegment } from '../utils.ts';
+import { findSegment } from '../utils';
 import { type IMenuItem } from '@platform/core';
 
 describe('findSegment', () => {

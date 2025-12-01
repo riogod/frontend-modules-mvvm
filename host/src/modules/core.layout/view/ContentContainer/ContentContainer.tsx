@@ -2,10 +2,10 @@ import { createElement, type FC, Suspense } from 'react';
 import { useRoute } from '@riogz/react-router';
 import { type IMenuItem } from '@platform/core';
 import { ErrorBoundary } from '@platform/ui';
-import { findSegment } from './util.ts';
-import NotFoundPage from '../NotFoundPage.tsx';
+import { findSegment } from './util';
+import NotFoundPage from '../NotFoundPage';
 import { observer } from 'mobx-react-lite';
-import ModuleErrorFallback from './ModuleErrorFallback.tsx';
+import ModuleErrorFallback from './ModuleErrorFallback';
 
 const ContentContainer = () => {
   const route = useRoute();

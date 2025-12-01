@@ -1,6 +1,6 @@
 import { type AxiosError, IOC_CORE_TOKENS } from '@platform/core';
-import { type Bootstrap } from '../../../bootstrap/index.ts';
-import type { AppModel } from '../models/app.model.ts';
+import { type Bootstrap } from '../../../bootstrap/index';
+import type { AppModel } from '../models/app.model';
 
 type TCallbacks = (error: AxiosError) => void;
 

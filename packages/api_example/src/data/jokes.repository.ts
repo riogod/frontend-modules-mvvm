@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 import { APIClient, HttpMethod, IOC_CORE_TOKENS } from '@platform/core';
-import { EAPIExampleEndpoints } from '../config/endpoints.ts';
-import { JokeResponseDTO } from './jokes.dto.ts';
-import { jokesResponseSchema } from './validation/jokes.response.schema.ts';
+import { EAPIExampleEndpoints } from '../config/endpoints';
+import { JokeResponseDTO } from './jokes.dto';
+import { jokesResponseSchema } from './validation/jokes.response.schema';
 
 @injectable()
 export class JokesRepository {
