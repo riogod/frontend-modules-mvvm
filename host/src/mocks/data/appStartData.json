@@ -3,11 +3,13 @@
   "data": {
     "features": {
       "api.module.load.feature": true,
-      "todo.module.load.feature": true
+      "todo.module.load.feature": true,
+      "local-normal.load.feature": true
     },
     "permissions": {
       "api.module.load.permission": true,
-      "todo.module.load.permission": true
+      "todo.module.load.permission": true,
+      "local-normal.load.permission": true
     },
     "params": {
       "core.SomeParam": "SomeValue",

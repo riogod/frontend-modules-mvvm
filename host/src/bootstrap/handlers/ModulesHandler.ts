@@ -36,6 +36,11 @@ export class ModulesHandler extends AbstractInitHandler {
       (m) => m.loadType === ModuleLoadType.INIT,
     );
     
+    // Загружаем NORMAL модули из локальных modules.ts
+    const localNormalModules = app_modules.filter(
+      (m) => m.loadType !== ModuleLoadType.INIT,
+    );
+    
     // Объединяем INIT модули: локальные + из манифеста
     // Убираем дубликаты по имени (приоритет у локальных)
     const allInitModules: Module[] = [
@@ -46,10 +51,20 @@ export class ModulesHandler extends AbstractInitHandler {
       ),
     ];
 
-    // Объединяем: INIT модули + discovered NORMAL модули
-    const allModules: Module[] = [...allInitModules, ...discoveredNormalModules];
+    // Объединяем NORMAL модули: локальные + из манифеста
+    // Убираем дубликаты по имени (приоритет у локальных)
+    const allNormalModules: Module[] = [
+      ...localNormalModules,
+      ...discoveredNormalModules.filter(
+        (discovered) =>
+          !localNormalModules.some((local) => local.name === discovered.name),
+      ),
+    ];
+
+    // Объединяем: INIT модули + NORMAL модули
+    const allModules: Module[] = [...allInitModules, ...allNormalModules];
     log.debug(
-      `ModulesHandler: total modules to register = ${allModules.length} (INIT=${allInitModules.length}, NORMAL=${discoveredNormalModules.length})`,
+      `ModulesHandler: total modules to register = ${allModules.length} (INIT=${allInitModules.length}, NORMAL=${allNormalModules.length})`,
       { prefix: 'bootstrap.handlers.ModulesHandler' },
     );
 

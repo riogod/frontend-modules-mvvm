@@ -25,5 +25,9 @@ export const app_modules: Module[] = [
     config: LocalModuleConfig,
     loadType: ModuleLoadType.NORMAL,
     loadPriority: 3,
+    loadCondition: {
+      featureFlags: ['local-normal.load.feature'],
+      accessPermissions: ['local-normal.load.permission'],
+    },
   },
 ];

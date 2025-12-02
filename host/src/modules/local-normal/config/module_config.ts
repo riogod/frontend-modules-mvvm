@@ -1,4 +1,4 @@
-import { ModuleLoadType, type ModuleConfig } from '@platform/core';
+import { type ModuleConfig } from '@platform/core';
 import { routes } from './routes';
 
 import en_local_normal from './i18n/en_local-normal.json';
@@ -18,15 +18,4 @@ export default {
     i18n.addResourceBundle('ru', 'local-normal', ru_local_normal);
   },
   mockHandlers: handlers,
-  mockModuleInfo: {
-    name: 'local-normal',
-    loadType: ModuleLoadType.NORMAL,
-    remoteEntry: '',
-    dependencies: [],
-    featureFlags: [],
-    accessPermissions: [],
-    loadPriority: 1,
-    version: '1.0.0',
-  },
-  mockModuleData: {},
 } as ModuleConfig;
