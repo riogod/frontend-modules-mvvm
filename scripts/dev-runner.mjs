@@ -51,9 +51,10 @@ async function showMainMenu(configManager) {
       const moduleCount = Object.keys(fullConfig?.modules || {}).length;
       const moduleInfo =
         moduleCount > 0 ? ` (${moduleCount} модулей)` : ' (нет модулей)';
+      const lastUsedMark = config.isLastUsed ? chalk.cyan(' ★') : '';
 
       // Формируем заголовок с описанием в той же строке через дефис
-      let title = `${index + 1}. ${config.name}${moduleInfo}${usageInfo}`;
+      let title = `${index + 1}. ${config.name}${moduleInfo}${usageInfo}${lastUsedMark}`;
       if (fullConfig?.description && fullConfig.description.trim() !== '') {
         title += ` - ${chalk.gray(fullConfig.description)}`;
       }

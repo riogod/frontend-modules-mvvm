@@ -67,16 +67,28 @@ export class ConfigManager {
 
   /**
    * Получить список конфигураций
-   * @returns {Array<{id: string, name: string, description?: string, usageCount?: number}>}
+   * Последняя использованная конфигурация возвращается первой
+   * @returns {Array<{id: string, name: string, description?: string, usageCount?: number, isLastUsed?: boolean}>}
    */
   getList() {
-    return Object.entries(this.config.configurations).map(([id, config]) => ({
-      id,
-      name: config.name,
-      description: config.description || '',
-      usageCount: config.usageCount || 0,
-      createdAt: config.createdAt,
-    }));
+    const lastUsed = this.config.lastUsed;
+    const list = Object.entries(this.config.configurations).map(
+      ([id, config]) => ({
+        id,
+        name: config.name,
+        description: config.description || '',
+        usageCount: config.usageCount || 0,
+        createdAt: config.createdAt,
+        isLastUsed: id === lastUsed,
+      }),
+    );
+
+    // Сортируем: последняя использованная первой, остальные по количеству использований
+    return list.sort((a, b) => {
+      if (a.isLastUsed) return -1;
+      if (b.isLastUsed) return 1;
+      return (b.usageCount || 0) - (a.usageCount || 0);
+    });
   }
 
   /**

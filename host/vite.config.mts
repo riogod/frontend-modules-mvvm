@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import {
   createViteConfig,
   createModuleAliasesPlugin,
-  createManifestMiddleware,
   loadManifest,
 } from '@platform/vite-config';
 import path from 'path';
