@@ -1,6 +1,6 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { TodoListModel } from '../models/todo_list.model.ts';
+import { TodoListModel } from '../models/todo_list.model';
 import { TODO_DI_TOKENS } from '../config/di.tokens';
 
 @injectable()

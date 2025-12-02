@@ -23,7 +23,7 @@ export default {
     loadType: 'normal',
     loadPriority: 2,
     remoteEntry: '',
-    dependencies: ['todo'],
+    dependencies: [],
     featureFlags: ['api.module.load.feature'],
     accessPermissions: ['api.module.load.permission'],
   },
