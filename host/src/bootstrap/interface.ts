@@ -4,23 +4,9 @@ import { type RequestHandler } from 'msw';
 import type { Bootstrap } from '.';
 
 // Реэкспорт типов манифеста из единого источника
-import type {
-  AppManifest as BaseAppManifest,
-  ModuleManifestEntry,
-} from '@platform/vite-config/plugins/types';
+import type { ModuleManifestEntry } from '@platform/vite-config/plugins/types';
 
 export type { ModuleManifestEntry };
-
-/**
- * Расширение типа манифеста для runtime использования
- * Включает user данные которые приходят с /app/start
- */
-export interface AppStartResponse extends BaseAppManifest {
-  user?: {
-    permissions: string[];
-    featureFlags: string[];
-  };
-}
 
 /**
  *  Интерфейс конфигурации модуля приложения.

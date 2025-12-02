@@ -1,6 +1,5 @@
 import { AbstractInitHandler } from './AbstractInitHandler';
 import type { Bootstrap } from '..';
-import type { AppStartResponse } from '../interface';
 import type { AppStartDTO } from '../services/appStart/data/app.dto';
 import { HttpMethod, log } from '@platform/core';
 // Типы манифеста из единого источника
@@ -40,42 +39,22 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       // 1. Загружаем манифест (он автоматически сохраняется в loadManifest)
       const manifest = await this.loadManifest(bootstrap);
 
-      // Proxy-server возвращает AppStartDTO с полем data, где находятся модули
-      // Проверяем оба варианта структуры ответа для совместимости
-      let modulesList: ModuleManifestEntry[] = [];
-      let userData:
-        | { permissions: string[]; featureFlags: string[] }
-        | undefined = undefined;
-
-      if ('data' in manifest && manifest.data) {
-        // Структура AppStartDTO: { status, data: { modules, features, permissions, params } }
-        modulesList = manifest.data.modules || [];
-        // user данные в AppStartDTO не приходят, они извлекаются из features/permissions
-      } else {
-        // Структура AppStartResponse: { modules, user?, features?, permissions?, params? }
-        modulesList = (manifest as AppStartResponse).modules || [];
-        userData = (manifest as AppStartResponse).user;
-      }
+      // AppStartDTO: { status, data: { modules, features, permissions, params } }
+      const modulesList = manifest.data?.modules || [];
 
       log.debug(
-        `ModulesDiscoveryHandler: manifest loaded, modules=${modulesList.length}, hasUser=${!!userData}`,
+        `ModulesDiscoveryHandler: manifest loaded, modules=${modulesList.length}`,
         { prefix: 'bootstrap.handlers.ModulesDiscoveryHandler' },
       );
 
-      // 2. Сохраняем user данные для AccessControl
-      if (userData) {
-        bootstrap.setUserData(userData);
-      }
-
-      // 4. Обрабатываем модули из манифеста
-      const manifestModules: ModuleManifestEntry[] = modulesList;
-      const modules = await this.processModules(manifestModules);
+      // 2. Обрабатываем модули из манифеста
+      const modules = await this.processModules(modulesList);
       log.debug(
         `ModulesDiscoveryHandler: processed modules = ${modules.length}`,
         { prefix: 'bootstrap.handlers.ModulesDiscoveryHandler' },
       );
 
-      // 5. Сохраняем модули в Bootstrap
+      // 3. Сохраняем модули в Bootstrap
       bootstrap.setDiscoveredModules(modules);
     } catch (error) {
       log.error(
@@ -98,71 +77,21 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     return super.handle(bootstrap);
   }
 
-  private async loadManifest(
-    bootstrap: Bootstrap,
-  ): Promise<AppStartResponse | AppStartDTO> {
+  private async loadManifest(bootstrap: Bootstrap): Promise<AppStartDTO> {
     log.debug('ModulesDiscoveryHandler: loading manifest', {
       prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadManifest',
     });
     const apiClient = bootstrap.getAPIClient;
-    // Proxy-server возвращает AppStartDTO, но для совместимости принимаем оба типа
-    const response = await apiClient.request<
-      never,
-      AppStartResponse | AppStartDTO
-    >({
+
+    const response = await apiClient.request<never, AppStartDTO>({
       method: HttpMethod.GET,
       route: this.apiEndpoint,
     });
 
-    // Преобразуем ответ в AppStartDTO для сохранения
-    // Если ответ уже имеет структуру AppStartDTO (с data), используем его
-    // Иначе преобразуем AppStartResponse в AppStartDTO
-    const manifestDTO = this.responseToDTO(response as AppStartResponse);
-
     // Сохраняем манифест для повторного использования
-    bootstrap.setAppStartManifest(manifestDTO);
+    bootstrap.setAppStartManifest(response);
 
-    // Возвращаем оригинальный ответ для обработки в handle()
     return response;
-  }
-
-  /**
-   * Преобразует AppStartResponse в AppStartDTO
-   */
-  private responseToDTO(response: AppStartResponse): AppStartDTO {
-    // Если ответ уже имеет структуру AppStartDTO (с data), возвращаем как есть
-    if (
-      'data' in response &&
-      response.data &&
-      typeof response.data === 'object'
-    ) {
-      return response as unknown as AppStartDTO;
-    }
-
-    // Иначе преобразуем AppStartResponse в AppStartDTO
-    // Извлекаем features и permissions из user данных, если они есть
-    const features: Record<string, boolean> = {};
-    const permissions: Record<string, boolean> = {};
-
-    if (response.user) {
-      // Преобразуем массивы строк в объекты Record<string, boolean>
-      for (const flag of response.user.featureFlags || []) {
-        features[flag] = true;
-      }
-      for (const perm of response.user.permissions || []) {
-        permissions[perm] = true;
-      }
-    }
-
-    return {
-      status: 'success',
-      data: {
-        features,
-        permissions,
-        params: {},
-        modules: response.modules || [],
-      },
-    };
   }
 
   private async processModules(

@@ -14,6 +14,7 @@ export const routes: IRoutes = [
     path: '/todo',
     menu: {
       text: 'todo:menu.todo',
+      sortOrder: 1000,
     },
     browserTitle: 'TODO example',
     pageComponent: lazy(() => import('../view/TodoPage')),

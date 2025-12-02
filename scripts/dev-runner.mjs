@@ -72,7 +72,7 @@ async function showMainMenu(configManager) {
       value: { action: 'create-module' },
     },
     {
-      title: '→ Настройки Remote Server URL',
+      title: '→ Глобальные настройки',
       value: { action: 'settings' },
     },
     {
@@ -459,38 +459,66 @@ async function createConfiguration(configManager, moduleDiscovery) {
 }
 
 /**
- * Меню настроек Remote Server URL (глобальная настройка)
+ * Меню глобальных настроек
  */
 async function showSettings(configManager) {
   while (true) {
     process.stdout.write('\x1B[2J\x1B[0f');
 
-  const isRemoteAvailable = configManager.isRemoteAvailable();
+    const isRemoteAvailable = configManager.isRemoteAvailable();
+    const globalApiUrl = configManager.getGlobalApiUrl();
 
-    console.log(chalk.cyan.bold('\n⚙️ Настройки Remote Server URL\n'));
+    console.log(chalk.cyan.bold('\n⚙️ Глобальные настройки\n'));
+
+    // Remote Server URL
+    console.log(chalk.yellow('Remote Server URL:'));
     console.log(
       chalk.gray(
-        '💡 Remote Server URL используется для загрузки REMOTE модулей из удаленного сервера\n',
+        '  💡 Используется для загрузки REMOTE модулей из удаленного сервера',
       ),
     );
+    if (isRemoteAvailable) {
+      console.log(
+        chalk.green(`  ${configManager.getRemoteServerUrl()}\n`),
+      );
+    } else {
+      console.log(chalk.yellow('  ⚠️ Не настроен\n'));
+    }
 
-  if (isRemoteAvailable) {
+    // Global API URL
+    console.log(chalk.yellow('API URL (глобальный fallback):'));
     console.log(
-      chalk.green(`Remote Server URL: ${configManager.getRemoteServerUrl()}\n`),
+      chalk.gray(
+        '  💡 Используется если в конфигурации не задан apiUrl',
+      ),
     );
-  } else {
-    console.log(chalk.yellow('Remote Server URL: ⚠️ Не настроен\n'));
-  }
+    if (globalApiUrl) {
+      console.log(chalk.green(`  ${globalApiUrl}\n`));
+    } else {
+      console.log(chalk.yellow('  ⚠️ Не настроен\n'));
+    }
 
     const choices = [
       {
-        title: isRemoteAvailable ? '→ Изменить URL' : '→ Настроить URL',
-        value: 'set-url',
+        title: isRemoteAvailable
+          ? '→ Изменить Remote Server URL'
+          : '→ Настроить Remote Server URL',
+        value: 'set-remote-url',
+      },
+      {
+        title: globalApiUrl
+          ? '→ Изменить глобальный API URL'
+          : '→ Настроить глобальный API URL',
+        value: 'set-api-url',
       },
     ];
 
     if (isRemoteAvailable) {
-      choices.push({ title: '→ Очистить URL', value: 'clear-url' });
+      choices.push({ title: '→ Очистить Remote Server URL', value: 'clear-remote-url' });
+    }
+
+    if (globalApiUrl) {
+      choices.push({ title: '→ Очистить глобальный API URL', value: 'clear-api-url' });
     }
 
     choices.push({ title: '→ Назад', value: 'back' });
@@ -506,7 +534,7 @@ async function showSettings(configManager) {
       return;
     }
 
-    if (action === 'set-url') {
+    if (action === 'set-remote-url') {
       const { url } = await prompts({
         type: 'text',
         name: 'url',
@@ -527,11 +555,37 @@ async function showSettings(configManager) {
 
       if (url) {
         configManager.setRemoteServerUrl(url);
-        console.log(chalk.green('\n✅ URL сохранен\n'));
+        console.log(chalk.green('\n✅ Remote Server URL сохранен\n'));
       }
-    } else if (action === 'clear-url') {
+    } else if (action === 'clear-remote-url') {
       configManager.setRemoteServerUrl('');
-      console.log(chalk.yellow('\nURL очищен. REMOTE модули недоступны.\n'));
+      console.log(chalk.yellow('\nRemote Server URL очищен. REMOTE модули недоступны.\n'));
+    } else if (action === 'set-api-url') {
+      const { url } = await prompts({
+        type: 'text',
+        name: 'url',
+        message: 'Введите глобальный API URL:',
+        initial: globalApiUrl || 'http://localhost:3000',
+        validate: (value) => {
+          if (!value || value.trim() === '') {
+            return 'URL не может быть пустым';
+          }
+          try {
+            new URL(value);
+            return true;
+          } catch {
+            return 'Введите корректный URL';
+          }
+        },
+      });
+
+      if (url) {
+        configManager.setGlobalApiUrl(url);
+        console.log(chalk.green('\n✅ Глобальный API URL сохранен\n'));
+      }
+    } else if (action === 'clear-api-url') {
+      configManager.setGlobalApiUrl('');
+      console.log(chalk.yellow('\nГлобальный API URL очищен.\n'));
     }
 
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -580,8 +634,14 @@ async function editConfigurationSettings(configManager, configId) {
   // Показываем настройку моков
   const mocksStatus = useLocalMocks
     ? chalk.green('Да (используются локальные моки MSW)')
-    : chalk.yellow(`Нет (используется API: ${apiUrl || 'не настроен'})`);
-  console.log(`Использовать локальные моки: ${mocksStatus}\n`);
+    : chalk.yellow('Нет');
+  console.log(`Использовать локальные моки: ${mocksStatus}`);
+  
+  // Показываем API URL
+  const globalApiUrl = configManager.getGlobalApiUrl();
+  const effectiveApiUrl = apiUrl || globalApiUrl;
+  const apiUrlSource = apiUrl ? '' : (globalApiUrl ? ' (глобальный)' : '');
+  console.log(`API URL: ${effectiveApiUrl ? chalk.green(effectiveApiUrl + apiUrlSource) : chalk.yellow('не настроен')}\n`);
 
   const choices = [
     {
@@ -593,15 +653,11 @@ async function editConfigurationSettings(configManager, configId) {
         title: `→ Использовать локальные моки для host (текущее: ${useLocalMocks ? 'Да' : 'Нет'})`,
       value: 'set-use-mocks',
     },
-  ];
-
-  // Добавляем пункт настройки API URL только если моки отключены
-  if (!useLocalMocks) {
-    choices.push({
-      title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : '(не настроен)'}`,
+    {
+      title: `→ Настроить API URL ${apiUrl ? `(текущий: ${apiUrl})` : effectiveApiUrl ? `(глобальный: ${effectiveApiUrl})` : '(не настроен)'}`,
       value: 'set-api-url',
-    });
-  }
+    },
+  ];
 
   choices.push({ title: '→ Назад', value: 'back' });
 
@@ -675,11 +731,13 @@ async function editConfigurationSettings(configManager, configId) {
       }
     }
   } else if (action === 'set-api-url') {
+    const globalApiUrl = configManager.getGlobalApiUrl();
+    
     const { url } = await prompts({
       type: 'text',
       name: 'url',
-      message: 'Введите API URL:',
-      initial: apiUrl || 'http://localhost:3000',
+      message: `Введите API URL (глобальный: ${globalApiUrl || 'не задан'}):`,
+      initial: apiUrl || globalApiUrl || 'http://localhost:3000',
       validate: (value) => {
         if (!value || value.trim() === '') {
           return 'URL не может быть пустым';
@@ -754,11 +812,8 @@ async function selectConfiguration(configManager, configId) {
   console.log(
     `  Использовать локальные моки: ${settings.useLocalMocks !== false ? 'Да' : 'Нет'}`,
   );
-  if (!settings.useLocalMocks && settings.apiUrl) {
-    console.log(`  API URL: ${settings.apiUrl}`);
-  } else if (!settings.useLocalMocks && !settings.apiUrl) {
-    console.log(chalk.yellow('  API URL: ⚠️ не настроен'));
-  }
+  console.log(`  API URL: ${settings.apiUrl || chalk.yellow('⚠️ не настроен')}`);
+
 
   const { action } = await prompts({
     type: 'select',

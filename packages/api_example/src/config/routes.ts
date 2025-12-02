@@ -13,6 +13,7 @@ export const routes: IRoutes = [
     path: '/api-example',
     menu: {
       text: 'api:menu.api',
+      sortOrder: 2000,
     },
     browserTitle: 'API example',
     pageComponent: lazy(() => import('../view/ApiPage')),

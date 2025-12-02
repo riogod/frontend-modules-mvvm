@@ -261,20 +261,28 @@ export class ConfigManager {
    */
   getConfigSettings(configId) {
     const config = this.get(configId);
+    const globalApiUrl = this.config.apiUrl || '';
+    const globalLogLevel = this.config.logLevel || 'INFO';
+    const globalUseLocalMocks = this.config.useLocalMocks !== false;
+
     if (!config) {
       return {
-        logLevel: 'INFO',
-        useLocalMocks: true,
-        apiUrl: '',
+        logLevel: globalLogLevel,
+        useLocalMocks: globalUseLocalMocks,
+        apiUrl: globalApiUrl,
       };
     }
-    return (
-      config.settings || {
-        logLevel: 'INFO',
-        useLocalMocks: true,
-        apiUrl: '',
-      }
-    );
+
+    const settings = config.settings || {};
+    return {
+      logLevel: settings.logLevel || globalLogLevel,
+      useLocalMocks:
+        settings.useLocalMocks !== undefined
+          ? settings.useLocalMocks
+          : globalUseLocalMocks,
+      // Приоритет: settings.apiUrl > глобальный apiUrl
+      apiUrl: settings.apiUrl || globalApiUrl,
+    };
   }
 
   /**
@@ -295,36 +303,61 @@ export class ConfigManager {
     this.save();
   }
 
-  // Оставляем глобальные методы для обратной совместимости, но они теперь используют дефолтные значения
+  // Глобальные настройки (fallback для конфигураций)
   /**
-   * Получить настройку использования локальных моков (deprecated - используйте getConfigSettings)
+   * Получить глобальную настройку использования локальных моков
    * @returns {boolean}
    */
-  getUseLocalMocks() {
-    return true; // По умолчанию true
+  getGlobalUseLocalMocks() {
+    return this.config.useLocalMocks !== false;
   }
 
   /**
-   * Установить настройку использования локальных моков (deprecated - используйте setConfigSettings)
-   * @param {boolean} useLocalMocks - Использовать локальные моки (true) или реальный API (false)
+   * Установить глобальную настройку использования локальных моков
+   * @param {boolean} useLocalMocks
    */
-  setUseLocalMocks(useLocalMocks) {
-    // Deprecated - настройки теперь в конфигурациях
+  setGlobalUseLocalMocks(useLocalMocks) {
+    this.config.useLocalMocks = useLocalMocks;
+    this.save();
   }
 
   /**
-   * Получить URL API сервера (deprecated - используйте getConfigSettings)
+   * Получить глобальный URL API сервера (fallback)
    * @returns {string}
    */
-  getApiUrl() {
-    return '';
+  getGlobalApiUrl() {
+    return this.config.apiUrl || '';
   }
 
   /**
-   * Установить URL API сервера (deprecated - используйте setConfigSettings)
-   * @param {string} url - URL API сервера
+   * Установить глобальный URL API сервера (fallback)
+   * @param {string} url
    */
-  setApiUrl(url) {
-    // Deprecated - настройки теперь в конфигурациях
+  setGlobalApiUrl(url) {
+    this.config.apiUrl = url.trim();
+    this.save();
+  }
+
+  /**
+   * Получить глобальный уровень логирования
+   * @returns {string}
+   */
+  getGlobalLogLevel() {
+    return this.config.logLevel || 'INFO';
+  }
+
+  /**
+   * Установить глобальный уровень логирования
+   * @param {string} level
+   */
+  setGlobalLogLevel(level) {
+    const validLevels = ['NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+    if (!validLevels.includes(level.toUpperCase())) {
+      throw new Error(
+        `Недопустимый уровень логирования: ${level}. Допустимые значения: ${validLevels.join(', ')}`,
+      );
+    }
+    this.config.logLevel = level.toUpperCase();
+    this.save();
   }
 }

@@ -37,6 +37,10 @@ interface Config {
   version: string;
   lastUsed: string | null;
   remoteServerUrl: string;
+  // Глобальные настройки (fallback)
+  apiUrl?: string;
+  useLocalMocks?: boolean;
+  logLevel?: string;
   configurations: Record<
     string,
     {
@@ -51,6 +55,7 @@ interface Config {
           path?: string;
           url?: string;
           customUrl?: string;
+          apiUrl?: string;
         }
       >;
       settings?: {
@@ -256,13 +261,14 @@ async function createProxyServer() {
     process.exit(1);
   }
 
-  console.log(
-    `[ProxyServer] Config: ${activeConfig.name} | Mocks: ${activeConfig.settings?.useLocalMocks !== false ? 'ON' : 'OFF'} | API: ${activeConfig.settings?.apiUrl || 'not set'}`,
-  );
-
   // Настройки для host
+  // Приоритет: settings.apiUrl > глобальный apiUrl
   const hostUseLocalMocks = activeConfig.settings?.useLocalMocks !== false;
-  const hostApiUrl = activeConfig.settings?.apiUrl || '';
+  const hostApiUrl = activeConfig.settings?.apiUrl || config.apiUrl || '';
+
+  console.log(
+    `[ProxyServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'}`,
+  );
 
   // Загружаем handlers для host, если моки включены
   let hostHandlers: RequestHandler[] = [];
@@ -572,9 +578,18 @@ async function createProxyServer() {
       } else {
         // Проксируем на удаленный сервер
         // Поддерживаем все HTTP методы: GET, POST, PUT, DELETE, PATCH, OPTIONS
-        const apiUrl = activeConfig.settings?.apiUrl || '';
+        // Приоритет: apiUrl модуля > customUrl модуля > url модуля > settings.apiUrl > глобальный apiUrl
+        const apiUrl =
+          moduleConfig.apiUrl ||
+          moduleConfig.customUrl ||
+          moduleConfig.url ||
+          activeConfig.settings?.apiUrl ||
+          config.apiUrl ||
+          '';
         if (!apiUrl) {
-          res.status(500).json({ error: 'API URL not configured' });
+          res.status(500).json({
+            error: `API URL not configured for module ${moduleName}`,
+          });
           return;
         }
 
