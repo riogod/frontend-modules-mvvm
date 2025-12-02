@@ -1,7 +1,12 @@
 import { APIClientHandler } from './handlers/APIClient';
 import { RouterHandler } from './handlers/RouterHandler';
 import { RouterPostHandler } from './handlers/RouterPostHandler';
-import { APIClient, IOC_CORE_TOKENS, log } from '@platform/core';
+import {
+  APIClient,
+  IOC_CORE_TOKENS,
+  log,
+  type IBootstrap,
+} from '@platform/core';
 import { ModulesHandler } from './handlers/ModulesHandler';
 import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
@@ -62,7 +67,7 @@ export const initBootstrap = async (
  *
  *  @param {Module[]} modules - Модули приложения.
  */
-export class Bootstrap {
+export class Bootstrap implements IBootstrap {
   i18n: i18n = i18next;
   routerService = new BootstrapRouterService();
   moduleLoader = new BootstrapModuleLoader();

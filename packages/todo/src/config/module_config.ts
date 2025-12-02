@@ -1,4 +1,4 @@
-import { type ModuleConfig } from '@host/bootstrap/interface';
+import { type ModuleConfig } from '@platform/core';
 import { routes } from './routes';
 
 import en_todo from './i18n/en_todo.json';

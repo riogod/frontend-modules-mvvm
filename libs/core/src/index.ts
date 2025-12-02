@@ -1,6 +1,7 @@
 export * from './APIClient';
 export type * from './Router';
 export * from './Logger';
+export * from './ModuleInterfaces';
 
 export const IOC_CORE_TOKENS = {
   APIClient: Symbol.for('APIClient'),

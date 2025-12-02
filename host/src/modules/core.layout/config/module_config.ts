@@ -1,4 +1,4 @@
-import { type ModuleConfig } from '../../../bootstrap/interface';
+import { type ModuleConfig } from '@platform/core';
 import ru_common from './i18n/ru_common.json';
 import en_common from './i18n/en_common.json';
 import { log } from '@platform/core';

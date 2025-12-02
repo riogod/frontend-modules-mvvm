@@ -1,4 +1,5 @@
 import { type ModuleConfig } from '../bootstrap/interface';
+import { ModuleLoadType, type ModuleLoadCondition } from '@platform/core';
 
 /**
  * Базовый интерфейс модуля
@@ -71,37 +72,5 @@ export interface NormalModule extends BaseModule {
  */
 export type Module = InitModule | NormalModule;
 
-/**
- * Тип загрузки модуля
- */
-export enum ModuleLoadType {
-  /**
-   * Модуль загружается при инициализации приложения
-   */
-  INIT = 'init',
-  /**
-   * Модуль загружается в фоновом режиме после инициализации приложения
-   */
-  NORMAL = 'normal',
-}
-
-/**
- * Условия загрузки модуля
- */
-export type ModuleLoadCondition = {
-  /**
-   * Массив идентификаторов фич-флагов, при их отсутствии в AccessControlModel модуль не загружается
-   */
-  featureFlags?: string[];
-  /**
-   * Массив идентификаторов прав доступа, при их отсутствии в AccessControlModel модуль не загружается
-   */
-  accessPermissions?: string[];
-  /**
-   * Массив идентификаторов модулей, от которых зависит текущий модуль.
-   * Загрузка зависимых модулей будет происходить перед загрузкой текущего модуля в соответствии
-   * с их приоритетами загрузки.
-   * При их отсутствии модуль не загружается.
-   */
-  dependencies?: string[];
-};
+// Реэкспорт типов из core для удобства
+export { ModuleLoadType, type ModuleLoadCondition };

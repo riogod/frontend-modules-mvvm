@@ -1,4 +1,4 @@
-import { type ModuleConfig } from '@host/bootstrap/interface';
+import { type ModuleConfig } from '@platform/core';
 import { routes } from './routes';
 
 import en_{{MODULE_NAME_VAR}} from './i18n/en_{{MODULE_NAME}}.json';

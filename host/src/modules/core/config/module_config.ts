@@ -1,4 +1,4 @@
-import { type ModuleConfig } from '../../../bootstrap/interface';
+import { type ModuleConfig } from '@platform/core';
 import { routes } from './routes';
 import { HttpErrorHandler } from './http_errors';
 import { log } from '@platform/core';

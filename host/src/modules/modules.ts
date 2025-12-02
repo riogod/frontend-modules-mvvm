@@ -19,27 +19,4 @@ export const app_modules: Module[] = [
     loadType: ModuleLoadType.INIT,
     loadPriority: 2,
   },
-  // {
-  //   name: 'todo',
-  //   description: 'Todo module - Показывает пример работы с моделью Todo',
-  //   config: TodoConfig,
-  //   loadType: ModuleLoadType.NORMAL,
-  //   loadPriority: 1,
-  // },
-  // {
-  //   name: 'api',
-  //   description:
-  //     'API example module - Показывает пример реализации работы с API',
-  //   // Динамический импорт конфига - модуль будет вынесен в отдельный чанк
-  //   config: import('@platform/module-api-example/config/module_config').then(
-  //     (m) => m.default,
-  //   ),
-  //   loadType: ModuleLoadType.NORMAL,
-  //   loadPriority: 2,
-  //   loadCondition: {
-  //     dependencies: ['core', 'todo'],
-  //     featureFlags: ['api.module.load.feature'],
-  //     accessPermissions: ['api.module.load.permission'],
-  //   },
-  // },
 ];

@@ -1,4 +1,4 @@
-import type { ModuleManifestEntry } from '@host/bootstrap/interface';
+import type { ModuleManifestEntry } from '@platform/core';
 
 export interface AppStartDTO {
   status: string;

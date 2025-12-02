@@ -5,8 +5,15 @@
  * - config/vite-config/plugins/ — Vite плагины
  * - config/vite-config/build/ — Build утилиты
  * - host/src/bootstrap/ — Bootstrap handlers (через реэкспорт)
+ *
+ * Примечание: ModuleManifestEntry определен здесь для vite-config,
+ * но также доступен через @platform/core для использования в других частях проекта
  */
 
+/**
+ * Запись модуля в манифесте
+ * Дублируется из @platform/core для использования в vite-config
+ */
 export interface ModuleManifestEntry {
   name: string;
   version?: string;
