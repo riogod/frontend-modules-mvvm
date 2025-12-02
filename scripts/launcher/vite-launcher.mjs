@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { ProxyServerLauncher } from './proxy-server-launcher.mjs';
+import { DevServerLauncher } from './dev-server-launcher.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -55,10 +55,10 @@ export class ViteLauncher {
           ? configSettings.useLocalMocks
           : true;
 
-    // В dev режиме всегда используем пустой API URL, чтобы запросы шли через Vite proxy на proxy-server
+    // В dev режиме всегда используем пустой API URL, чтобы запросы шли через Vite proxy на dev-server
     // Vite proxy перенаправит запросы на localhost:1337
-    // Proxy-server сам решит, использовать моки или проксировать на реальный сервер
-    // Отключаем MSW в браузере, так как proxy-server использует MSW для Node.js
+    // Dev-server сам решит, использовать моки или проксировать на реальный сервер
+    // Отключаем MSW в браузере, так как dev-server использует MSW для Node.js
     const env = {
       ...process.env,
       VITE_LOCAL_MODULES: localModules.join(','),
@@ -66,19 +66,19 @@ export class ViteLauncher {
       VITE_USE_LOCAL_MOCKS: String(useLocalMocks),
       // В dev режиме всегда используем пустой URL для работы через Vite proxy
       VITE_API_URL: '',
-      // Отключаем MSW в браузере, так как используется proxy-server
+      // Отключаем MSW в браузере, так как используется dev-server
       VITE_USE_PROXY_SERVER: 'true',
     };
 
-    // 5. Запустить proxy-server параллельно
-    const proxyLauncher = new ProxyServerLauncher();
-    const proxyProcess = await proxyLauncher.start();
+    // 5. Запустить dev-server параллельно
+    const devLauncher = new DevServerLauncher();
+    const devProcess = await devLauncher.start();
 
-    // Обработка завершения proxy-server
-    proxyProcess.on('close', (code) => {
+    // Обработка завершения dev-server
+    devProcess.on('close', (code) => {
       if (code !== 0) {
         console.error(
-          `[ViteLauncher] Proxy-server process exited with code ${code}`,
+          `[ViteLauncher] Dev-server process exited with code ${code}`,
         );
     }
     });
@@ -93,8 +93,8 @@ export class ViteLauncher {
 
     // Обработка завершения процесса Vite
     viteProcess.on('close', (code) => {
-      // Останавливаем proxy-server при завершении Vite
-      proxyLauncher.stop(proxyProcess);
+      // Останавливаем dev-server при завершении Vite
+      devLauncher.stop(devProcess);
       // null - процесс был убит сигналом (нормальное завершение)
       // 0 - нормальное завершение
       // 130 (SIGINT) и 143 (SIGTERM) - завершение по сигналу
@@ -106,7 +106,7 @@ export class ViteLauncher {
     // Обработка сигналов для корректного завершения
     process.on('SIGINT', () => {
       console.log('\n[ViteLauncher] Получен SIGINT, останавливаем процессы...');
-      proxyLauncher.stop(proxyProcess);
+      devLauncher.stop(devProcess);
       viteProcess.kill('SIGTERM');
     });
 
@@ -114,7 +114,7 @@ export class ViteLauncher {
       console.log(
         '\n[ViteLauncher] Получен SIGTERM, останавливаем процессы...',
       );
-      proxyLauncher.stop(proxyProcess);
+      devLauncher.stop(devProcess);
       viteProcess.kill('SIGTERM');
     });
 

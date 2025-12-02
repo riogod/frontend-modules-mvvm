@@ -1,8 +1,8 @@
 {
-  "name": "@platform/proxy-server",
+  "name": "@platform/dev-server",
   "version": "0.0.0",
   "private": true,
-  "description": "Proxy server for development with MSW integration",
+  "description": "Development server with MSW integration",
   "type": "module",
   "main": "./index.js",
   "scripts": {
@@ -21,3 +21,4 @@
     "typescript": "~5.9.3"
   }
 }
+

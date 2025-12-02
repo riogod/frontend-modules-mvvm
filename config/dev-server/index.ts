@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PROXY_PORT = 1337;
+const DEV_SERVER_PORT = 1337;
 const ROOT_DIR = path.resolve(__dirname, '../..');
 const MANIFEST_PATH = path.resolve(ROOT_DIR, '.launcher/current-manifest.json');
 const CONFIGS_PATH = path.resolve(ROOT_DIR, '.launcher/configs.json');
@@ -73,13 +73,13 @@ interface Config {
 function loadManifest(): Manifest | null {
   try {
     if (!fs.existsSync(MANIFEST_PATH)) {
-      console.warn(`[ProxyServer] Manifest not found: ${MANIFEST_PATH}`);
+      console.warn(`[DevServer] Manifest not found: ${MANIFEST_PATH}`);
       return null;
     }
     const content = fs.readFileSync(MANIFEST_PATH, 'utf-8');
     return JSON.parse(content) as Manifest;
   } catch (error) {
-    console.error(`[ProxyServer] Failed to load manifest:`, error);
+    console.error(`[DevServer] Failed to load manifest:`, error);
     return null;
   }
 }
@@ -90,13 +90,13 @@ function loadManifest(): Manifest | null {
 function loadConfig(): Config | null {
   try {
     if (!fs.existsSync(CONFIGS_PATH)) {
-      console.warn(`[ProxyServer] Config not found: ${CONFIGS_PATH}`);
+      console.warn(`[DevServer] Config not found: ${CONFIGS_PATH}`);
       return null;
     }
     const content = fs.readFileSync(CONFIGS_PATH, 'utf-8');
     return JSON.parse(content) as Config;
   } catch (error) {
-    console.error(`[ProxyServer] Failed to load config:`, error);
+    console.error(`[DevServer] Failed to load config:`, error);
     return null;
   }
 }
@@ -144,7 +144,7 @@ async function loadModuleHandlers(
     return null;
   } catch (error) {
     console.error(
-      `[ProxyServer] Failed to load handlers for ${moduleName}:`,
+      `[DevServer] Failed to load handlers for ${moduleName}:`,
       error,
     );
     return null;
@@ -224,9 +224,9 @@ function enrichAppStartResponse(originalResponse: any): any {
 }
 
 /**
- * Создает и запускает proxy server
+ * Создает и запускает dev server
  */
-async function createProxyServer() {
+async function createDevServer() {
   const app = express();
 
   // CORS middleware - поддерживает все HTTP методы
@@ -257,7 +257,7 @@ async function createProxyServer() {
   const manifest = loadManifest();
 
   if (!config || !activeConfig) {
-    console.error('[ProxyServer] Failed to load configuration');
+    console.error('[DevServer] Failed to load configuration');
     process.exit(1);
   }
 
@@ -267,7 +267,7 @@ async function createProxyServer() {
   const hostApiUrl = activeConfig.settings?.apiUrl || config.apiUrl || '';
 
   console.log(
-    `[ProxyServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'}`,
+    `[DevServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'}`,
   );
 
   // Загружаем handlers для host, если моки включены
@@ -279,11 +279,11 @@ async function createProxyServer() {
       if (hostMocks.handlers && Array.isArray(hostMocks.handlers)) {
         hostHandlers = hostMocks.handlers;
         console.log(
-          `[ProxyServer] Host mocks: ${hostMocks.handlers.length} handlers`,
+          `[DevServer] Host mocks: ${hostMocks.handlers.length} handlers`,
         );
       }
     } catch (error) {
-      console.warn(`[ProxyServer] Failed to load host mocks:`, error);
+      console.warn(`[DevServer] Failed to load host mocks:`, error);
     }
   }
 
@@ -297,7 +297,7 @@ async function createProxyServer() {
       if (handlers && handlers.length > 0) {
         moduleHandlers.set(moduleName, handlers);
         console.log(
-          `[ProxyServer] Module ${moduleName}: ${handlers.length} handlers`,
+          `[DevServer] Module ${moduleName}: ${handlers.length} handlers`,
         );
       }
     }
@@ -322,7 +322,7 @@ async function createProxyServer() {
           res.status(200).json(enriched);
           return;
         } catch (error) {
-          console.error(`[ProxyServer] Failed to load appStartData:`, error);
+          console.error(`[DevServer] Failed to load appStartData:`, error);
         }
       }
 
@@ -435,7 +435,7 @@ async function createProxyServer() {
         return;
       }
 
-      console.error(`[ProxyServer] Error handling /app/start:`, error);
+      console.error(`[DevServer] Error handling /app/start:`, error);
       res.status(500).json({
         error: 'Internal server error',
         message: error.message,
@@ -565,7 +565,7 @@ async function createProxyServer() {
             }
           } catch (error) {
             console.error(
-              `[ProxyServer] Handler failed for ${moduleName}:`,
+              `[DevServer] Handler failed for ${moduleName}:`,
               error,
             );
           }
@@ -674,7 +674,7 @@ async function createProxyServer() {
         return;
       }
 
-      console.error(`[ProxyServer] Error handling ${urlPath}:`, error);
+      console.error(`[DevServer] Error handling ${urlPath}:`, error);
       res.status(500).json({
         error: 'Internal server error',
         message: error.message,
@@ -682,21 +682,21 @@ async function createProxyServer() {
     }
   });
 
-  const server = app.listen(PROXY_PORT, () => {
-    console.log(`[ProxyServer] Running on port ${PROXY_PORT}`);
+  const server = app.listen(DEV_SERVER_PORT, () => {
+    console.log(`[DevServer] Running on port ${DEV_SERVER_PORT}`);
   });
 
   // Обработка сигналов для корректного завершения
   const gracefulShutdown = (signal: string) => {
-    console.log(`\n[ProxyServer] Получен ${signal}, завершаем работу...`);
+    console.log(`\n[DevServer] Получен ${signal}, завершаем работу...`);
     server.close(() => {
-      console.log('[ProxyServer] Сервер остановлен');
+      console.log('[DevServer] Сервер остановлен');
       process.exit(0);
     });
 
     // Принудительное завершение через 5 секунд
     setTimeout(() => {
-      console.error('[ProxyServer] Принудительное завершение');
+      console.error('[DevServer] Принудительное завершение');
       process.exit(1);
     }, 5000);
   };
@@ -706,7 +706,8 @@ async function createProxyServer() {
 }
 
 // Запускаем сервер
-createProxyServer().catch((error) => {
-  console.error('[ProxyServer] Failed to start server:', error);
+createDevServer().catch((error) => {
+  console.error('[DevServer] Failed to start server:', error);
   process.exit(1);
 });
+

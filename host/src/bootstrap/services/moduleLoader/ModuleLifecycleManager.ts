@@ -208,9 +208,9 @@ export class ModuleLifecycleManager {
       return;
     }
 
-    // Mock handlers теперь регистрируются в proxy-server (порт 1337)
-    // Proxy-server загружает handlers из packages/{moduleName}/src/config/mocks/index.ts
-    // Браузерный MSW worker не используется, так как все запросы идут через Vite proxy на proxy-server
+    // Mock handlers теперь регистрируются в dev-server (порт 1337)
+    // Dev-server загружает handlers из packages/{moduleName}/src/config/mocks/index.ts
+    // Браузерный MSW worker не используется, так как все запросы идут через Vite proxy на dev-server
     if (config.mockHandlers && process.env.NODE_ENV !== 'development') {
       log.debug(
         `Mock handlers skipped for module: ${module.name} (not in development mode)`,

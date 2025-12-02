@@ -87,7 +87,7 @@ describe('bootstrap', () => {
 
   describe('constructor', () => {
     test('should not call mock service if not in development ', () => {
-      // mockService больше не используется, так как все моки обрабатываются через proxy-server
+      // mockService больше не используется, так как все моки обрабатываются через dev-server
     });
 
     test.skip('should call mock service if in development ', () => {

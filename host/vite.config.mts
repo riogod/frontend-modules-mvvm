@@ -32,7 +32,7 @@ export default defineConfig(
       }),
 
       // Middleware для /app/start (только в dev)
-      // Примечание: middleware отключен, так как теперь используется proxy-server
+      // Примечание: middleware отключен, так как теперь используется dev-server
       // createManifestMiddleware({
       //   manifest,
       //   defaultUser: {
@@ -44,10 +44,10 @@ export default defineConfig(
     server: {
       port: 4200,
       host: 'localhost',
-      // Проксируем все API запросы на proxy-server (порт 1337)
-      // Proxy-server обрабатывает запросы через MSW или проксирует на реальный сервер
+      // Проксируем все API запросы на dev-server (порт 1337)
+      // Dev-server обрабатывает запросы через MSW или проксирует на реальный сервер
       proxy: {
-        // Проксируем /app/start на proxy-server
+        // Проксируем /app/start на dev-server
         '/app/start': {
           target: 'http://localhost:1337',
           changeOrigin: true,

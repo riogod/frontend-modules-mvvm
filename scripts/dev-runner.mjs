@@ -466,7 +466,7 @@ async function showSettings(configManager) {
   while (true) {
     process.stdout.write('\x1B[2J\x1B[0f');
 
-    const isRemoteAvailable = configManager.isRemoteAvailable();
+  const isRemoteAvailable = configManager.isRemoteAvailable();
     const globalApiUrl = configManager.getGlobalApiUrl();
 
     console.log(chalk.cyan.bold('\n⚙️ Глобальные настройки\n'));
@@ -478,11 +478,11 @@ async function showSettings(configManager) {
         '  💡 Используется для загрузки REMOTE модулей из удаленного сервера',
       ),
     );
-    if (isRemoteAvailable) {
-      console.log(
+  if (isRemoteAvailable) {
+    console.log(
         chalk.green(`  ${configManager.getRemoteServerUrl()}\n`),
-      );
-    } else {
+    );
+  } else {
       console.log(chalk.yellow('  ⚠️ Не настроен\n'));
     }
 
@@ -497,7 +497,7 @@ async function showSettings(configManager) {
       console.log(chalk.green(`  ${globalApiUrl}\n`));
     } else {
       console.log(chalk.yellow('  ⚠️ Не настроен\n'));
-    }
+  }
 
     const choices = [
       {
