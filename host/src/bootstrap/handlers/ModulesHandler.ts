@@ -5,9 +5,9 @@ import { type Module, ModuleLoadType } from '../../modules/interface';
 import { app_modules } from '../../modules/modules';
 
 /**
- * Обработчик инициализации локальных модулей приложения.
+ * Обработчик инициализации модулей приложения.
  * Инициализирует ModuleLoader и загружает INIT модули.
- * Использует discovered modules из манифеста (NORMAL модули) и локальные INIT модули.
+ * Использует discovered modules из манифеста (INIT и NORMAL модули) и локальные INIT модули из modules.ts.
  */
 export class ModulesHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
@@ -15,22 +15,41 @@ export class ModulesHandler extends AbstractInitHandler {
       prefix: 'bootstrap.handlers.ModulesHandler',
     });
 
-    // Получаем discovered modules (NORMAL модули из манифеста)
+    // Получаем discovered modules из манифеста (могут быть как INIT, так и NORMAL)
     const discoveredModules = bootstrap.getDiscoveredModules();
+    
+    // Разделяем discovered modules на INIT и NORMAL
+    const discoveredInitModules = discoveredModules.filter(
+      (m) => m.loadType === ModuleLoadType.INIT,
+    );
+    const discoveredNormalModules = discoveredModules.filter(
+      (m) => m.loadType !== ModuleLoadType.INIT,
+    );
+    
     log.debug(
-      `ModulesHandler: discovered NORMAL modules = ${discoveredModules.length}`,
+      `ModulesHandler: discovered modules = ${discoveredModules.length} (INIT=${discoveredInitModules.length}, NORMAL=${discoveredNormalModules.length})`,
       { prefix: 'bootstrap.handlers.ModulesHandler' },
     );
 
-    // Загружаем INIT модули (они определены локально в modules.ts)
-    const initModules = app_modules.filter(
+    // Загружаем INIT модули (из локальных modules.ts + из манифеста)
+    const localInitModules = app_modules.filter(
       (m) => m.loadType === ModuleLoadType.INIT,
     );
+    
+    // Объединяем INIT модули: локальные + из манифеста
+    // Убираем дубликаты по имени (приоритет у локальных)
+    const allInitModules: Module[] = [
+      ...localInitModules,
+      ...discoveredInitModules.filter(
+        (discovered) =>
+          !localInitModules.some((local) => local.name === discovered.name),
+      ),
+    ];
 
     // Объединяем: INIT модули + discovered NORMAL модули
-    const allModules: Module[] = [...initModules, ...discoveredModules];
+    const allModules: Module[] = [...allInitModules, ...discoveredNormalModules];
     log.debug(
-      `ModulesHandler: total modules to register = ${allModules.length} (INIT=${initModules.length}, NORMAL=${discoveredModules.length})`,
+      `ModulesHandler: total modules to register = ${allModules.length} (INIT=${allInitModules.length}, NORMAL=${discoveredNormalModules.length})`,
       { prefix: 'bootstrap.handlers.ModulesHandler' },
     );
 

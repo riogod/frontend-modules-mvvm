@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { ModuleLoadType } from '@platform/core';
 import type { AppManifest } from './types';
 
 export interface LoadManifestOptions {
@@ -79,14 +80,14 @@ function createFallbackManifest(
     {
       name: 'core',
       version: '1.0.0',
-      loadType: 'init',
+      loadType: ModuleLoadType.INIT,
       loadPriority: 0,
       remoteEntry: '',
     },
     {
       name: 'core.layout',
       version: '1.0.0',
-      loadType: 'init',
+      loadType: ModuleLoadType.INIT,
       loadPriority: 2,
       remoteEntry: '',
     },
@@ -102,7 +103,7 @@ function createFallbackManifest(
       modules.push({
         name: dir.name,
         version: '1.0.0',
-        loadType: 'normal',
+        loadType: ModuleLoadType.NORMAL,
         loadPriority: 1,
         remoteEntry: '',
       });

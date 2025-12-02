@@ -1,5 +1,11 @@
 import * as path from 'path';
 
+// Используем значения enum напрямую для .js файлов
+const ModuleLoadType = {
+  INIT: 'init',
+  NORMAL: 'normal',
+};
+
 /**
  * Vite плагин для создания алиасов LOCAL модулей
  *
@@ -19,7 +25,7 @@ export function createModuleAliasesPlugin(options) {
 
   // Извлекаем локальные модули (remoteEntry === '')
   const localModules = manifest.modules
-    .filter((m) => m.remoteEntry === '' && m.loadType === 'normal')
+    .filter((m) => m.remoteEntry === '' && m.loadType === ModuleLoadType.NORMAL)
     .map((m) => m.name);
 
   return {

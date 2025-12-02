@@ -1,4 +1,5 @@
 import z from 'zod';
+import { ModuleLoadType } from '@platform/core';
 
 /**
  * Схема записи модуля в манифесте
@@ -6,7 +7,7 @@ import z from 'zod';
 const moduleManifestEntrySchema = z.object({
   name: z.string(),
   version: z.string().optional(),
-  loadType: z.enum(['init', 'normal']),
+  loadType: z.nativeEnum(ModuleLoadType),
   loadPriority: z.number().optional(),
   remoteEntry: z.string(),
   dependencies: z.array(z.string()).optional(),

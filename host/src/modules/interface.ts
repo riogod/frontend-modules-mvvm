@@ -17,11 +17,21 @@ interface BaseModule {
 /**
  * Модуль типа INIT - загружается при инициализации приложения
  * loadCondition запрещен для INIT модулей
+ * Может быть как локальным, так и удаленным (remote)
+ * Для remote модулей config будет Promise<ModuleConfig>
  */
 export interface InitModule extends BaseModule {
   loadType: ModuleLoadType.INIT;
   loadCondition?: never; // Запрещено для INIT модулей
-  config: ModuleConfig;
+  /**
+   * Конфигурация модуля. Для локальных модулей - синхронная (ModuleConfig),
+   * для remote модулей - асинхронная (Promise<ModuleConfig>)
+   */
+  config: ModuleConfig | Promise<ModuleConfig>;
+  /**
+   * Информация о remote модуле (только для REMOTE источника)
+   */
+  remote?: RemoteModuleInfo;
 }
 
 /**
@@ -67,7 +77,7 @@ export interface NormalModule extends BaseModule {
 /**
  * Объединенный тип модуля
  * Использует discriminated union для обеспечения типобезопасности:
- * - INIT модули не могут иметь loadCondition и всегда имеют синхронный config
+ * - INIT модули не могут иметь loadCondition, но могут быть как локальными, так и remote
  * - NORMAL модули могут иметь loadCondition и поддерживают как синхронный, так и асинхронный config
  */
 export type Module = InitModule | NormalModule;

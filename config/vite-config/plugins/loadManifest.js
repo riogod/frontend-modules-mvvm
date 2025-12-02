@@ -1,6 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Используем значения enum напрямую для .js файлов
+const ModuleLoadType = {
+  INIT: 'init',
+  NORMAL: 'normal',
+};
+
 /**
  * Загружает манифест из файла или создает fallback
  */
@@ -50,14 +56,14 @@ function createFallbackManifest(dirname, packagesDir) {
     {
       name: 'core',
       version: '1.0.0',
-      loadType: 'init',
+      loadType: ModuleLoadType.INIT,
       loadPriority: 0,
       remoteEntry: '',
     },
     {
       name: 'core.layout',
       version: '1.0.0',
-      loadType: 'init',
+      loadType: ModuleLoadType.INIT,
       loadPriority: 2,
       remoteEntry: '',
     },
@@ -73,7 +79,7 @@ function createFallbackManifest(dirname, packagesDir) {
       modules.push({
         name: dir.name,
         version: '1.0.0',
-        loadType: 'normal',
+        loadType: ModuleLoadType.NORMAL,
         loadPriority: 1,
         remoteEntry: '',
       });

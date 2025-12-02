@@ -159,30 +159,33 @@ describe('bootstrap', () => {
       await bootstrap.moduleLoader.initInitModules();
     });
 
-    test('should initialize module routes if routes are defined', () => {
-      const moduleConfig = modules[0].config;
+    test('should initialize module routes if routes are defined', async () => {
+      let moduleConfig = modules[0].config;
+      // Для remote INIT модулей config может быть Promise
       if (moduleConfig instanceof Promise) {
-        throw new Error('INIT modules should have synchronous config');
+        moduleConfig = await moduleConfig;
       }
       if (moduleConfig.ROUTES) {
         expect(registerRoutes).toBeCalledWith(moduleConfig.ROUTES());
       }
     });
 
-    test('should call onModuleInit if onModuleInit is defined', () => {
-      const moduleConfig = modules[0].config;
+    test('should call onModuleInit if onModuleInit is defined', async () => {
+      let moduleConfig = modules[0].config;
+      // Для remote INIT модулей config может быть Promise
       if (moduleConfig instanceof Promise) {
-        throw new Error('INIT modules should have synchronous config');
+        moduleConfig = await moduleConfig;
       }
       if (moduleConfig.onModuleInit) {
         expect(moduleConfig.onModuleInit).toBeCalled();
       }
     });
 
-    test('should add i18n dictionaries if I18N is defined', () => {
-      const moduleConfig = modules[0].config;
+    test('should add i18n dictionaries if I18N is defined', async () => {
+      let moduleConfig = modules[0].config;
+      // Для remote INIT модулей config может быть Promise
       if (moduleConfig instanceof Promise) {
-        throw new Error('INIT modules should have synchronous config');
+        moduleConfig = await moduleConfig;
       }
       expect(bootstrap.i18n).not.toBeNull();
       expect(moduleConfig.I18N).toBeCalled();

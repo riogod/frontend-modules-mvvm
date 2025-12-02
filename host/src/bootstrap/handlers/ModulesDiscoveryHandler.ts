@@ -7,8 +7,9 @@ import type { ModuleManifestEntry } from '@platform/vite-config/plugins/types';
 import type {
   Module,
   NormalModule,
-  ModuleLoadType,
+  InitModule,
 } from '../../modules/interface';
+import { ModuleLoadType } from '../../modules/interface';
 import type { ModuleConfig } from '../interface';
 import { loadRemoteModule } from '../services/remoteModuleLoader';
 
@@ -127,9 +128,71 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
   ): Promise<Module | null> {
     const isLocal = entry.remoteEntry === '';
 
-    // Базовые поля модуля
+    const moduleName = String(entry.name);
+
+    // INIT модули - могут быть как локальными, так и remote
+    if (entry.loadType === ModuleLoadType.INIT) {
+      let config: ModuleConfig | Promise<ModuleConfig>;
+
+      if (isLocal) {
+        try {
+          config = await this.loadLocalConfig(moduleName);
+        } catch (error) {
+          log.warn(
+            `ModulesDiscoveryHandler: skipping INIT module ${moduleName}: module not found. ` +
+              `Make sure the module exists in packages/${moduleName}/src/config/module_config.ts`,
+            {
+              prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+            },
+            {
+              error,
+              moduleName: entry.name,
+            },
+          );
+          return null;
+        }
+      } else {
+        const remoteEntry = String(entry.remoteEntry);
+        config = this.createRemoteConfigLoader(moduleName, remoteEntry);
+        log.debug(
+          'ModulesDiscoveryHandler: remote INIT config loader created',
+          {
+            prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+          },
+          {
+            moduleName: entry.name,
+            remoteEntry,
+          },
+        );
+      }
+
+      const initModule: InitModule = {
+        name: moduleName,
+        loadType: ModuleLoadType.INIT,
+        loadPriority: entry.loadPriority || 1,
+        config,
+      };
+
+      // Добавляем remote info для REMOTE INIT модулей
+      if (!isLocal) {
+        initModule.remote = {
+          entry: entry.remoteEntry,
+          scope: `module-${moduleName}`,
+        };
+      }
+
+      log.debug('ModulesDiscoveryHandler: INIT module created', {
+        prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.createModule',
+        moduleName: entry.name,
+        initModule,
+      });
+
+      return initModule;
+    }
+
+    // NORMAL модули
     const baseModule = {
-      name: String(entry.name),
+      name: moduleName,
       loadPriority: entry.loadPriority || 1,
       loadCondition: {
         dependencies: entry.dependencies || [],
@@ -144,15 +207,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       baseModule,
     });
 
-    if (entry.loadType === 'init') {
-      // INIT модули всегда локальные, их конфиги уже загружены
-      // Они обрабатываются отдельно в ModulesHandler
-      return null;
-    }
-
-    // NORMAL модули
     let config: ModuleConfig | Promise<ModuleConfig>;
-    const moduleName = String(entry.name);
 
     if (isLocal) {
       try {
@@ -189,7 +244,7 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
 
     const normalModule: NormalModule = {
       ...baseModule,
-      loadType: 'normal' as ModuleLoadType.NORMAL,
+      loadType: ModuleLoadType.NORMAL,
       config,
     };
 

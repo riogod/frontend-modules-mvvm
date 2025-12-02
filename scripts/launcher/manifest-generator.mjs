@@ -36,7 +36,7 @@ export class ManifestGenerator {
       // Всегда читаем файл заново, чтобы получить актуальные данные
       // (не используем кэширование, так как конфиги модулей могут изменяться)
       const content = fs.readFileSync(moduleConfigPath, 'utf-8');
-      
+
       // Извлекаем mockModuleInfo и mockModuleData используя более надежный парсинг
       // Функция для извлечения объекта с учетом вложенности
       const extractObject = (fieldName, content) => {
@@ -79,7 +79,7 @@ export class ManifestGenerator {
       if (mockModuleInfoMatch) {
         try {
           const infoContent = mockModuleInfoMatch[1];
-          
+
           // Извлекаем поля с поддержкой многострочных значений
           const extractString = (field) => {
             const match = infoContent.match(
@@ -126,7 +126,7 @@ export class ManifestGenerator {
       if (mockModuleDataMatch) {
         try {
           const dataContent = mockModuleDataMatch[1];
-          
+
           mockModuleData = {
             features: {},
             permissions: {},
@@ -135,10 +135,7 @@ export class ManifestGenerator {
 
           // Функция для извлечения содержимого объекта с учетом вложенности
           const extractObjectContent = (fieldName, content) => {
-            const fieldPattern = new RegExp(
-              `${fieldName}:\\s*\\{`,
-              's',
-            );
+            const fieldPattern = new RegExp(`${fieldName}:\\s*\\{`, 's');
             const fieldMatch = content.match(fieldPattern);
             if (!fieldMatch) return null;
 
@@ -170,7 +167,10 @@ export class ManifestGenerator {
           }
 
           // Парсим permissions
-          const permissionsContent = extractObjectContent('permissions', dataContent);
+          const permissionsContent = extractObjectContent(
+            'permissions',
+            dataContent,
+          );
           if (permissionsContent) {
             const permissionEntries = permissionsContent.matchAll(
               /['"]([^'"]+)['"]:\s*(true|false)/g,
@@ -240,7 +240,10 @@ export class ManifestGenerator {
         // Проверяем существование модуля, если передан moduleDiscovery
         if (moduleDiscovery) {
           // Для LOCAL модулей проверяем физическое существование
-          if (moduleConfig.source === 'local' && !moduleDiscovery.moduleExists(name)) {
+          if (
+            moduleConfig.source === 'local' &&
+            !moduleDiscovery.moduleExists(name)
+          ) {
             continue;
           }
           // Для REMOTE модулей не проверяем (они загружаются удаленно)
@@ -277,8 +280,13 @@ export class ManifestGenerator {
           if (localConfig) {
             // Обогащаем запись модуля данными из mockModuleInfo
             if (localConfig.mockModuleInfo) {
+              // Обновляем loadType из mockModuleInfo, если он указан
+              if (localConfig.mockModuleInfo.loadType) {
+                moduleEntry.loadType = localConfig.mockModuleInfo.loadType;
+              }
               moduleEntry.loadPriority =
-                localConfig.mockModuleInfo.loadPriority || moduleEntry.loadPriority;
+                localConfig.mockModuleInfo.loadPriority ||
+                moduleEntry.loadPriority;
               moduleEntry.dependencies = [
                 ...new Set([
                   ...moduleEntry.dependencies,

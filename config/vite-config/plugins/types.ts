@@ -10,20 +10,13 @@
  * но также доступен через @platform/core для использования в других частях проекта
  */
 
+import type { ModuleManifestEntry as CoreModuleManifestEntry } from '@platform/core';
+
 /**
  * Запись модуля в манифесте
- * Дублируется из @platform/core для использования в vite-config
+ * Реэкспортируется из @platform/core для использования в vite-config
  */
-export interface ModuleManifestEntry {
-  name: string;
-  version?: string;
-  loadType: 'init' | 'normal';
-  loadPriority?: number;
-  remoteEntry: string;
-  dependencies?: string[];
-  featureFlags?: string[];
-  accessPermissions?: string[];
-}
+export type ModuleManifestEntry = CoreModuleManifestEntry;
 
 export interface AppManifest {
   modules: ModuleManifestEntry[];

@@ -1,6 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import { getModuleVersion, isModuleBuilt } from './utils.js';
+
+// Используем значения enum напрямую для .js файлов
+const ModuleLoadType = {
+  INIT: 'init',
+  NORMAL: 'normal',
+};
 /**
  * Генерирует production манифест на основе собранных модулей
  */
@@ -12,7 +18,7 @@ export function generateManifest(options) {
     for (const moduleName of initModules) {
         modules.push({
             name: moduleName,
-            loadType: 'init',
+            loadType: ModuleLoadType.INIT,
             loadPriority: 0,
             remoteEntry: '',
         });
@@ -33,7 +39,7 @@ export function generateManifest(options) {
             modules.push({
                 name: moduleName,
                 version,
-                loadType: 'normal',
+                loadType: ModuleLoadType.NORMAL,
                 loadPriority: 1,
                 remoteEntry: `${baseUrl}${moduleName}/${versionPath}/assets/remoteEntry.js`,
             });

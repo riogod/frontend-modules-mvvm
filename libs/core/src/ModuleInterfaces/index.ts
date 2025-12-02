@@ -9,7 +9,7 @@ import type { IBootstrap } from '../interfaces';
 export interface ModuleManifestEntry {
   name: string;
   version?: string;
-  loadType: 'init' | 'normal';
+  loadType: ModuleLoadType;
   loadPriority?: number;
   remoteEntry: string;
   dependencies?: string[];
@@ -25,10 +25,6 @@ export enum ModuleLoadType {
    * Модуль загружается при инициализации приложения
    */
   INIT = 'init',
-  /**
-   * Модуль загружается перед стартом приложения
-   */
-  BEFORE = 'before',
   /**
    * Модуль загружается в фоновом режиме после инициализации приложения
    */

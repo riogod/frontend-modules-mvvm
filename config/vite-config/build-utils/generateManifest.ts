@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { ModuleLoadType } from '@platform/core';
 import type { AppManifest, ModuleManifestEntry } from '../plugins/types';
 import { getModuleVersion, isModuleBuilt } from './utils.js';
 
@@ -30,7 +31,7 @@ export function generateManifest(options: GenerateManifestOptions): AppManifest 
   for (const moduleName of initModules) {
     modules.push({
       name: moduleName,
-      loadType: 'init',
+      loadType: ModuleLoadType.INIT,
       loadPriority: 0,
       remoteEntry: '',
     });
@@ -55,7 +56,7 @@ export function generateManifest(options: GenerateManifestOptions): AppManifest 
       modules.push({
         name: moduleName,
         version,
-        loadType: 'normal',
+        loadType: ModuleLoadType.NORMAL,
         loadPriority: 1,
         remoteEntry: `${baseUrl}${moduleName}/${versionPath}/assets/remoteEntry.js`,
       });

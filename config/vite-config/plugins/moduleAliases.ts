@@ -1,5 +1,6 @@
 import * as path from 'path';
 import type { Plugin, UserConfig } from 'vite';
+import { ModuleLoadType } from '@platform/core';
 import type { ModuleAliasesOptions } from './types';
 
 /**
@@ -31,7 +32,7 @@ export function createModuleAliasesPlugin(
 
   // Извлекаем локальные модули (remoteEntry === '')
   const localModules = manifest.modules
-    .filter((m) => m.remoteEntry === '' && m.loadType === 'normal')
+    .filter((m) => m.remoteEntry === '' && m.loadType === ModuleLoadType.NORMAL)
     .map((m) => m.name);
 
   return {

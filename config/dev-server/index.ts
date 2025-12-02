@@ -435,7 +435,21 @@ async function createDevServer() {
         return;
       }
 
-      console.error(`[DevServer] Error handling /app/start:`, error);
+      // Компактный вывод ошибки
+      const errorUrl = error.config?.url || hostApiUrl || '/app/start';
+      const errorCode = error.code || 'UNKNOWN';
+      
+      // Для ECONNREFUSED выводим более компактное сообщение
+      if (errorCode === 'ECONNREFUSED') {
+        console.error(
+          `[DevServer] Backend server unavailable: ${errorUrl} (${errorCode})`
+        );
+      } else {
+        console.error(
+          `[DevServer] Error handling /app/start: ${errorCode} - ${error.message || 'Unknown error'}`
+        );
+      }
+      
       res.status(500).json({
         error: 'Internal server error',
         message: error.message,
