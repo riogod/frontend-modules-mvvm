@@ -1,7 +1,7 @@
 import { type Module, ModuleLoadType } from './interface';
 import CoreConfig from './core/config/module_config';
-// import TodoConfig from '@platform/module-todo/config/module_config';
 import CoreLayoutConfig from './core.layout/config/module_config';
+import LocalModuleConfig from './local-normal/config/module_config';
 
 export const app_modules: Module[] = [
   {
@@ -18,5 +18,12 @@ export const app_modules: Module[] = [
     config: CoreLayoutConfig,
     loadType: ModuleLoadType.INIT,
     loadPriority: 2,
+  },
+  {
+    name: 'local-module',
+    description: 'Local module - Содержит локальные данные',
+    config: LocalModuleConfig,
+    loadType: ModuleLoadType.NORMAL,
+    loadPriority: 3,
   },
 ];
