@@ -1,5 +1,4 @@
 import { type IRoutes } from '@platform/core';
-import { TODO_ROUTES } from '@platform/module-todo/config/routes';
 
 export const CORE_ROUTES = {
   HOME: 'home',
@@ -10,7 +9,7 @@ export const routes: IRoutes = [
   {
     name: CORE_ROUTES.HOME,
     path: '/',
-    forwardTo: TODO_ROUTES.TODO,
+    forwardTo: 'todo',
   },
   {
     name: CORE_ROUTES[404],

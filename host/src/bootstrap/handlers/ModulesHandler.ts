@@ -35,7 +35,7 @@ export class ModulesHandler extends AbstractInitHandler {
     const localInitModules = app_modules.filter(
       (m) => m.loadType === ModuleLoadType.INIT,
     );
-    
+
     // Загружаем NORMAL модули из локальных modules.ts
     const localNormalModules = app_modules.filter(
       (m) => m.loadType !== ModuleLoadType.INIT,

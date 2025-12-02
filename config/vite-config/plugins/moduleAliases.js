@@ -32,9 +32,19 @@ export function createModuleAliasesPlugin(options) {
     name: 'platform-module-aliases',
 
     config(config) {
+      // В production не создаем алиасы для локальных модулей
+      // Они должны загружаться через Module Federation или быть в host/src/modules/
+      const isProduction = process.env.NODE_ENV === 'production';
+      
+      if (isProduction) {
+        // В production возвращаем пустую конфигурацию
+        // Remote модули должны загружаться через Module Federation
+        return {};
+      }
+
       const aliases = {};
 
-      // Создаем алиасы для каждого локального модуля
+      // Создаем алиасы для каждого локального модуля (только в dev)
       localModules.forEach((moduleName) => {
         const modulePath = path.resolve(packagesDir, moduleName, 'src');
 

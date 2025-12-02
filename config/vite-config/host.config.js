@@ -53,7 +53,7 @@ export function createHostConfig(options) {
   const {
     dirname,
     cacheDir,
-    outDir = '../dist/host',
+    outDir = '../dist',
     coverageDir = '../../coverage/host',
     vitestSetupFile = './vitest.setup.mts',
     resolve,
@@ -128,6 +128,36 @@ export function createHostConfig(options) {
       },
       rollupOptions: {
         plugins: [],
+        // В production исключаем remote модули из билда хоста
+        // Они должны загружаться через Module Federation
+        external: (() => {
+          // В production исключаем все модули из packages/, которые должны быть remote
+          // В dev режиме они загружаются через алиасы
+          if (process.env.NODE_ENV === 'production') {
+            return (id) => {
+              // Исключаем remote модули из packages/
+              if (id.includes('/packages/')) {
+                const packageMatch = id.match(/\/packages\/([^/]+)\//);
+                if (packageMatch) {
+                  const packageName = packageMatch[1];
+                  // Исключаем все модули из packages/ (они должны быть remote)
+                  // Локальные модули находятся в host/src/modules/
+                  return true;
+                }
+              }
+              // Исключаем алиасы для remote модулей
+              if (id.startsWith('@platform/module-')) {
+                const moduleName = id.replace('@platform/module-', '').split('/')[0];
+                // Проверяем, что это не локальный модуль из host/src/modules/
+                // Локальные модули не должны иметь алиас @platform/module-*
+                // Если модуль имеет такой алиас, значит он из packages/ и должен быть external
+                return true;
+              }
+              return false;
+            };
+          }
+          return undefined;
+        })(),
         output: {
           // Использовать именованные экспорты для лучшего tree shaking
           exports: 'named',
@@ -187,19 +217,34 @@ export function createHostConfig(options) {
               return 'vendor';
             }
 
-            // Разделение модулей на отдельные chunks для LAZY модулей
-            if (id.includes('/modules/')) {
+            // Разделение локальных модулей из host/src/modules/ на отдельные chunks
+            // Remote модули (todo, api_example) не должны попадать в билд хоста
+            if (id.includes('/host/src/modules/')) {
               // Извлекаем имя модуля из пути
-              const moduleMatch = id.match(/\/modules\/([^/]+)\//);
+              const moduleMatch = id.match(/\/host\/src\/modules\/([^/]+)\//);
               if (moduleMatch) {
                 const moduleName = moduleMatch[1];
-                // Создаем отдельный chunk для каждого LAZY модуля
-                if (moduleName === 'todo' || moduleName === 'api_example') {
-                  return `module-${moduleName}`;
-                }
-                // INIT модули (core) остаются в основном бандле
-                if (moduleName === 'core') {
+                // INIT модули (core, core.layout) остаются в основном бандле
+                if (moduleName === 'core' || moduleName === 'core.layout') {
                   return undefined; // Включаем в основной бандл
+                }
+                // Локальные NORMAL модули (local-normal и т.д.) в отдельные чанки
+                return `module-${moduleName}`;
+              }
+            }
+            
+            // Исключаем remote модули из packages/ из билда хоста
+            // Они должны загружаться через Module Federation
+            if (id.includes('/packages/')) {
+              const packageMatch = id.match(/\/packages\/([^/]+)\//);
+              if (packageMatch) {
+                const packageName = packageMatch[1];
+                // В production remote модули не должны попадать в билд
+                if (process.env.NODE_ENV === 'production') {
+                  // Предупреждаем, если remote модуль попал в билд
+                  console.warn(
+                    `[vite-config] Warning: Remote module ${packageName} is being bundled into host build. This should not happen in production.`
+                  );
                 }
               }
             }
