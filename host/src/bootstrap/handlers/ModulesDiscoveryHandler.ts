@@ -4,11 +4,7 @@ import type { AppStartDTO } from '../services/appStart/data/app.dto';
 import { HttpMethod, log } from '@platform/core';
 // Типы манифеста из единого источника
 import type { ModuleManifestEntry } from '@platform/vite-config/plugins/types';
-import type {
-  Module,
-  NormalModule,
-  InitModule,
-} from '../../modules/interface';
+import type { Module, NormalModule, InitModule } from '../../modules/interface';
 import { ModuleLoadType } from '../../modules/interface';
 import type { ModuleConfig } from '../interface';
 import { loadRemoteModule } from '../services/remoteModuleLoader';
@@ -131,7 +127,8 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     const moduleName = String(entry.name);
 
     // INIT модули - могут быть как локальными, так и remote
-    if (entry.loadType === ModuleLoadType.INIT) {
+    // Сравниваем со строковым значением enum ('init'), так как данные из API могут быть строками
+    if (entry.loadType === 'init') {
       let config: ModuleConfig | Promise<ModuleConfig>;
 
       if (isLocal) {
@@ -272,6 +269,11 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
   /**
    * Загружает конфиг LOCAL модуля через import.meta.glob
    * Используем предзагруженные модули для надежной работы в runtime
+   *
+   * Примечание: import.meta.glob() возвращает абсолютные пути файловой системы
+   * в качестве ключей объекта, а не относительные пути. Поэтому мы ищем
+   * по частичному совпадению пути, который содержит имя модуля.
+   *
    * @throws Error если модуль не найден
    */
   private async loadLocalConfig(moduleName: string): Promise<ModuleConfig> {
@@ -279,40 +281,16 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
       moduleName: moduleName,
     });
-    // Ищем модуль в предзагруженных конфигах
-    // Путь должен соответствовать паттерну в import.meta.glob
-    // От host/src/bootstrap/handlers/ до packages/{name}/src/config/module_config.ts
-    // Теперь glob паттерн включает .ts, поэтому ключи будут с расширением
-    const modulePath = `../../../../packages/${moduleName}/src/config/module_config.ts`;
 
-    // Сначала ищем по точному пути
-    let moduleLoader = this.moduleConfigs[modulePath];
+    // import.meta.glob() возвращает абсолютные пути файловой системы в качестве ключей
+    // Ищем по частичному совпадению, которое содержит имя модуля и путь к конфигу
+    const availablePaths = Object.keys(this.moduleConfigs);
+    const matchingPath = availablePaths.find((path) =>
+      path.includes(`packages/${moduleName}/src/config/module_config`),
+    );
 
-    // Если не нашли, ищем по частичному совпадению (на случай разных форматов пути)
-    if (!moduleLoader) {
-      const availablePaths = Object.keys(this.moduleConfigs);
-      const matchingPath = availablePaths.find((path) =>
-        path.includes(`packages/${moduleName}/src/config/module_config`),
-      );
-      if (matchingPath) {
-        log.debug(
-          'ModulesDiscoveryHandler: using fallback path for local config',
-          {
-            prefix:
-              'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
-          },
-          {
-            moduleName,
-            matchingPath,
-          },
-        );
-        moduleLoader = this.moduleConfigs[matchingPath];
-      }
-    }
-
-    if (!moduleLoader) {
+    if (!matchingPath) {
       // Выводим доступные модули для отладки
-      const availablePaths = Object.keys(this.moduleConfigs);
       const availableModules =
         availablePaths.length > 0
           ? availablePaths
@@ -329,6 +307,18 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
       );
     }
 
+    log.debug(
+      'ModulesDiscoveryHandler: found module config path',
+      {
+        prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
+      },
+      {
+        moduleName,
+        matchingPath,
+      },
+    );
+
+    const moduleLoader = this.moduleConfigs[matchingPath];
     const module = await moduleLoader();
     log.debug('ModulesDiscoveryHandler: local config module loaded', {
       prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.loadLocalConfig',
