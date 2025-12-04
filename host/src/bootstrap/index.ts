@@ -12,7 +12,7 @@ import { Container } from 'inversify';
 import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
 import { InitI18nHandler } from './handlers/InitI18nHandler';
-import i18next, { type i18n } from 'i18next';
+import { createInstance, type i18n } from 'i18next';
 import { BootstrapRouterService } from './services/routerService';
 import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { type IAppConfig } from '../config/app';
@@ -68,7 +68,7 @@ export const initBootstrap = async (
  *  @param {Module[]} modules - Модули приложения.
  */
 export class Bootstrap implements IBootstrap {
-  i18n: i18n = i18next;
+  i18n: i18n = createInstance();
   routerService = new BootstrapRouterService();
   moduleLoader = new BootstrapModuleLoader();
 

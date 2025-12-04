@@ -6,7 +6,7 @@ export default {
   // Federation имя создается как moduleName (плагин добавляет префикс 'module_')
   exposes: {},
   shared: {},
-  base: process.env.NODE_ENV === 'production' ? '{{MODULE_BASE_URL}}' : '/',
+  // base автоматический из module.config.js: /modules/${moduleName}/latest/
   remotes: {},
 };
 

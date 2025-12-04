@@ -2,9 +2,42 @@
 import { createBaseConfig } from './base.config.js';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
+import federation from '@originjs/vite-plugin-federation';
 import path from 'path';
 import fs from 'fs';
 import process from 'node:process';
+
+/**
+ * Shared зависимости для Module Federation
+ * Должны совпадать с shared в module.config.js
+ * eager: true - загружать немедленно, чтобы share scope был готов до загрузки remote модулей
+ */
+const federationShared = {
+  react: { singleton: true, requiredVersion: false, eager: true },
+  'react-dom': { singleton: true, requiredVersion: false, eager: true },
+  mobx: { singleton: true, requiredVersion: false, eager: true },
+  'mobx-react-lite': { singleton: true, requiredVersion: false, eager: true },
+  i18next: { singleton: true, requiredVersion: false, eager: true },
+  'react-i18next': { singleton: true, requiredVersion: false, eager: true },
+  inversify: { singleton: true, requiredVersion: false, eager: true },
+  'reflect-metadata': { singleton: true, requiredVersion: false, eager: true },
+  '@riogz/react-router': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@riogz/router': { singleton: true, requiredVersion: false, eager: true },
+  '@riogz/router-plugin-browser': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  // Внутренние библиотеки - lazy loading, т.к. они бандлятся через алиасы
+  '@platform/core': { singleton: true, requiredVersion: false },
+  '@platform/ui': { singleton: true, requiredVersion: false },
+  '@platform/common': { singleton: true, requiredVersion: false },
+  '@platform/share': { singleton: true, requiredVersion: false },
+};
 
 /**
  * Плагин для очистки dist с сохранением папки modules
@@ -129,10 +162,21 @@ export function createHostConfig(options) {
   const resolvedOutDir = path.resolve(dirname, outDir);
   const cleanDistPlugin = cleanDistPreserveModulesPlugin(resolvedOutDir);
 
+  // Federation плагин для host - экспортирует shared зависимости для remote модулей
+  const federationPlugin = federation({
+    name: 'host',
+    // Host не expose ничего, только предоставляет shared
+    exposes: {},
+    // Remote модули загружаются динамически через RemoteModuleLoader
+    remotes: {},
+    // Shared зависимости - remote модули будут использовать их из host
+    shared: federationShared,
+  });
+
   const base = createBaseConfig({
     dirname,
     cacheDir: cacheDir || `../../node_modules/.vite/host`,
-    plugins: [react(), svgr(), cleanDistPlugin, ...plugins],
+    plugins: [react(), svgr(), cleanDistPlugin, federationPlugin, ...plugins],
     resolve: finalResolve,
     test: {
       globals: true,
@@ -176,31 +220,8 @@ export function createHostConfig(options) {
       },
       rollupOptions: {
         plugins: [],
-        // В production исключаем remote модули из билда хоста
-        // Они должны загружаться через Module Federation
-        external: (() => {
-          // В production исключаем все модули из packages/, которые должны быть remote
-          // В dev режиме они загружаются через алиасы
-          if (process.env.NODE_ENV === 'production') {
-            return (id) => {
-              // Исключаем remote модули из packages/
-              if (id.includes('/packages/')) {
-                // Исключаем все модули из packages/ (они должны быть remote)
-                // Локальные модули находятся в host/src/modules/
-                return true;
-              }
-              // Исключаем алиасы для remote модулей
-              if (id.startsWith('@platform/module-')) {
-                // Проверяем, что это не локальный модуль из host/src/modules/
-                // Локальные модули не должны иметь алиас @platform/module-*
-                // Если модуль имеет такой алиас, значит он из packages/ и должен быть external
-                return true;
-              }
-              return false;
-            };
-          }
-          return undefined;
-        })(),
+        // Remote модули загружаются динамически через RemoteModuleLoader,
+        // поэтому external не нужен - они не импортируются напрямую в хосте
         output: {
           // Использовать именованные экспорты для лучшего tree shaking
           exports: 'named',
@@ -208,93 +229,93 @@ export function createHostConfig(options) {
           generatedCode: {
             constBindings: true,
           },
-          manualChunks: (id) => {
-            // Разделение локальных библиотек из libs/ на отдельные чанки
-            // Это важно для микрофронтендов - каждая библиотека будет в отдельном чанке,
-            // который можно переиспользовать в разных микрофронтендах
-            if (id.includes('/libs/')) {
-              // Извлекаем имя библиотеки из пути
-              const libMatch = id.match(/\/libs\/([^/]+)\//);
-              if (libMatch) {
-                const libName = libMatch[1];
-                // Создаем чанк с префиксом lib- для удобства идентификации
-                // Формат: lib-core.js, lib-ui.js, lib-common.js, lib-share.js
-                return `lib-${libName}`;
-              }
-            }
+          // manualChunks: (id) => {
+          //   // Разделение локальных библиотек из libs/ на отдельные чанки
+          //   // Это важно для микрофронтендов - каждая библиотека будет в отдельном чанке,
+          //   // который можно переиспользовать в разных микрофронтендах
+          //   // if (id.includes('/libs/')) {
+          //   //   // Извлекаем имя библиотеки из пути
+          //   //   const libMatch = id.match(/\/libs\/([^/]+)\//);
+          //   //   if (libMatch) {
+          //   //     const libName = libMatch[1];
+          //   //     // Создаем чанк с префиксом lib- для удобства идентификации
+          //   //     // Формат: lib-core.js, lib-ui.js, lib-common.js, lib-share.js
+          //   //     return `lib-${libName}`;
+          //   //   }
+          //   // }
 
-            // Разделение vendor библиотек
-            if (id.includes('node_modules')) {
-              // Router библиотеки
-              if (
-                id.includes('@riogz/router') ||
-                id.includes('@riogz/react-router')
-              ) {
-                return 'vendor-router';
-              }
-              // UI библиотеки (MUI и emotion)
-              if (id.includes('@mui/') || id.includes('@emotion/')) {
-                return 'vendor-ui';
-              }
-              // Утилиты
-              if (
-                id.includes('axios') ||
-                id.includes('zod') ||
-                id.includes('@fingerprintjs')
-              ) {
-                return 'vendor-utils';
-              }
-              // i18next
-              if (id.includes('i18next') || id.includes('react-i18next')) {
-                return 'i18next';
-              }
-              // inversify
-              if (id.includes('inversify') || id.includes('@inversifyjs')) {
-                return 'inversify';
-              }
-              // mobx
-              if (id.includes('mobx')) {
-                return 'mobx';
-              }
-              // Остальные node_modules (включая react и react-dom) в общий vendor
-              return 'vendor';
-            }
+          //   // Разделение vendor библиотек
+          //   if (id.includes('node_modules')) {
+          //     // Router библиотеки
+          //     if (
+          //       id.includes('@riogz/router') ||
+          //       id.includes('@riogz/react-router')
+          //     ) {
+          //       return 'vendor-router';
+          //     }
+          //     // UI библиотеки (MUI и emotion)
+          //     // if (id.includes('@mui/') || id.includes('@emotion/')) {
+          //     //   return 'vendor-ui';
+          //     // }
+          //     // // Утилиты
+          //     // if (
+          //     //   id.includes('axios') ||
+          //     //   id.includes('zod') ||
+          //     //   id.includes('@fingerprintjs')
+          //     // ) {
+          //     //   return 'vendor-utils';
+          //     // }
+          //     // // i18next
+          //     // if (id.includes('i18next') || id.includes('react-i18next')) {
+          //     //   return 'i18next';
+          //     // }
+          //     // inversify
+          //     // if (id.includes('inversify') || id.includes('@inversifyjs')) {
+          //     //   return 'inversify';
+          //     // }
+          //     // mobx
+          //     // if (id.includes('mobx')) {
+          //     //   return 'mobx';
+          //     // }
+          //     // Остальные node_modules (включая react и react-dom) в общий vendor
+          //     return 'vendor';
+          //   }
 
-            // Разделение локальных модулей из host/src/modules/ на отдельные chunks
-            // Remote модули (todo, api_example) не должны попадать в билд хоста
-            if (id.includes('/host/src/modules/')) {
-              // Извлекаем имя модуля из пути
-              const moduleMatch = id.match(/\/host\/src\/modules\/([^/]+)\//);
-              if (moduleMatch) {
-                const moduleName = moduleMatch[1];
-                // INIT модули (core, core.layout) остаются в основном бандле
-                if (moduleName === 'core' || moduleName === 'core.layout') {
-                  return undefined; // Включаем в основной бандл
-                }
-                // Локальные NORMAL модули (local-normal и т.д.) в отдельные чанки
-                return `module-${moduleName}`;
-              }
-            }
+          //   // Разделение локальных модулей из host/src/modules/ на отдельные chunks
+          //   // Remote модули (todo, api_example) не должны попадать в билд хоста
+          //   // if (id.includes('/host/src/modules/')) {
+          //   //   // Извлекаем имя модуля из пути
+          //   //   const moduleMatch = id.match(/\/host\/src\/modules\/([^/]+)\//);
+          //   //   if (moduleMatch) {
+          //   //     const moduleName = moduleMatch[1];
+          //   //     // INIT модули (core, core.layout) остаются в основном бандле
+          //   //     if (moduleName === 'core' || moduleName === 'core.layout') {
+          //   //       return undefined; // Включаем в основной бандл
+          //   //     }
+          //   //     // Локальные NORMAL модули (local-normal и т.д.) в отдельные чанки
+          //   //     return `module-${moduleName}`;
+          //   //   }
+          //   // }
 
-            // Исключаем remote модули из packages/ из билда хоста
-            // Они должны загружаться через Module Federation
-            if (id.includes('/packages/')) {
-              const packageMatch = id.match(/\/packages\/([^/]+)\//);
-              if (packageMatch) {
-                const packageName = packageMatch[1];
-                // В production remote модули не должны попадать в билд
-                if (process.env.NODE_ENV === 'production') {
-                  // Предупреждаем, если remote модуль попал в билд
-                  // eslint-disable-next-line no-console
-                  console.warn(
-                    `[vite-config] Warning: Remote module ${packageName} is being bundled into host build. This should not happen in production.`,
-                  );
-                }
-              }
-            }
+          //   // Исключаем remote модули из packages/ из билда хоста
+          //   // Они должны загружаться через Module Federation
+          //   if (id.includes('/packages/')) {
+          //     const packageMatch = id.match(/\/packages\/([^/]+)\//);
+          //     if (packageMatch) {
+          //       const packageName = packageMatch[1];
+          //       // В production remote модули не должны попадать в билд
+          //       if (process.env.NODE_ENV === 'production') {
+          //         // Предупреждаем, если remote модуль попал в билд
+          //         // eslint-disable-next-line no-console
+          //         console.warn(
+          //           `[vite-config] Warning: Remote module ${packageName} is being bundled into host build. This should not happen in production.`,
+          //         );
+          //       }
+          //     }
+          //   }
 
-            return undefined;
-          },
+          //   return undefined;
+          // },
         },
       },
       ...build,

@@ -1,7 +1,21 @@
 import type { IRoute } from '../Router/interfaces';
-import { type i18n } from 'i18next';
 import { type RequestHandler } from 'msw';
 import type { IBootstrap } from '../interfaces';
+
+/**
+ * Интерфейс i18n для модулей.
+ * Определён локально, чтобы избежать прямой зависимости от i18next
+ * в shared библиотеках (это вызывает проблемы с Module Federation).
+ */
+export interface ModuleI18n {
+  addResourceBundle(
+    lng: string,
+    ns: string,
+    resources: Record<string, unknown>,
+    deep?: boolean,
+    overwrite?: boolean,
+  ): void;
+}
 
 /**
  * Запись модуля в манифесте
@@ -65,7 +79,7 @@ export interface ModuleConfig<TBootstrap extends IBootstrap = IBootstrap> {
   /**
    * Функция для настройки i18n модуля
    */
-  I18N?: (i18n: i18n) => void;
+  I18N?: (i18n: ModuleI18n) => void;
   /**
    * Функция инициализации модуля. Может быть как синхронной (void), так и асинхронной (Promise<void>).
    */

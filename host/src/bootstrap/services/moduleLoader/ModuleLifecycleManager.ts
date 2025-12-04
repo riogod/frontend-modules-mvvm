@@ -138,6 +138,36 @@ export class ModuleLifecycleManager {
     // После загрузки config уже не является Promise
     const config = module.config;
     if (config && 'I18N' in config && config.I18N && bootstrap.i18n) {
+      // Проверяем, что bootstrap.i18n это корректный i18next instance
+      // addResourceBundle появляется только после init(), поэтому проверяем базовые методы
+      const i18nInstance = bootstrap.i18n;
+      const hasAddResourceBundle =
+        typeof i18nInstance?.addResourceBundle === 'function';
+      const hasInit = typeof i18nInstance?.init === 'function';
+      const hasUse = typeof i18nInstance?.use === 'function';
+      
+      log.debug(
+        `Calling I18N with bootstrap.i18n, type: ${typeof i18nInstance}, hasAddResourceBundle: ${hasAddResourceBundle}, hasInit: ${hasInit}, hasUse: ${hasUse}`,
+        { prefix: 'bootstrap.moduleLoader.lifecycleManager' },
+      );
+
+      // addResourceBundle должен быть доступен после инициализации i18n в InitI18nHandler
+      if (!hasAddResourceBundle) {
+        log.error(
+          `bootstrap.i18n does not have addResourceBundle method! i18n should be initialized before registering module i18n.`,
+          {
+            prefix: 'bootstrap.moduleLoader.lifecycleManager',
+            i18nType: typeof i18nInstance,
+            i18nConstructor: i18nInstance?.constructor?.name,
+            hasInit,
+            hasUse,
+          },
+        );
+        throw new Error(
+          `bootstrap.i18n does not have addResourceBundle method. Make sure i18n is initialized before registering module i18n.`,
+        );
+      }
+
       config.I18N(bootstrap.i18n);
       log.debug(`i18n registered for module: ${module.name}`, {
         prefix: 'bootstrap.moduleLoader.lifecycleManager',

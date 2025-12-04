@@ -8,15 +8,26 @@ import fs from 'fs';
 
 /**
  * Базовые shared зависимости для всех модулей
+ * Должны совпадать с shared в host.config.js
+ * Модули используют shared из host если доступно, иначе fallback на свою копию
  */
 const defaultShared = {
   react: { singleton: true, requiredVersion: false },
   'react-dom': { singleton: true, requiredVersion: false },
   mobx: { singleton: true, requiredVersion: false },
   'mobx-react-lite': { singleton: true, requiredVersion: false },
+  i18next: { singleton: true, requiredVersion: false },
+  'react-i18next': { singleton: true, requiredVersion: false },
+  inversify: { singleton: true, requiredVersion: false },
+  'reflect-metadata': { singleton: true, requiredVersion: false },
+  '@riogz/react-router': { singleton: true, requiredVersion: false },
+  '@riogz/router': { singleton: true, requiredVersion: false },
+  '@riogz/router-plugin-browser': { singleton: true, requiredVersion: false },
+  // Внутренние библиотеки - резолвятся через алиасы
   '@platform/core': { singleton: true, requiredVersion: false },
   '@platform/ui': { singleton: true, requiredVersion: false },
   '@platform/common': { singleton: true, requiredVersion: false },
+  '@platform/share': { singleton: true, requiredVersion: false },
 };
 
 /**

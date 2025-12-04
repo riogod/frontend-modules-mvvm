@@ -1,6 +1,6 @@
 import { type Container } from 'inversify';
 import { type APIClient } from './APIClient';
-import { type i18n } from 'i18next';
+import { type ModuleI18n } from './ModuleInterfaces';
 
 /**
  * Интерфейс Bootstrap объекта для инициализации модулей
@@ -19,6 +19,8 @@ export interface IBootstrap {
 
   /**
    * i18n instance для локализации
+   * Используем ModuleI18n вместо i18next.i18n, чтобы избежать
+   * прямой зависимости от i18next в shared библиотеках
    */
-  readonly i18n: i18n;
+  readonly i18n: ModuleI18n;
 }

@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 export default defineConfig(async () =>
   createModuleConfig({
     dirname: __dirname,
-    moduleName: 'module-api-example',
+    moduleName: 'api_example',
   })
 );
 

@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { createBaseConfig } from './base.config.js';
 import { createHostConfig } from './host.config.js';
 import { createLibConfig } from './lib.config.js';
@@ -41,7 +42,10 @@ export function createViteConfig(options) {
     ? {
         ...restOptions,
         dirname: restOptions.dirname || localConfig.dirname || dirname,
-        plugins: [...(restOptions.plugins || []), ...(localConfig.plugins || [])],
+        plugins: [
+          ...(restOptions.plugins || []),
+          ...(localConfig.plugins || []),
+        ],
         resolve: { ...restOptions.resolve, ...localConfig.resolve },
         build: { ...restOptions.build, ...localConfig.build },
         server: { ...restOptions.server, ...localConfig.server },
@@ -76,7 +80,8 @@ export function createViteConfig(options) {
     case 'lib':
       base = createLibConfig({
         dirname: mergedOptions.dirname,
-        libName: options.libName || mergedOptions.dirname.split('/').pop() || 'lib',
+        libName:
+          options.libName || mergedOptions.dirname.split('/').pop() || 'lib',
         cacheDir: mergedOptions.cacheDir,
         outDir: mergedOptions.outDir,
         coverageDir: mergedOptions.coverageDir,
@@ -126,4 +131,3 @@ export function createViteConfig(options) {
 
   return base;
 }
-

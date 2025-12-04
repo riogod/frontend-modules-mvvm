@@ -332,29 +332,90 @@ export class RemoteModuleLoader {
     log.debug(`Initializing container: ${scope}`, {
       prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
     });
-    // Получаем shared scope от webpack/vite
-    // Типы определены в federation.d.ts
-    const hasWebpackShareScopes =
-      typeof __webpack_share_scopes__ !== 'undefined';
-    const shareScope = hasWebpackShareScopes ? __webpack_share_scopes__ : {};
+
+    // Vite Federation использует globalThis.__federation_shared__ для shared модулей
+    // Webpack Federation использует __webpack_share_scopes__
+    const hasViteFederationShared =
+      typeof globalThis.__federation_shared__ !== 'undefined';
+    
+    // Безопасная проверка Webpack share scopes
+    let hasWebpackShareScopes = false;
+    let webpackShareScopes: { default?: Record<string, unknown> } | undefined;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const wpScopes = (globalThis as any).__webpack_share_scopes__;
+      hasWebpackShareScopes = typeof wpScopes !== 'undefined';
+      webpackShareScopes = wpScopes;
+    } catch {
+      // Игнорируем ошибку, если __webpack_share_scopes__ не определён
+    }
 
     log.debug(
-      `Share scope available: ${hasWebpackShareScopes}, has default: ${!!shareScope.default}`,
+      `Share scope available: ${hasWebpackShareScopes}, has default: ${!!(webpackShareScopes?.default)}`,
+      {
+        prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+      },
+    );
+    log.debug(
+      `Vite Federation shared available: ${hasViteFederationShared}`,
       {
         prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
       },
     );
 
     try {
-      // Инициализируем default scope если не инициализирован
-      const hasWebpackInitSharing =
-        typeof __webpack_init_sharing__ !== 'undefined';
-      if (hasWebpackInitSharing && !shareScope.default) {
-        log.debug(`Initializing webpack sharing for default scope`, {
+      // Для Webpack: инициализируем default scope если не инициализирован
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const wpInitSharing = (globalThis as any).__webpack_init_sharing__;
+        if (
+          typeof wpInitSharing !== 'undefined' &&
+          !webpackShareScopes?.default
+        ) {
+          log.debug(`Initializing webpack sharing for default scope`, {
+            prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+          });
+          await wpInitSharing('default');
+          log.debug(`Webpack sharing initialized for default scope`, {
+            prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+          });
+        }
+      } catch {
+        // Игнорируем ошибку, если Webpack sharing не доступен
+      }
+
+      // Определяем shareScope для инициализации контейнера
+      // Vite Federation ожидает объект с shared модулями в формате:
+      // { moduleName: { version: { get: () => Promise<module>, loaded: boolean } } }
+      let shareScope: Record<string, unknown> | undefined = undefined;
+
+      if (hasWebpackShareScopes && webpackShareScopes?.default) {
+        shareScope = webpackShareScopes.default;
+        log.debug(`Using Webpack share scope`, {
           prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
         });
-        await __webpack_init_sharing__('default');
-        log.debug(`Webpack sharing initialized for default scope`, {
+      } else if (hasViteFederationShared && globalThis.__federation_shared__) {
+        // Vite Federation может хранить shared модули в разных структурах:
+        // 1. { default: { react: {...}, ... } } - со scope 'default'
+        // 2. { react: {...}, ... } - напрямую без scope
+        const fedShared = globalThis.__federation_shared__;
+        if (fedShared.default && typeof fedShared.default === 'object') {
+          shareScope = fedShared.default as Record<string, unknown>;
+          log.debug(`Using Vite Federation share scope (default)`, {
+            prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+          });
+        } else {
+          // Используем весь объект как share scope
+          shareScope = fedShared as unknown as Record<string, unknown>;
+          log.debug(`Using Vite Federation share scope (root)`, {
+            prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
+          });
+        }
+      } else {
+        // Если нет share scope, передаём пустой объект для Vite Federation
+        // Vite Federation может работать без share scope в dev режиме
+        shareScope = {};
+        log.debug(`No share scope available, using empty object`, {
           prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
         });
       }
@@ -363,7 +424,7 @@ export class RemoteModuleLoader {
       log.debug(`Calling container.init() for: ${scope}`, {
         prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
       });
-      await container.init(shareScope.default || {});
+      await container.init(shareScope);
       log.debug(`Container initialized successfully: ${scope}`, {
         prefix: 'bootstrap.services.remoteModuleLoader.initContainer',
       });
