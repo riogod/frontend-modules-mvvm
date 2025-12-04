@@ -1,12 +1,14 @@
-# Задача 009: Federation Production Build & CI/CD
+# Задача 009: Federation Production Build
 
-## Статус: ⚪ Не начата
+## Статус: 🟡 Частично реализована
 
 ## Описание
 
-Настройка production сборки модулей с Module Federation, создание build скриптов и подготовка CI/CD пайплайна для независимого развертывания модулей.
+Настройка production сборки модулей с Module Federation и создание build скриптов для сборки модулей и host приложения.
 
-**Централизация утилит**: Build утилиты (`getModuleVersion`, `generateManifest`, `discoverModules`) размещаются в `@platform/vite-config/build/` для переиспользования и консистентности с типами манифеста.
+**Централизация утилит**: Build утилиты (`getModuleVersion`, `discoverModules`) размещены в `@platform/vite-config/build-utils/` для переиспользования.
+
+**Архитектура манифеста**: В production манифест модулей поставляется **бэкендом через `/app/start`**. Бэкенд самостоятельно управляет конфигурацией модулей (БД/конфиг). Статическая генерация манифеста не требуется.
 
 ## Зависимости
 
@@ -14,726 +16,504 @@
 - **Задача 006**: Vite плагины (типы манифеста `AppManifest`)
 - **Задача 008**: RemoteModuleLoader (для тестирования загрузки)
 
+## Что уже реализовано
+
+- ✅ Директория `config/vite-config/build-utils/` создана
+- ✅ `utils.ts` с функциями `getModuleVersion`, `discoverModules`, `isModuleBuilt`
+- ✅ `generateManifest.ts` (для dev/preview, не для production)
+- ✅ `index.ts` с реэкспортом утилит
+- ✅ Типы `ModuleManifestEntry` и `ModuleLoadType` в `@platform/core`
+
 ## Подзадачи
 
-### 1. Создание build утилит в @platform/vite-config
+### 1. ✅ Build утилиты в @platform/vite-config (ВЫПОЛНЕНО)
 
-- [ ] Создать директорию `config/vite-config/build/`
+Утилиты уже созданы в `config/vite-config/build-utils/`:
 
-- [ ] Создать `config/vite-config/build/utils.ts`:
+**`config/vite-config/build-utils/utils.ts`** — реализовано:
 
-  ```typescript
-  import fs from 'fs';
-  import path from 'path';
-  import type { AppManifest, ModuleManifestEntry } from '../plugins/types';
+```typescript
+import fs from 'fs';
+import path from 'path';
 
-  /**
-   * Получает версию модуля из package.json
-   */
-  export function getModuleVersion(modulePath: string): string {
-    const pkgPath = path.join(modulePath, 'package.json');
-    if (fs.existsSync(pkgPath)) {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-      return pkg.version || '1.0.0';
-    }
-    return '1.0.0';
-  }
+export function getModuleVersion(modulePath: string): string;
+export function discoverModules(packagesDir: string): string[];
+export function isModuleBuilt(distDir: string, moduleName: string): boolean;
+```
 
-  /**
-   * Сканирует директорию packages/ и возвращает список модулей
-   */
-  export function discoverModules(packagesDir: string): string[] {
-    if (!fs.existsSync(packagesDir)) {
-      return [];
-    }
-
-    return fs
-      .readdirSync(packagesDir, { withFileTypes: true })
-      .filter((d) => {
-        if (!d.isDirectory()) return false;
-        // Проверяем наличие vite.config.mts
-        const hasViteConfig = fs.existsSync(
-          path.join(packagesDir, d.name, 'vite.config.mts'),
-        );
-        return hasViteConfig;
-      })
-      .map((d) => d.name);
-  }
-
-  /**
-   * Проверяет, собран ли модуль (есть remoteEntry.js)
-   */
-  export function isModuleBuilt(distDir: string, moduleName: string): boolean {
-    const remoteEntry = path.join(distDir, moduleName, 'latest', 'remoteEntry.js');
-    return fs.existsSync(remoteEntry);
-  }
-  ```
-
-- [ ] Создать `config/vite-config/build/generateManifest.ts`:
-
-  ```typescript
-  import fs from 'fs';
-  import path from 'path';
-  import type { AppManifest, ModuleManifestEntry } from '../plugins/types';
-  import { getModuleVersion, isModuleBuilt } from './utils';
-
-  export interface GenerateManifestOptions {
-    /**
-     * Путь к директории dist/modules/
-     */
-    distDir: string;
-
-    /**
-     * Путь к директории packages/
-     */
-    packagesDir: string;
-
-    /**
-     * Путь для сохранения манифеста
-     */
-    outputPath: string;
-
-    /**
-     * Базовый URL для модулей
-     * @default '/modules/'
-     */
-    baseUrl?: string;
-
-    /**
-     * Использовать версию или 'latest' в URL
-     * @default 'version'
-     */
-    versionStrategy?: 'version' | 'latest';
-
-    /**
-     * Дополнительные INIT модули
-     */
-    initModules?: ModuleManifestEntry[];
-  }
-
-  /**
-   * Генерирует production манифест на основе собранных модулей
-   */
-  export function generateManifest(options: GenerateManifestOptions): AppManifest {
-    const {
-      distDir,
-      packagesDir,
-      outputPath,
-      baseUrl = '/modules/',
-      versionStrategy = 'version',
-      initModules = [],
-    } = options;
-
-    const modules: ModuleManifestEntry[] = [];
-
-    // INIT модули (всегда локальные, часть Host)
-    const defaultInitModules: ModuleManifestEntry[] = [
-      {
-        name: 'core',
-        version: '1.0.0',
-        loadType: 'init',
-        loadPriority: 0,
-        remoteEntry: '',
-      },
-      {
-        name: 'core.layout',
-        version: '1.0.0',
-        loadType: 'init',
-        loadPriority: 2,
-        remoteEntry: '',
-      },
-    ];
-
-    modules.push(...defaultInitModules, ...initModules);
-
-    // Сканируем собранные NORMAL модули
-    if (fs.existsSync(distDir)) {
-      const moduleNames = fs
-        .readdirSync(distDir, { withFileTypes: true })
-        .filter((d) => d.isDirectory())
-        .map((d) => d.name);
-
-      for (const moduleName of moduleNames) {
-        if (!isModuleBuilt(distDir, moduleName)) {
-          console.warn(`[generateManifest] Module ${moduleName} not built, skipping`);
-          continue;
-        }
-
-        const version = getModuleVersion(path.join(packagesDir, moduleName));
-        const versionPath = versionStrategy === 'latest' ? 'latest' : version;
-
-        modules.push({
-          name: moduleName,
-          version,
-          loadType: 'normal',
-          loadPriority: 1,
-          remoteEntry: `${baseUrl}${moduleName}/${versionPath}/remoteEntry.js`,
-        });
-      }
-    }
-
-    const manifest: AppManifest = { modules };
-
-    // Сохраняем манифест
-    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-    fs.writeFileSync(outputPath, JSON.stringify(manifest, null, 2));
-
-    console.log(`[generateManifest] Generated manifest with ${modules.length} modules`);
-    console.log(`[generateManifest] Output: ${outputPath}`);
-
-    return manifest;
-  }
-  ```
-
-- [ ] Создать `config/vite-config/build/index.ts`:
-
-  ```typescript
-  export { getModuleVersion, discoverModules, isModuleBuilt } from './utils';
-  export { generateManifest, type GenerateManifestOptions } from './generateManifest';
-  ```
+### 2. Добавить экспорты build-utils в index.js
 
 - [ ] Обновить `config/vite-config/index.js`:
 
-  ```javascript
-  export { createBaseConfig } from './base.config.js';
-  export { createHostConfig } from './host.config.js';
-  export { createLibConfig } from './lib.config.js';
-  export { createViteConfig } from './createViteConfig.js';
+```javascript
+export { createBaseConfig } from './base.config.js';
+export { createHostConfig } from './host.config.js';
+export { createLibConfig } from './lib.config.js';
+export { createModuleConfig } from './module.config.js';
+export { createViteConfig } from './createViteConfig.js';
 
-  // Плагины для MFE
-  export {
-    createModuleAliasesPlugin,
-    createManifestMiddleware,
-    loadManifest,
-  } from './plugins/index.js';
+// Плагины для MFE
+export {
+  createModuleAliasesPlugin,
+  createManifestMiddleware,
+  loadManifest,
+} from './plugins/index.js';
 
-  // Build утилиты
-  export {
-    getModuleVersion,
-    discoverModules,
-    isModuleBuilt,
-    generateManifest,
-  } from './build/index.js';
-  ```
+// Build утилиты
+export {
+  getModuleVersion,
+  discoverModules,
+  isModuleBuilt,
+} from './build-utils/index.js';
+```
 
-### 2. Создание build-module.mjs скрипта
+### 3. Исправить outDir в module.config.js
+
+- [ ] Обновить `config/vite-config/module.config.js`:
+
+```javascript
+// Было:
+outDir = `../../dist/packages/${moduleName}`,
+
+// Стало:
+outDir = `../../dist/modules/${moduleName}/latest`,
+```
+
+Это обеспечит единую структуру:
+
+- `dist/modules/{module_name}/latest/assets/remoteEntry.js`
+
+### 4. Исправить isModuleBuilt для согласованности
+
+- [ ] Проверить `config/vite-config/build-utils/utils.ts`:
+
+```typescript
+/**
+ * Проверяет, собран ли модуль (есть remoteEntry.js)
+ */
+export function isModuleBuilt(distDir: string, moduleName: string): boolean {
+  const remoteEntry = path.join(
+    distDir,
+    moduleName,
+    'latest',
+    'assets',
+    'remoteEntry.js',
+  );
+  return fs.existsSync(remoteEntry);
+}
+```
+
+### 5. Создание build-module.mjs скрипта
 
 - [ ] Создать `scripts/build-module.mjs`:
 
-  ```javascript
-  #!/usr/bin/env node
-  import { spawn } from 'child_process';
-  import fs from 'fs';
-  import path from 'path';
-  import { fileURLToPath } from 'url';
-  import chalk from 'chalk';
-  import ora from 'ora';
-  import {
-    getModuleVersion,
-    discoverModules,
-  } from '@platform/vite-config/build';
+```javascript
+#!/usr/bin/env node
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import chalk from 'chalk';
+import ora from 'ora';
 
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const packagesDir = path.resolve(__dirname, '../packages');
-  const distDir = path.resolve(__dirname, '../dist/modules');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packagesDir = path.resolve(__dirname, '../packages');
+const distDir = path.resolve(__dirname, '../dist/modules');
 
-  /**
-   * Универсальный скрипт для сборки MFE модулей
-   *
-   * Использование:
-   *   npm run build:module -- --name=todo
-   *   npm run build:module -- --all
-   *   npm run build:module -- --name=todo --name=api_example --parallel
-   */
+/**
+ * Универсальный скрипт для сборки MFE модулей
+ *
+ * Использование:
+ *   npm run build:module -- --name=todo
+ *   npm run build:module -- --all
+ *   npm run build:module -- --name=todo --name=api_example --parallel
+ *
+ * Результат сборки:
+ *   dist/modules/{module}/latest/   — всегда актуальная версия
+ *   dist/modules/{module}/{version}/ — копия для версионирования
+ */
 
-  function parseArgs() {
-    const args = process.argv.slice(2);
-    return {
-      all: args.includes('--all'),
-      names: args
-        .filter((a) => a.startsWith('--name='))
-        .map((a) => a.replace('--name=', '')),
-      parallel: args.includes('--parallel'),
-      analyze: args.includes('--analyze'),
-    };
+/**
+ * Получает версию модуля из package.json
+ */
+function getModuleVersion(modulePath) {
+  const pkgPath = path.join(modulePath, 'package.json');
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    return pkg.version || '1.0.0';
   }
+  return '1.0.0';
+}
 
-  async function buildModule(moduleName, options = {}) {
-    const modulePath = path.join(packagesDir, moduleName);
-    const version = getModuleVersion(modulePath);
-    const outDir = path.join(distDir, moduleName, version);
+/**
+ * Рекурсивно копирует директорию
+ */
+function copyDirectory(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
 
-    const spinner = ora(`Building ${chalk.cyan(moduleName)} v${version}`).start();
+  const entries = fs.readdirSync(src, { withFileTypes: true });
 
-    return new Promise((resolve, reject) => {
-      const args = ['build', '--outDir', outDir];
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
 
-      if (options.analyze) {
-        args.push('--mode', 'analyze');
-      }
-
-      const build = spawn('vite', args, {
-        cwd: modulePath,
-        stdio: options.verbose ? 'inherit' : 'pipe',
-        env: {
-          ...process.env,
-          NODE_ENV: 'production',
-        },
-      });
-
-      let stderr = '';
-
-      if (!options.verbose) {
-        build.stderr?.on('data', (data) => {
-          stderr += data.toString();
-        });
-      }
-
-      build.on('close', (code) => {
-        if (code === 0) {
-          spinner.succeed(`Built ${chalk.cyan(moduleName)} v${version}`);
-          console.log(`   Output: ${chalk.gray(outDir)}`);
-
-          // Создаем latest symlink
-          const latestDir = path.join(distDir, moduleName, 'latest');
-          if (fs.existsSync(latestDir)) {
-            fs.rmSync(latestDir, { recursive: true });
-          }
-          fs.cpSync(outDir, latestDir, { recursive: true });
-
-          resolve({ name: moduleName, version, outDir });
-        } else {
-          spinner.fail(`Failed to build ${chalk.red(moduleName)}`);
-          if (stderr) {
-            console.error(chalk.red(stderr));
-          }
-          reject(new Error(`Build failed for ${moduleName}`));
-        }
-      });
-    });
-  }
-
-  async function buildModulesParallel(moduleNames, options) {
-    console.log(
-      chalk.cyan(`\n📦 Building ${moduleNames.length} modules in parallel...\n`),
-    );
-
-    const results = await Promise.allSettled(
-      moduleNames.map((name) => buildModule(name, options)),
-    );
-
-    const succeeded = results.filter((r) => r.status === 'fulfilled');
-    const failed = results.filter((r) => r.status === 'rejected');
-
-    console.log('\n' + chalk.cyan('Build Summary:'));
-    console.log(`  ✅ Succeeded: ${succeeded.length}`);
-    console.log(`  ❌ Failed: ${failed.length}`);
-
-    if (failed.length > 0) {
-      process.exit(1);
-    }
-  }
-
-  async function buildModulesSequential(moduleNames, options) {
-    console.log(chalk.cyan(`\n📦 Building ${moduleNames.length} modules...\n`));
-
-    for (const name of moduleNames) {
-      await buildModule(name, options);
-    }
-  }
-
-  async function main() {
-    const args = parseArgs();
-
-    let modulesToBuild = [];
-
-    if (args.all) {
-      // Используем утилиту из @platform/vite-config
-      modulesToBuild = discoverModules(packagesDir);
-    } else if (args.names.length > 0) {
-      modulesToBuild = args.names;
-
-      // Валидация
-      for (const name of modulesToBuild) {
-        if (!fs.existsSync(path.join(packagesDir, name))) {
-          console.error(chalk.red(`Module "${name}" not found in packages/`));
-          process.exit(1);
-        }
-      }
+    if (entry.isDirectory()) {
+      copyDirectory(srcPath, destPath);
     } else {
-      console.log(chalk.yellow('Usage:'));
-      console.log('  npm run build:module -- --name=todo');
-      console.log('  npm run build:module -- --all');
-      console.log('  npm run build:module -- --name=todo --name=api --parallel');
-      process.exit(1);
+      fs.copyFileSync(srcPath, destPath);
     }
+  }
+}
 
-    if (modulesToBuild.length === 0) {
-      console.log(chalk.yellow('No modules found to build'));
-      process.exit(0);
-    }
-
-    const options = { analyze: args.analyze };
-
-    if (args.parallel) {
-      await buildModulesParallel(modulesToBuild, options);
-    } else {
-      await buildModulesSequential(modulesToBuild, options);
-    }
-
-    console.log(chalk.green('\n✨ All modules built successfully!\n'));
+/**
+ * Сканирует директорию packages/ и возвращает список модулей
+ */
+function discoverModules(packagesDir) {
+  if (!fs.existsSync(packagesDir)) {
+    return [];
   }
 
-  main().catch((err) => {
-    console.error(chalk.red('❌ Build failed:'), err.message);
-    process.exit(1);
-  });
-  ```
+  return fs
+    .readdirSync(packagesDir, { withFileTypes: true })
+    .filter((d) => {
+      if (!d.isDirectory()) return false;
+      const hasViteConfig = fs.existsSync(
+        path.join(packagesDir, d.name, 'vite.config.mts'),
+      );
+      return hasViteConfig;
+    })
+    .map((d) => d.name);
+}
 
-### 3. Создание generate-manifest.mjs скрипта
-
-- [ ] Создать `scripts/generate-manifest.mjs`:
-
-  ```javascript
-  #!/usr/bin/env node
-  import path from 'path';
-  import { fileURLToPath } from 'url';
-  import { generateManifest } from '@platform/vite-config/build';
-
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-  /**
-   * Генерирует production манифест
-   *
-   * Использование:
-   *   npm run generate:manifest
-   *   npm run generate:manifest -- --latest  (использовать /latest/ вместо версии)
-   */
-
+function parseArgs() {
   const args = process.argv.slice(2);
-  const useLatest = args.includes('--latest');
+  return {
+    all: args.includes('--all'),
+    names: args
+      .filter((a) => a.startsWith('--name='))
+      .map((a) => a.replace('--name=', '')),
+    parallel: args.includes('--parallel'),
+    analyze: args.includes('--analyze'),
+  };
+}
 
-  generateManifest({
-    distDir: path.resolve(__dirname, '../dist/modules'),
-    packagesDir: path.resolve(__dirname, '../packages'),
-    outputPath: path.resolve(__dirname, '../dist/host/manifest.json'),
-    baseUrl: '/modules/',
-    versionStrategy: useLatest ? 'latest' : 'version',
+async function buildModule(moduleName, options = {}) {
+  const modulePath = path.join(packagesDir, moduleName);
+  const version = getModuleVersion(modulePath);
+  const latestDir = path.join(distDir, moduleName, 'latest');
+  const versionDir = path.join(distDir, moduleName, version);
+
+  const spinner = ora(`Building ${chalk.cyan(moduleName)} v${version}`).start();
+
+  return new Promise((resolve, reject) => {
+    const args = ['build', '--outDir', latestDir];
+
+    if (options.analyze) {
+      args.push('--mode', 'analyze');
+    }
+
+    const build = spawn('npx', ['vite', ...args], {
+      cwd: modulePath,
+      stdio: options.verbose ? 'inherit' : 'pipe',
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+      },
+    });
+
+    let stderr = '';
+
+    if (!options.verbose) {
+      build.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+    }
+
+    build.on('close', (code) => {
+      if (code === 0) {
+        // Копируем latest → version
+        try {
+          if (fs.existsSync(versionDir)) {
+            fs.rmSync(versionDir, { recursive: true });
+          }
+          copyDirectory(latestDir, versionDir);
+
+          spinner.succeed(`Built ${chalk.cyan(moduleName)} v${version}`);
+          console.log(`   Latest:  ${chalk.gray(latestDir)}`);
+          console.log(`   Version: ${chalk.gray(versionDir)}`);
+
+          resolve({ name: moduleName, version, latestDir, versionDir });
+        } catch (copyError) {
+          spinner.fail(`Failed to copy version for ${chalk.red(moduleName)}`);
+          reject(copyError);
+        }
+      } else {
+        spinner.fail(`Failed to build ${chalk.red(moduleName)}`);
+        if (stderr) {
+          console.error(chalk.red(stderr));
+        }
+        reject(new Error(`Build failed for ${moduleName}`));
+      }
+    });
   });
-  ```
+}
 
-### 4. Обновление package.json scripts
+async function buildModulesParallel(moduleNames, options) {
+  console.log(
+    chalk.cyan(`\n📦 Building ${moduleNames.length} modules in parallel...\n`),
+  );
+
+  const results = await Promise.allSettled(
+    moduleNames.map((name) => buildModule(name, options)),
+  );
+
+  const succeeded = results.filter((r) => r.status === 'fulfilled');
+  const failed = results.filter((r) => r.status === 'rejected');
+
+  console.log('\n' + chalk.cyan('Build Summary:'));
+  console.log(`  ✅ Succeeded: ${succeeded.length}`);
+  console.log(`  ❌ Failed: ${failed.length}`);
+
+  if (failed.length > 0) {
+    process.exit(1);
+  }
+}
+
+async function buildModulesSequential(moduleNames, options) {
+  console.log(chalk.cyan(`\n📦 Building ${moduleNames.length} modules...\n`));
+
+  for (const name of moduleNames) {
+    await buildModule(name, options);
+  }
+}
+
+async function main() {
+  const args = parseArgs();
+
+  let modulesToBuild = [];
+
+  if (args.all) {
+    modulesToBuild = discoverModules(packagesDir);
+  } else if (args.names.length > 0) {
+    modulesToBuild = args.names;
+
+    // Валидация
+    for (const name of modulesToBuild) {
+      if (!fs.existsSync(path.join(packagesDir, name))) {
+        console.error(chalk.red(`Module "${name}" not found in packages/`));
+        process.exit(1);
+      }
+    }
+  } else {
+    console.log(chalk.yellow('Usage:'));
+    console.log('  npm run build:module -- --name=todo');
+    console.log('  npm run build:module -- --all');
+    console.log(
+      '  npm run build:module -- --name=todo --name=api_example --parallel',
+    );
+    process.exit(1);
+  }
+
+  if (modulesToBuild.length === 0) {
+    console.log(chalk.yellow('No modules found to build'));
+    process.exit(0);
+  }
+
+  const options = { analyze: args.analyze };
+
+  if (args.parallel) {
+    await buildModulesParallel(modulesToBuild, options);
+  } else {
+    await buildModulesSequential(modulesToBuild, options);
+  }
+
+  console.log(chalk.green('\n✨ All modules built successfully!\n'));
+}
+
+main().catch((err) => {
+  console.error(chalk.red('❌ Build failed:'), err.message);
+  process.exit(1);
+});
+```
+
+### 6. Обновление package.json scripts
 
 - [ ] Добавить build скрипты в корневой `package.json`:
 
-  ```json
-  {
-    "scripts": {
-      "build": "npm run build:host",
-      "build:host": "vite build --config host/vite.config.mts",
-      "build:module": "node scripts/build-module.mjs",
-      "build:modules": "node scripts/build-module.mjs --all",
-      "build:modules:parallel": "node scripts/build-module.mjs --all --parallel",
-      "build:all": "npm run build:host && npm run build:modules && npm run generate:manifest",
-      "generate:manifest": "node scripts/generate-manifest.mjs",
-      "preview:host": "vite preview --config host/vite.config.mts",
-      "analyze:module": "node scripts/build-module.mjs --analyze"
-    }
+```json
+{
+  "scripts": {
+    "build": "npm run build:host",
+    "build:host": "vite build --config host/vite.config.mts",
+    "build:module": "node scripts/build-module.mjs",
+    "build:modules": "node scripts/build-module.mjs --all",
+    "build:modules:parallel": "node scripts/build-module.mjs --all --parallel",
+    "build:all": "npm run build:modules && npm run build:host",
+    "preview:host": "vite preview --config host/vite.config.mts",
+    "analyze:module": "node scripts/build-module.mjs --analyze"
   }
-  ```
+}
+```
 
-### 5. Настройка Host для production
+### 7. Настройка Host для production (опционально)
 
-- [ ] Обновить `host/vite.config.mts` для production:
+- [ ] При необходимости обновить `host/vite.config.mts` для production с federation:
 
-  ```typescript
-  import federation from '@originjs/vite-plugin-federation';
+```typescript
+import federation from '@originjs/vite-plugin-federation';
 
-  // В production конфигурации
-  if (process.env.NODE_ENV === 'production') {
-    config.plugins.push(
-      federation({
-        name: 'host',
-        remotes: {
-          // Remotes будут загружаться динамически через манифест
-        },
-        shared: {
-          react: { singleton: true, requiredVersion: false },
-          'react-dom': { singleton: true, requiredVersion: false },
-          mobx: { singleton: true, requiredVersion: false },
-          'mobx-react-lite': { singleton: true, requiredVersion: false },
-          '@platform/core': { singleton: true, requiredVersion: false },
-          '@platform/ui': { singleton: true, requiredVersion: false },
-          '@platform/common': { singleton: true, requiredVersion: false },
-        },
-      }),
-    );
-  }
-  ```
+// В production конфигурации (если требуется динамическая загрузка)
+if (process.env.NODE_ENV === 'production') {
+  config.plugins.push(
+    federation({
+      name: 'host',
+      remotes: {
+        // Remotes загружаются динамически через RemoteModuleLoader
+      },
+      shared: {
+        react: { singleton: true, requiredVersion: false },
+        'react-dom': { singleton: true, requiredVersion: false },
+        mobx: { singleton: true, requiredVersion: false },
+        'mobx-react-lite': { singleton: true, requiredVersion: false },
+        '@platform/core': { singleton: true, requiredVersion: false },
+        '@platform/ui': { singleton: true, requiredVersion: false },
+        '@platform/common': { singleton: true, requiredVersion: false },
+      },
+    }),
+  );
+}
+```
 
-### 6. Создание Dockerfile для модулей
-
-- [ ] Создать `docker/Dockerfile.module`:
-
-  ```dockerfile
-  # Сборка модуля
-  FROM node:20-alpine AS builder
-
-  ARG MODULE_NAME
-
-  WORKDIR /app
-
-  # Копируем package files
-  COPY package*.json ./
-  COPY packages/${MODULE_NAME}/package.json ./packages/${MODULE_NAME}/
-  COPY libs/ ./libs/
-  COPY config/ ./config/
-
-  # Устанавливаем зависимости
-  RUN npm ci
-
-  # Копируем исходники модуля
-  COPY packages/${MODULE_NAME}/ ./packages/${MODULE_NAME}/
-  COPY tsconfig.base.json ./
-
-  # Собираем модуль
-  RUN npm run build:module -- --name=${MODULE_NAME}
-
-  # Production образ
-  FROM nginx:alpine
-
-  ARG MODULE_NAME
-
-  # Копируем собранный модуль
-  COPY --from=builder /app/dist/modules/${MODULE_NAME} /usr/share/nginx/html/modules/${MODULE_NAME}
-
-  # Копируем nginx конфиг
-  COPY docker/nginx-module.conf /etc/nginx/conf.d/default.conf
-
-  EXPOSE 80
-
-  CMD ["nginx", "-g", "daemon off;"]
-  ```
-
-### 7. Создание nginx конфигурации
-
-- [ ] Создать `docker/nginx-module.conf`:
-
-  ```nginx
-  server {
-      listen 80;
-      server_name localhost;
-
-      root /usr/share/nginx/html;
-
-      # CORS для Module Federation
-      location /modules/ {
-          add_header 'Access-Control-Allow-Origin' '*' always;
-          add_header 'Access-Control-Allow-Methods' 'GET, OPTIONS' always;
-          add_header 'Access-Control-Allow-Headers' 'Origin, Content-Type, Accept' always;
-
-          if ($request_method = 'OPTIONS') {
-              add_header 'Access-Control-Max-Age' 1728000;
-              add_header 'Content-Type' 'text/plain charset=UTF-8';
-              add_header 'Content-Length' 0;
-              return 204;
-          }
-
-          # Кеширование для assets
-          location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
-              expires 1y;
-              add_header Cache-Control "public, immutable";
-          }
-
-          try_files $uri $uri/ =404;
-      }
-
-      # Health check
-      location /health {
-          return 200 'OK';
-          add_header Content-Type text/plain;
-      }
-  }
-  ```
-
-### 8. Создание GitHub Actions workflow
-
-- [ ] Создать `.github/workflows/build-modules.yml`:
-
-  ```yaml
-  name: Build and Deploy Modules
-
-  on:
-    push:
-      branches: [main, develop]
-      paths:
-        - 'packages/**'
-    pull_request:
-      branches: [main]
-      paths:
-        - 'packages/**'
-
-  jobs:
-    detect-changes:
-      runs-on: ubuntu-latest
-      outputs:
-        modules: ${{ steps.changes.outputs.modules }}
-      steps:
-        - uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
-
-        - name: Detect changed modules
-          id: changes
-          run: |
-            CHANGED_MODULES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | \
-              grep '^packages/' | \
-              cut -d'/' -f2 | \
-              sort -u | \
-              jq -R -s -c 'split("\n") | map(select(length > 0))')
-            echo "modules=$CHANGED_MODULES" >> $GITHUB_OUTPUT
-
-    build:
-      needs: detect-changes
-      if: needs.detect-changes.outputs.modules != '[]'
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          module: ${{ fromJson(needs.detect-changes.outputs.modules) }}
-
-      steps:
-        - uses: actions/checkout@v4
-
-        - name: Setup Node.js
-          uses: actions/setup-node@v4
-          with:
-            node-version: '20'
-            cache: 'npm'
-
-        - name: Install dependencies
-          run: npm ci
-
-        - name: Build module
-          run: npm run build:module -- --name=${{ matrix.module }}
-
-        - name: Upload artifacts
-          uses: actions/upload-artifact@v4
-          with:
-            name: module-${{ matrix.module }}
-            path: dist/modules/${{ matrix.module }}
-
-    deploy:
-      needs: build
-      if: github.ref == 'refs/heads/main'
-      runs-on: ubuntu-latest
-
-      steps:
-        - name: Download all artifacts
-          uses: actions/download-artifact@v4
-          with:
-            path: dist/modules
-
-        # Добавьте шаги деплоя для вашей инфраструктуры
-        - name: Deploy to CDN
-          run: |
-            echo "Deploy modules to CDN"
-            # aws s3 sync dist/modules s3://your-bucket/modules/
-  ```
-
-### 9. Создание версионирования модулей
+### 8. Создание версионирования модулей (опционально)
 
 - [ ] Создать `scripts/version-module.mjs`:
 
-  ```javascript
-  #!/usr/bin/env node
-  import fs from 'fs';
-  import path from 'path';
-  import { execSync } from 'child_process';
-  import prompts from 'prompts';
-  import { discoverModules } from '@platform/vite-config/build';
+```javascript
+#!/usr/bin/env node
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import prompts from 'prompts';
 
-  const packagesDir = path.resolve(process.cwd(), 'packages');
+const packagesDir = path.resolve(process.cwd(), 'packages');
 
-  async function versionModule(moduleName, bumpType) {
-    const modulePath = path.join(packagesDir, moduleName);
-    const pkgPath = path.join(modulePath, 'package.json');
-
-    // Используем npm version для bump
-    execSync(`npm version ${bumpType} --no-git-tag-version`, {
-      cwd: modulePath,
-      stdio: 'inherit',
-    });
-
-    // Читаем новую версию
-    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-    console.log(`\n✅ ${moduleName} bumped to v${pkg.version}`);
-
-    return pkg.version;
+/**
+ * Сканирует директорию packages/ и возвращает список модулей
+ */
+function discoverModules(packagesDir) {
+  if (!fs.existsSync(packagesDir)) {
+    return [];
   }
 
-  async function main() {
-    const moduleName = process.argv[2];
-    const bumpType = process.argv[3] || 'patch';
+  return fs
+    .readdirSync(packagesDir, { withFileTypes: true })
+    .filter((d) => {
+      if (!d.isDirectory()) return false;
+      const hasViteConfig = fs.existsSync(
+        path.join(packagesDir, d.name, 'vite.config.mts'),
+      );
+      return hasViteConfig;
+    })
+    .map((d) => d.name);
+}
 
-    if (!moduleName) {
-      const modules = discoverModules(packagesDir);
+async function versionModule(moduleName, bumpType) {
+  const modulePath = path.join(packagesDir, moduleName);
+  const pkgPath = path.join(modulePath, 'package.json');
 
-      const { selectedModule, selectedBump } = await prompts([
-        {
-          type: 'select',
-          name: 'selectedModule',
-          message: 'Select module:',
-          choices: modules.map((m) => ({ title: m, value: m })),
-        },
-        {
-          type: 'select',
-          name: 'selectedBump',
-          message: 'Version bump:',
-          choices: [
-            { title: 'patch (1.0.x)', value: 'patch' },
-            { title: 'minor (1.x.0)', value: 'minor' },
-            { title: 'major (x.0.0)', value: 'major' },
-          ],
-        },
-      ]);
+  // Используем npm version для bump
+  execSync(`npm version ${bumpType} --no-git-tag-version`, {
+    cwd: modulePath,
+    stdio: 'inherit',
+  });
 
-      await versionModule(selectedModule, selectedBump);
-    } else {
-      await versionModule(moduleName, bumpType);
-    }
+  // Читаем новую версию
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+  console.log(`\n✅ ${moduleName} bumped to v${pkg.version}`);
+
+  return pkg.version;
+}
+
+async function main() {
+  const moduleName = process.argv[2];
+  const bumpType = process.argv[3] || 'patch';
+
+  if (!moduleName) {
+    const modules = discoverModules(packagesDir);
+
+    const { selectedModule, selectedBump } = await prompts([
+      {
+        type: 'select',
+        name: 'selectedModule',
+        message: 'Select module:',
+        choices: modules.map((m) => ({ title: m, value: m })),
+      },
+      {
+        type: 'select',
+        name: 'selectedBump',
+        message: 'Version bump:',
+        choices: [
+          { title: 'patch (1.0.x)', value: 'patch' },
+          { title: 'minor (1.x.0)', value: 'minor' },
+          { title: 'major (x.0.0)', value: 'major' },
+        ],
+      },
+    ]);
+
+    await versionModule(selectedModule, selectedBump);
+  } else {
+    await versionModule(moduleName, bumpType);
   }
+}
 
-  main().catch(console.error);
-  ```
+main().catch(console.error);
+```
 
-### 10. Тестирование production сборки
+### 9. Тестирование production сборки
 
 - [ ] Собрать все модули: `npm run build:modules`
-- [ ] Сгенерировать манифест: `npm run generate:manifest`
 - [ ] Проверить структуру dist/modules/
-- [ ] Запустить preview: `npm run preview:host`
+- [ ] Собрать host: `npm run build:host`
+- [ ] Запустить preview с dev-server (для /app/start): `npm run preview`
 - [ ] Проверить загрузку модулей через Federation
-- [ ] Проверить корректность версионирования
-
-### 11. Документация
-
-- [ ] Создать `docs/deployment.md` с инструкциями по деплою
-- [ ] Добавить примеры CI/CD конфигураций для разных платформ
 
 ## Definition of Done (DoD)
 
-1. ✅ Build утилиты размещены в `@platform/vite-config/build/`
-2. ✅ `build-module.mjs` использует утилиты из `@platform/vite-config`
-3. ✅ `generate-manifest.mjs` использует `generateManifest()` из `@platform/vite-config`
-4. ✅ Параллельная сборка модулей работает (--parallel)
-5. ✅ Версионирование модулей реализовано
-6. ✅ Production манифест генерируется корректно
-7. ✅ Host настроен для production с Federation
-8. ✅ Docker конфигурация создана
-9. ✅ GitHub Actions workflow создан
-10. ✅ CORS настроен для Module Federation
+1. ✅ Build утилиты размещены в `@platform/vite-config/build-utils/`
+2. ⬜ Экспорты добавлены в `config/vite-config/index.js`
+3. ⬜ outDir в module.config.js изменен на `dist/modules/{module}/latest`
+4. ⬜ `build-module.mjs` создан и работает
+5. ⬜ Параллельная сборка модулей работает (--parallel)
+6. ⬜ Модули собираются в `/dist/modules/{module_name}/latest/`
+7. ⬜ Host собирается в `/dist`
 
-## Архитектура централизованных утилит
+## Архитектура
+
+### Манифест модулей
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Production                               │
+│                                                                  │
+│   ┌──────────┐     GET /app/start      ┌──────────────────┐    │
+│   │  Host    │ ◄─────────────────────► │     Backend      │    │
+│   │  App     │                         │  (БД/Конфиг)     │    │
+│   └──────────┘                         └──────────────────┘    │
+│        │                                        │               │
+│        │ Манифест содержит:                     │               │
+│        │ - modules[]                            │               │
+│        │ - remoteEntry URLs                     │               │
+│        │ - features, permissions                │               │
+│        ▼                                        ▼               │
+│   ┌──────────────────────────────────────────────────┐         │
+│   │              CDN / Static Server                  │         │
+│   │   /modules/todo/latest/assets/remoteEntry.js     │         │
+│   │   /modules/api_example/latest/assets/remoteEntry.js │      │
+│   └──────────────────────────────────────────────────┘         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Централизованные утилиты
 
 ```
 config/vite-config/
@@ -743,99 +523,75 @@ config/vite-config/
 │   ├── manifestMiddleware.ts
 │   ├── loadManifest.ts
 │   └── index.ts
-├── build/                     # 🆕 Build утилиты
-│   ├── utils.ts               # getModuleVersion, discoverModules
-│   ├── generateManifest.ts    # Генерация production манифеста
+├── build-utils/               # ✅ Build утилиты (реализовано)
+│   ├── utils.ts               # getModuleVersion, discoverModules, isModuleBuilt
+│   ├── generateManifest.ts    # Для dev/preview (не для production)
 │   └── index.ts
 ├── host.config.ts
 ├── module.config.ts
-└── index.js                   # Экспорт всего
+└── index.js                   # ⬜ Добавить экспорты build-utils
 ```
 
 ## Структура dist после сборки
 
 ```
 dist/
-├── host/                           # Host Application
-│   ├── index.html
-│   ├── assets/
-│   │   ├── index-[hash].js
-│   │   ├── index-[hash].css
-│   │   └── ...
-│   └── manifest.json               # Production манифест
+├── index.html                      # Host Application
+├── assets/
+│   ├── index-[hash].js
+│   ├── index-[hash].css
+│   ├── lib-core-[hash].js
+│   ├── lib-ui-[hash].js
+│   ├── lib-common-[hash].js
+│   ├── vendor-[hash].js
+│   └── ...
 │
-└── modules/                        # MFE модули
+└── modules/                        # MFE модули (деплоятся отдельно)
     ├── todo/
-    │   ├── 1.0.0/                  # Версионированная сборка
-    │   │   ├── remoteEntry.js
+    │   ├── latest/                 # Всегда актуальная версия
     │   │   └── assets/
-    │   └── latest/                 # Копия последней версии
-    │       ├── remoteEntry.js
+    │   │       ├── remoteEntry.js
+    │   │       └── ...
+    │   └── 1.0.1/                  # Версионированная копия
     │       └── assets/
+    │           ├── remoteEntry.js
+    │           └── ...
     │
     └── api_example/
-        ├── 1.2.3/
-        │   ├── remoteEntry.js
+        ├── latest/
         │   └── assets/
-        └── latest/
-            ├── remoteEntry.js
+        │       ├── remoteEntry.js
+        │       └── ...
+        └── 1.2.3/
             └── assets/
+                ├── remoteEntry.js
+                └── ...
 ```
 
-## Пример production манифеста
+**Версионирование модулей:**
 
-```json
-{
-  "modules": [
-    {
-      "name": "core",
-      "version": "1.0.0",
-      "loadType": "init",
-      "loadPriority": 0,
-      "remoteEntry": ""
-    },
-    {
-      "name": "core.layout",
-      "version": "1.0.0",
-      "loadType": "init",
-      "loadPriority": 2,
-      "remoteEntry": ""
-    },
-    {
-      "name": "todo",
-      "version": "1.0.0",
-      "loadType": "normal",
-      "loadPriority": 1,
-      "remoteEntry": "/modules/todo/1.0.0/remoteEntry.js"
-    },
-    {
-      "name": "api_example",
-      "version": "1.2.3",
-      "loadType": "normal",
-      "loadPriority": 2,
-      "remoteEntry": "/modules/api_example/1.2.3/remoteEntry.js"
-    }
-  ]
-}
-```
+- `latest/` — всегда содержит актуальную сборку
+- `{version}/` — копия для rollback, A/B тестирования, канареечных релизов
+
+> **Примечание**: `manifest.json` НЕ генерируется статически. Манифест поставляется бэкендом через `/app/start`. Бэкенд может указывать как `latest`, так и конкретную версию в `remoteEntry` URL.
 
 ## Риски и митигация
 
-| Риск                               | Вероятность | Влияние | Митигация                                 |
-| ---------------------------------- | ----------- | ------- | ----------------------------------------- |
-| Несовместимость версий shared deps | Средняя     | Высокое | Тестирование, lock файлы                  |
-| CORS ошибки                        | Высокая     | Высокое | Правильная настройка nginx/CDN            |
-| Кеширование старых версий          | Средняя     | Среднее | Версионирование в URL, cache busting      |
-| Большой размер бандлов             | Средняя     | Среднее | Bundle analyzer, code splitting           |
+| Риск                               | Вероятность | Влияние | Митигация                                |
+| ---------------------------------- | ----------- | ------- | ---------------------------------------- |
+| Несовместимость версий shared deps | Средняя     | Высокое | Тестирование, lock файлы                 |
+| Кеширование старых версий          | Средняя     | Среднее | Cache busting через hash в именах файлов |
+| Большой размер бандлов             | Средняя     | Среднее | Bundle analyzer, code splitting          |
 
 ## Время выполнения
 
-Ожидаемое время: **8-12 часов**
+Ожидаемое время: **3-4 часа** (сокращено, т.к. build-utils уже реализованы и генерация манифеста не требуется)
 
 ## Примечания
 
-- Build утилиты централизованы в `@platform/vite-config` для переиспользования
-- Типы манифеста берутся из `@platform/vite-config/plugins/types.ts` (единый источник)
-- Версионирование позволяет откатиться на предыдущую версию модуля
-- `latest/` копия упрощает тестирование, в production лучше использовать точные версии
-- CORS критичен для Module Federation между разными доменами
+- Build утилиты уже реализованы в `@platform/vite-config/build-utils/`
+- Типы манифеста берутся из `@platform/vite-config/plugins/types.ts` (реэкспорт из `@platform/core`)
+- **Манифест поставляется бэкендом** через `/app/start` — статическая генерация не требуется
+- Модули собираются в `/dist/modules/{module_name}/latest/` + копия в `/{version}/`
+- Host собирается в `/dist` (корневая директория dist)
+- Бэкенд может использовать `latest` или конкретную версию в `remoteEntry` URL
