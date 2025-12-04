@@ -102,7 +102,11 @@ export async function createModuleConfig(options) {
   };
 
   // Определяем имя модуля для Federation
-  const federationName = localConfig.name || moduleName;
+  // Имя должно соответствовать формату, который ожидает RemoteModuleLoader:
+  // createScopeName(name) создает `module_${name.replace(/-/g, '_')}`
+  // Vite Federation плагин (@originjs/vite-plugin-federation) добавляет префикс 'module_' к имени
+  // Поэтому передаем просто moduleName (например, 'todo'), и плагин создаст контейнер 'module_todo'
+  const federationName = moduleName;
 
   // Базовые плагины
   const basePlugins = [react()];
@@ -120,6 +124,9 @@ export async function createModuleConfig(options) {
         exposes: finalExposes,
         shared: finalShared,
         remotes: localConfig.remotes || {},
+        // Настройки для правильной генерации путей
+        // Vite Federation по умолчанию добавляет /assets/ в пути
+        // Но мы выводим файлы в корень модуля
       }),
     );
   }
@@ -162,7 +169,11 @@ export async function createModuleConfig(options) {
     ...base,
     server,
     preview,
-    base: localConfig.base || (isProduction ? `/modules/${moduleName}/` : '/'),
+    // base должен быть установлен так, чтобы пути к файлам были правильными
+    // Файлы собираются в dist/modules/{moduleName}/latest/
+    base:
+      localConfig.base ||
+      (isProduction ? `/modules/${moduleName}/latest/` : '/'),
     build: {
       outDir,
       target: 'esnext',
@@ -171,9 +182,6 @@ export async function createModuleConfig(options) {
       sourcemap: !isProduction,
       emptyOutDir: true,
       rollupOptions: {
-        // Для Module Federation используем module_config как входную точку
-        // Это нужно только для сборки, реальный экспорт через federation exposes
-        input: path.resolve(dirname, 'src/config/module_config.ts'),
         output: {
           format: 'esm',
           exports: 'named',

@@ -2,7 +2,8 @@
  * Локальная конфигурация Module Federation для {{MODULE_NAME}} модуля
  */
 export default {
-  name: '{{MODULE_SCOPE_NAME}}',
+  // name игнорируется - используется автоматически из moduleName
+  // Federation имя создается как moduleName (плагин добавляет префикс 'module_')
   exposes: {},
   shared: {},
   base: process.env.NODE_ENV === 'production' ? '{{MODULE_BASE_URL}}' : '/',

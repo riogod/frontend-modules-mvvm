@@ -209,29 +209,51 @@ export class RemoteModuleLoader {
       prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
     });
 
-    // 1. Загружаем remoteEntry.js
-    log.debug(`Loading script: ${remoteEntry}`, {
+    // Vite Federation экспортирует функции get, init напрямую из remoteEntry.js
+    // Используем динамический импорт для получения контейнера
+    log.debug(`Loading remote module via dynamic import: ${remoteEntry}`, {
       prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
     });
-    await this.loadScript(remoteEntry);
-    log.debug(`Script loaded: ${remoteEntry}`, {
-      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
-    });
-
-    // 2. Получаем контейнер
-    log.debug(`Getting container from window[${scope}]`, {
-      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
-    });
-    const container = window[scope] as RemoteContainer;
-    if (!container) {
-      log.error(`Container not found: ${scope}`, {
+    
+    let container: RemoteContainer;
+    try {
+      // Динамический импорт remoteEntry.js возвращает модуль с методами get, init
+      const remoteModule = await import(/* @vite-ignore */ remoteEntry);
+      
+      if (!remoteModule.get || !remoteModule.init) {
+        log.error(`Remote module does not export get/init: ${remoteEntry}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+        });
+        throw new RemoteContainerNotFoundError(scope);
+      }
+      
+      container = {
+        get: remoteModule.get,
+        init: remoteModule.init,
+      } as RemoteContainer;
+      log.debug(`Container obtained via dynamic import: ${scope}`, {
         prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
       });
-      throw new RemoteContainerNotFoundError(scope);
+    } catch (importError) {
+      // Fallback: попробуем загрузить через script tag и найти в window (для совместимости с Webpack)
+      log.debug(`Dynamic import failed, trying script tag + window[${scope}]`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+        error: importError instanceof Error ? importError.message : String(importError),
+      });
+      
+      await this.loadScript(remoteEntry);
+      const windowContainer = window[scope] as RemoteContainer;
+      if (!windowContainer) {
+        log.error(`Container not found: ${scope}`, {
+          prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+        });
+        throw new RemoteContainerNotFoundError(scope);
+      }
+      container = windowContainer;
+      log.debug(`Container found in window: ${scope}`, {
+        prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
+      });
     }
-    log.debug(`Container found: ${scope}`, {
-      prefix: 'bootstrap.services.remoteModuleLoader.doLoad',
-    });
 
     // 3. Инициализируем контейнер с shared scope
     log.debug(`Initializing container: ${scope}`, {

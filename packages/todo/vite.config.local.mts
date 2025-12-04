@@ -1,8 +1,9 @@
 export default {
-  name: 'module-todo',
+  // name игнорируется - используется автоматически из moduleName
+  // Federation имя создается как module_${moduleName.replace(/-/g, '_')}
   exposes: {},
   shared: {},
-  base: process.env.NODE_ENV === 'production' ? '/modules/todo/' : '/',
+  // Не указываем base - используется автоматически из module.config.js
   remotes: {},
 };
 

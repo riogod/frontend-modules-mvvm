@@ -9,8 +9,6 @@ const __dirname = dirname(__filename);
 export default defineConfig(async () =>
   createModuleConfig({
     dirname: __dirname,
-    moduleName: 'module-todo',
-  })
+    moduleName: 'todo',
+  }),
 );
-
-

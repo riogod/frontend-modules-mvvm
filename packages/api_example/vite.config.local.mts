@@ -1,8 +1,8 @@
 export default {
-  name: 'module-api-example',
+  // name игнорируется - используется автоматически из moduleName
+  // Federation имя создается как moduleName (плагин добавляет префикс 'module_')
   exposes: {},
   shared: {},
-  base: process.env.NODE_ENV === 'production' ? '/modules/api_example/' : '/',
+  // Не указываем base - используется автоматически из module.config.js
   remotes: {},
 };
-

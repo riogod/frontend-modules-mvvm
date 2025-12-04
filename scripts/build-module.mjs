@@ -104,6 +104,15 @@ function reorganizeModuleOutput(moduleDir) {
       // Игнорируем ошибки
     }
   }
+
+  // Исправляем пути в remoteEntry.js: заменяем /assets/../ на /
+  const remoteEntryPath = path.join(moduleDir, 'remoteEntry.js');
+  if (fs.existsSync(remoteEntryPath)) {
+    let content = fs.readFileSync(remoteEntryPath, 'utf8');
+    // Заменяем /assets/../ на / в путях
+    content = content.replace(/\/assets\/\.\.\//g, '/');
+    fs.writeFileSync(remoteEntryPath, content, 'utf8');
+  }
 }
 
 /**
