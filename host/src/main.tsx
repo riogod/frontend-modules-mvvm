@@ -10,7 +10,7 @@ import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';
 import { app_modules } from './modules/modules';
 import { RouterProvider } from '@riogz/react-router';
-import { DIProvider } from '@platform/ui';
+import { DIProvider, setGlobalDIContainer } from '@platform/ui';
 import { configure } from 'mobx';
 import ThemeSchema from './modules/core.layout/view/ThemeSchema';
 import { Layout } from './modules/core.layout/view/Layout';
@@ -24,6 +24,10 @@ log.setConfig({ level: LogLevel.DEBUG });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
+    // Устанавливаем глобальный DI контейнер для remote модулей
+    // Это fallback на случай, если React Context недоступен
+    setGlobalDIContainer(bootstrap.di);
+
     bootstrap.routerService.router.start(() => {
       createRoot(document.getElementById('root')!).render(
         <ErrorBoundary logPrefix="host.app">

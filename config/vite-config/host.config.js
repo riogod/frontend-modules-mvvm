@@ -32,11 +32,12 @@ const federationShared = {
     requiredVersion: false,
     eager: true,
   },
-  // Внутренние библиотеки - lazy loading, т.к. они бандлятся через алиасы
-  '@platform/core': { singleton: true, requiredVersion: false },
-  '@platform/ui': { singleton: true, requiredVersion: false },
-  '@platform/common': { singleton: true, requiredVersion: false },
-  '@platform/share': { singleton: true, requiredVersion: false },
+  // Внутренние библиотеки - eager для @platform/ui, т.к. он содержит DIContext,
+  // который должен быть доступен для remote модулей
+  '@platform/core': { singleton: true, requiredVersion: false, eager: true },
+  '@platform/ui': { singleton: true, requiredVersion: false, eager: true },
+  '@platform/common': { singleton: true, requiredVersion: false, eager: true },
+  '@platform/share': { singleton: true, requiredVersion: false, eager: true },
 };
 
 /**

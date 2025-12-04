@@ -1,4 +1,4 @@
-import { type ModuleConfig } from '@platform/core';
+import { IOC_CORE_TOKENS, type ModuleConfig } from '@platform/core';
 import { routes } from './routes';
 import en_api from './i18n/en_api.json';
 import ru_api from './i18n/ru_api.json';
@@ -11,6 +11,12 @@ export default {
   onModuleInit: (bootstrap) => {
     DI_CONFIG(bootstrap.di);
     log.debug('initialized', { prefix: 'module.api' });
+
+    console.log(
+      'bootstrap.di',
+      bootstrap.di.isBound(IOC_CORE_TOKENS.USECASE_GET_PERMISSIONS),
+    );
+    log.debug('bootstrap.di', { prefix: 'module.api_example' }, bootstrap.di);
   },
   I18N: (i18n) => {
     i18n.addResourceBundle('en', 'api', en_api);
