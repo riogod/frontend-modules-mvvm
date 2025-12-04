@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { createBaseConfig } from './base.config.js';
 import react from '@vitejs/plugin-react';
 import federation from '@originjs/vite-plugin-federation';
@@ -70,7 +71,7 @@ export async function createModuleConfig(options) {
     exposes: defaultExposes = {},
     shared: additionalShared = {},
     cacheDir,
-    outDir = `../../dist/packages/${moduleName}`,
+    outDir = `../../dist/modules/${moduleName}/latest`,
     server = {
       port: 4201,
       host: 'localhost',
@@ -128,7 +129,6 @@ export async function createModuleConfig(options) {
   // Настраиваем resolve для workspace пакетов
   const resolveAliases = {};
   const libsDir = path.resolve(dirname, '../../libs');
-  const packagesDir = path.resolve(dirname, '../../packages');
 
   // Добавляем алиасы для библиотек
   if (fs.existsSync(libsDir)) {
@@ -171,12 +171,19 @@ export async function createModuleConfig(options) {
       sourcemap: !isProduction,
       emptyOutDir: true,
       rollupOptions: {
+        // Для Module Federation используем module_config как входную точку
+        // Это нужно только для сборки, реальный экспорт через federation exposes
+        input: path.resolve(dirname, 'src/config/module_config.ts'),
         output: {
           format: 'esm',
           exports: 'named',
           generatedCode: {
             constBindings: true,
           },
+          // Все файлы в корень модуля, не в assets/
+          entryFileNames: '[name].js',
+          chunkFileNames: '[name]-[hash].js',
+          assetFileNames: '[name]-[hash][extname]',
         },
       },
       ...build,

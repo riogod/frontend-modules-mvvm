@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import type { AppManifest, ModuleManifestEntry } from '../plugins/types';
 
 /**
  * Получает версию модуля из package.json
@@ -43,9 +42,7 @@ export function isModuleBuilt(distDir: string, moduleName: string): boolean {
     distDir,
     moduleName,
     'latest',
-    'assets',
     'remoteEntry.js',
   );
   return fs.existsSync(remoteEntry);
 }
-

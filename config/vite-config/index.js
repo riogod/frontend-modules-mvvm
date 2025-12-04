@@ -10,3 +10,10 @@ export {
   createManifestMiddleware,
   loadManifest,
 } from './plugins/index.js';
+
+// Build утилиты
+export {
+  getModuleVersion,
+  discoverModules,
+  isModuleBuilt,
+} from './build-utils/index.js';

@@ -1,9 +1,53 @@
+/* eslint-env node */
 import { createBaseConfig } from './base.config.js';
 import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import path from 'path';
 import fs from 'fs';
 import process from 'node:process';
+
+/**
+ * Плагин для очистки dist с сохранением папки modules
+ * Используется вместо emptyOutDir: true, чтобы не удалять собранные модули
+ */
+function cleanDistPreserveModulesPlugin(outDir) {
+  const resolvedOutDir = path.resolve(outDir);
+
+  return {
+    name: 'clean-dist-preserve-modules',
+    buildStart() {
+      // Очищаем dist, но сохраняем папку modules
+      if (fs.existsSync(resolvedOutDir)) {
+        const entries = fs.readdirSync(resolvedOutDir, { withFileTypes: true });
+
+        for (const entry of entries) {
+          const entryPath = path.join(resolvedOutDir, entry.name);
+
+          // Пропускаем папку modules
+          if (entry.name === 'modules') {
+            continue;
+          }
+
+          // Удаляем всё остальное
+          try {
+            if (entry.isDirectory()) {
+              fs.rmSync(entryPath, { recursive: true });
+            } else {
+              fs.unlinkSync(entryPath);
+            }
+          } catch (error) {
+            // Игнорируем ошибки (файл может быть заблокирован)
+            // eslint-disable-next-line no-console
+            console.warn(
+              `[clean-dist-preserve-modules] Failed to remove ${entryPath}:`,
+              error.message,
+            );
+          }
+        }
+      }
+    },
+  };
+}
 
 function collectLibraryAliases(dirname) {
   const aliases = {};
@@ -81,10 +125,14 @@ export function createHostConfig(options) {
       }
     : { alias: libraryAliases };
 
+  // Плагин для очистки dist с сохранением папки modules
+  const resolvedOutDir = path.resolve(dirname, outDir);
+  const cleanDistPlugin = cleanDistPreserveModulesPlugin(resolvedOutDir);
+
   const base = createBaseConfig({
     dirname,
     cacheDir: cacheDir || `../../node_modules/.vite/host`,
-    plugins: [react(), svgr(), ...plugins],
+    plugins: [react(), svgr(), cleanDistPlugin, ...plugins],
     resolve: finalResolve,
     test: {
       globals: true,
@@ -121,7 +169,7 @@ export function createHostConfig(options) {
       modulePreload: false,
       cssCodeSplit: false,
       minify: 'esbuild',
-      emptyOutDir: true,
+      emptyOutDir: false, // Используем кастомный плагин для очистки с сохранением modules
       sourcemap: true,
       commonjsOptions: {
         transformMixedEsModules: true,
@@ -137,17 +185,12 @@ export function createHostConfig(options) {
             return (id) => {
               // Исключаем remote модули из packages/
               if (id.includes('/packages/')) {
-                const packageMatch = id.match(/\/packages\/([^/]+)\//);
-                if (packageMatch) {
-                  const packageName = packageMatch[1];
-                  // Исключаем все модули из packages/ (они должны быть remote)
-                  // Локальные модули находятся в host/src/modules/
-                  return true;
-                }
+                // Исключаем все модули из packages/ (они должны быть remote)
+                // Локальные модули находятся в host/src/modules/
+                return true;
               }
               // Исключаем алиасы для remote модулей
               if (id.startsWith('@platform/module-')) {
-                const moduleName = id.replace('@platform/module-', '').split('/')[0];
                 // Проверяем, что это не локальный модуль из host/src/modules/
                 // Локальные модули не должны иметь алиас @platform/module-*
                 // Если модуль имеет такой алиас, значит он из packages/ и должен быть external
@@ -232,7 +275,7 @@ export function createHostConfig(options) {
                 return `module-${moduleName}`;
               }
             }
-            
+
             // Исключаем remote модули из packages/ из билда хоста
             // Они должны загружаться через Module Federation
             if (id.includes('/packages/')) {
@@ -242,8 +285,9 @@ export function createHostConfig(options) {
                 // В production remote модули не должны попадать в билд
                 if (process.env.NODE_ENV === 'production') {
                   // Предупреждаем, если remote модуль попал в билд
+                  // eslint-disable-next-line no-console
                   console.warn(
-                    `[vite-config] Warning: Remote module ${packageName} is being bundled into host build. This should not happen in production.`
+                    `[vite-config] Warning: Remote module ${packageName} is being bundled into host build. This should not happen in production.`,
                   );
                 }
               }
