@@ -127,8 +127,10 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     const moduleName = String(entry.name);
 
     // INIT модули - могут быть как локальными, так и remote
-    // Сравниваем со строковым значением enum ('init'), так как данные из API могут быть строками
-    if (entry.loadType === 'init') {
+    // Приводим к строке для сравнения, так как данные из API могут быть строками
+    const loadType = String(entry.loadType);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+    if (loadType === ModuleLoadType.INIT) {
       let config: ModuleConfig | Promise<ModuleConfig>;
 
       if (isLocal) {
