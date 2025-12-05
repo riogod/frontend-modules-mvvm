@@ -28,6 +28,26 @@ const defaultShared = {
   '@platform/ui': { singleton: true, requiredVersion: false },
   '@platform/common': { singleton: true, requiredVersion: false },
   '@platform/share': { singleton: true, requiredVersion: false },
+  '@emotion/react': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@emotion/styled': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@mui/material': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@mui/icons-material': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
 };
 
 /**

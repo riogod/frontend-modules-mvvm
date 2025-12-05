@@ -32,6 +32,27 @@ const federationShared = {
     requiredVersion: false,
     eager: true,
   },
+  '@emotion/react': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@emotion/styled': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  // MUI пакеты - должны быть shared для консистентной стилизации
+  '@mui/material': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@mui/icons-material': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
   // Внутренние библиотеки - eager для @platform/ui, т.к. он содержит DIContext,
   // который должен быть доступен для remote модулей
   '@platform/core': { singleton: true, requiredVersion: false, eager: true },

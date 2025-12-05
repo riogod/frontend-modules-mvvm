@@ -4,8 +4,8 @@
     "types": ["vitest/globals", "node"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "emitDeclarationOnly": true,
-    "composite": true,
+    "emitDeclarationOnly": false,
+    "composite": false,
     "outDir": "../../dist/out-tsc"
   },
   "include": [

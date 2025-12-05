@@ -8,7 +8,7 @@
     "dev:quick": "node scripts/dev-runner.mjs --config development",
     "dev:direct": "LOG_LEVEL=INFO vite --config host/vite.config.mts",
     "dev:all-local": "VITE_LOCAL_MODULES=* vite --config host/vite.config.mts",
-    "preview": "LOG_LEVEL=DEBUG npm run build && vite preview --config host/vite.config.mts",
+    "preview": "LOG_LEVEL=DEBUG npm run build:all && vite preview --config host/vite.config.mts",
     "build": "npm run build:host",
     "build:host": "vite build --config host/vite.config.mts",
     "build:module": "node scripts/build-module.mjs",

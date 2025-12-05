@@ -1,3 +1,1 @@
-export interface ICleanInterface {
-  clean(): void;
-}
+export * from './ThemeSchema';

@@ -6,6 +6,7 @@ import { Observer } from 'mobx-react-lite';
 import TodoItem from './components/TodoItem';
 import TodoListFilter from './components/TodoListFilter';
 import { TODO_DI_TOKENS } from '../config/di.tokens';
+import { ThemeSchema } from '@platform/share';
 
 const TodoPage: FC = () => {
   const listViewModel = useVM<TodoListViewModel>(
@@ -13,7 +14,7 @@ const TodoPage: FC = () => {
   );
 
   return (
-    <>
+    <ThemeSchema>
       <Container
         sx={{
           height: 1,
@@ -36,7 +37,7 @@ const TodoPage: FC = () => {
         <Box sx={{ minHeight: 124 }} />
       </Container>
       <TodoInput />
-    </>
+    </ThemeSchema>
   );
 };
 

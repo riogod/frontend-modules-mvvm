@@ -6,13 +6,12 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["node"],
-    "composite": true,
     "declaration": true,
     "declarationMap": true,
     "outDir": "../../dist/out-tsc",
-    "baseUrl": "."
+    "baseUrl": "../..",
+    "moduleResolution": "bundler"
   },
-  "files": ["src/index.ts"],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "src/**/*.spec.ts",
@@ -20,11 +19,6 @@
     "src/**/*.spec.tsx",
     "src/**/*.test.tsx",
     "jest.config.ts"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.spec.json"
-    }
   ],
   "extends": "../../tsconfig.base.json"
 }

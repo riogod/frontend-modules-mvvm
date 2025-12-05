@@ -12,7 +12,7 @@ import { app_modules } from './modules/modules';
 import { RouterProvider } from '@riogz/react-router';
 import { DIProvider, setGlobalDIContainer } from '@platform/ui';
 import { configure } from 'mobx';
-import ThemeSchema from './modules/core.layout/view/ThemeSchema';
+import { ThemeSchema } from '@platform/share';
 import { Layout } from './modules/core.layout/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
