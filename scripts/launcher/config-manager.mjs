@@ -234,13 +234,10 @@ export class ConfigManager {
     if (!this.isRemoteAvailable()) {
       throw new Error('Remote Server URL не настроен');
     }
-    // Убираем завершающий слеш и нормализуем URL
+    // Убираем завершающий слеш, но не трогаем протокол (чтобы не сломать http://)
     const baseUrl = this.config.remoteServerUrl.trim().replace(/\/+$/, '');
-    // Убираем начальный слеш из пути модуля, чтобы избежать двойных слешей
-    return `${baseUrl}/modules/${moduleName}/latest/remoteEntry.js`.replace(
-      /\/+/g,
-      '/',
-    );
+    // Просто конкатенируем путь — без глобального replace, чтобы сохранить "http://"
+    return `${baseUrl}/modules/${moduleName}/latest/remoteEntry.js`;
   }
 
   /**

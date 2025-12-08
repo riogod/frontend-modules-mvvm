@@ -5,6 +5,25 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Нормализация URL без ломания протокола (http:// -> http://)
+function normalizeUrl(url = '') {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  try {
+    return new URL(trimmed).toString();
+  } catch {
+    // Частый кейс: http:/example -> чинить двойной слеш
+    const fixed = trimmed
+      .replace(/^http:\/(?!\/)/, 'http://')
+      .replace(/^https:\/(?!\/)/, 'https://');
+    try {
+      return new URL(fixed).toString();
+    } catch {
+      return fixed;
+    }
+  }
+}
+
 /**
  * Генератор манифеста для Module Federation
  * Создает структуру манифеста на основе конфигурации модулей
@@ -253,10 +272,12 @@ export class ManifestGenerator {
         let remoteEntry = '';
         if (moduleConfig.source === 'remote') {
           // Стандартный путь для REMOTE
-          remoteEntry = moduleConfig.url || '';
+          remoteEntry = normalizeUrl(moduleConfig.url || '');
         } else if (moduleConfig.source === 'remote_custom') {
           // Кастомный URL для REMOTE_CUSTOM
-          remoteEntry = moduleConfig.customUrl || moduleConfig.url || '';
+          remoteEntry = normalizeUrl(
+            moduleConfig.customUrl || moduleConfig.url || '',
+          );
         }
         // Для LOCAL remoteEntry остается пустым
 
