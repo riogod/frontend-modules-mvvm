@@ -5,7 +5,6 @@ import { APIClient, IOC_CORE_TOKENS } from '@platform/core';
 
 let bootstrap: Bootstrap;
 
-
 const addRoutes = vi.fn();
 const registerRoutes = vi.fn();
 vi.mock('../services/routerService', () => ({
@@ -151,8 +150,30 @@ describe('bootstrap', () => {
 
   describe('initModules', () => {
     beforeEach(async () => {
+      // Очищаем моки перед каждым тестом
+      vi.clearAllMocks();
+
+      // Заменяем routerService на мок после создания Bootstrap
+      // так как Bootstrap создает экземпляр напрямую в поле класса
+      bootstrap.routerService = {
+        routes: [],
+        router: {
+          add: vi.fn(),
+        },
+        init: vi.fn(),
+        addRoutes: addRoutes,
+        registerRoutes: registerRoutes,
+        routerPostInit: vi.fn(),
+        buildRoutesMenu: vi.fn(),
+      } as any;
+
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
+      // Инициализируем i18n перед загрузкой модулей, так как модули требуют addResourceBundle
+      await bootstrap.i18n.init({
+        resources: { ru: {}, en: {} },
+        fallbackLng: 'en',
+      });
       bootstrap.initModuleLoader();
       // Модули должны быть добавлены в ModuleLoader перед вызовом initInitModules
       await bootstrap.moduleLoader.addModules(modules);

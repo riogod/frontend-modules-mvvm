@@ -6,7 +6,7 @@ import {
 } from '@platform/core';
 import { createRouter, type Router } from '@riogz/router';
 import browserPlugin from '@riogz/router-plugin-browser';
-import { findSegment } from '../utils';
+import { findSegment } from '../../utils';
 
 /**
  *  Сервис роутинга приложения.
