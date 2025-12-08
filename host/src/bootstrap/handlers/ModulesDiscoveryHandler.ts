@@ -7,7 +7,7 @@ import type { ModuleManifestEntry } from '@platform/vite-config/plugins/types';
 import type { Module, NormalModule, InitModule } from '../../modules/interface';
 import { ModuleLoadType } from '../../modules/interface';
 import type { ModuleConfig } from '../interface';
-import { loadRemoteModule } from '../services/remoteModuleLoader';
+import { loadRemoteModule } from '../services/moduleLoader';
 
 /**
  * Handler для загрузки и обработки манифеста модулей

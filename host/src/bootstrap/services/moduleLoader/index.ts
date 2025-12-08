@@ -7,6 +7,7 @@ import { ModuleConditionValidator } from './ModuleConditionValidator';
 import { ModuleLifecycleManager } from './ModuleLifecycleManager';
 import { type ModuleLoadStatus, type LoadedModule } from './types';
 import { log } from '@platform/core';
+export * from './remote';
 
 /**
  * Сервис загрузки и управления модулями приложения.
@@ -359,7 +360,7 @@ export class BootstrapModuleLoader {
         const unprocessed = modules
           .filter((m) => !processed.has(m.name))
           .map((m) => m.name);
-        
+
         // Проверяем, есть ли отсутствующие зависимости
         const modulesWithMissingDeps: string[] = [];
         for (const moduleName of unprocessed) {
@@ -378,7 +379,7 @@ export class BootstrapModuleLoader {
             }
           }
         }
-        
+
         if (modulesWithMissingDeps.length > 0) {
           // Есть модули с отсутствующими зависимостями - это нормально, просто пропускаем их
           log.warn(
@@ -395,20 +396,20 @@ export class BootstrapModuleLoader {
           break;
         } else {
           // Нет отсутствующих зависимостей - значит циклическая зависимость
-        log.error(
+          log.error(
             `Circular dependency detected. Unprocessed modules: ${unprocessed.join(', ')}`,
-          {
-            prefix: 'bootstrap.moduleLoader.groupModulesByDependencyLevels',
-          },
-        );
-        throw new Error(
+            {
+              prefix: 'bootstrap.moduleLoader.groupModulesByDependencyLevels',
+            },
+          );
+          throw new Error(
             `Circular dependency detected. Unprocessed modules: ${unprocessed.join(', ')}`,
-        );
+          );
         }
       }
 
       log.debug(
-        `Dependency level ${levels.length + 1} created with ${currentLevel.length} modules: ${currentLevel.map(m => m.name).join(', ')}`,
+        `Dependency level ${levels.length + 1} created with ${currentLevel.length} modules: ${currentLevel.map((m) => m.name).join(', ')}`,
         {
           prefix: 'bootstrap.moduleLoader.groupModulesByDependencyLevels',
         },
@@ -447,12 +448,9 @@ export class BootstrapModuleLoader {
 
     // Пропускаем уже загруженные модули (загружены как зависимости)
     if (this.isModuleLoaded(module.name)) {
-      log.debug(
-        `Skipping already loaded module in preload: ${module.name}`,
-        {
-          prefix: 'bootstrap.moduleLoader.shouldSkipModuleInPreload',
-        },
-      );
+      log.debug(`Skipping already loaded module in preload: ${module.name}`, {
+        prefix: 'bootstrap.moduleLoader.shouldSkipModuleInPreload',
+      });
       return true;
     }
 
@@ -489,12 +487,9 @@ export class BootstrapModuleLoader {
         bootstrap,
       );
       if (!hasFeatureFlags) {
-        log.debug(
-          `Module ${module.name} skipped: feature flags not met`,
-          {
-            prefix: 'bootstrap.moduleLoader.shouldSkipModuleByConditions',
-          },
-        );
+        log.debug(`Module ${module.name} skipped: feature flags not met`, {
+          prefix: 'bootstrap.moduleLoader.shouldSkipModuleByConditions',
+        });
         return true;
       }
     }
@@ -507,12 +502,9 @@ export class BootstrapModuleLoader {
           bootstrap,
         );
       if (!hasPermissions) {
-        log.debug(
-          `Module ${module.name} skipped: access permissions not met`,
-          {
-            prefix: 'bootstrap.moduleLoader.shouldSkipModuleByConditions',
-          },
-        );
+        log.debug(`Module ${module.name} skipped: access permissions not met`, {
+          prefix: 'bootstrap.moduleLoader.shouldSkipModuleByConditions',
+        });
         return true;
       }
     }
@@ -1177,12 +1169,9 @@ export class BootstrapModuleLoader {
 
     const loadType = module.loadType ?? ModuleLoadType.NORMAL;
     if (loadType === ModuleLoadType.INIT) {
-      log.error(
-        `Cannot load INIT module on demand: ${moduleName}`,
-        {
-          prefix: 'bootstrap.moduleLoader.loadModuleByName',
-        },
-      );
+      log.error(`Cannot load INIT module on demand: ${moduleName}`, {
+        prefix: 'bootstrap.moduleLoader.loadModuleByName',
+      });
       throw new Error(
         `Module "${moduleName}" is an INIT module and cannot be loaded on demand`,
       );
@@ -1279,12 +1268,9 @@ export class BootstrapModuleLoader {
         },
       );
       await this.loadModuleByName(module.name);
-      log.debug(
-        `Module ${module.name} auto-loaded by route: ${routeName}`,
-        {
-          prefix: 'bootstrap.moduleLoader.autoLoadModuleByRoute',
-        },
-      );
+      log.debug(`Module ${module.name} auto-loaded by route: ${routeName}`, {
+        prefix: 'bootstrap.moduleLoader.autoLoadModuleByRoute',
+      });
     } else {
       log.debug(
         `Module ${module.name} already loaded for route: ${routeName}`,

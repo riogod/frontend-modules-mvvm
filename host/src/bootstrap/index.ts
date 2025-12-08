@@ -13,7 +13,7 @@ import { DIHandler } from './handlers/DIHandler';
 import { HTTPErrorHandler } from './handlers/HTTPErrorHandler';
 import { InitI18nHandler } from './handlers/InitI18nHandler';
 import { createInstance, type i18n } from 'i18next';
-import { BootstrapRouterService } from './services/routerService/routerService';
+import { BootstrapRouterService } from './services/router/routerService';
 import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { type IAppConfig } from '../config/app';
 import { type Module } from '../modules/interface';
