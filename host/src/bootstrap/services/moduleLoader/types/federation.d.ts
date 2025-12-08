@@ -1,5 +1,6 @@
 /**
- * Типы для Module Federation runtime API
+ * Типы для Module Federation runtime API.
+ * @module types/federation
  */
 
 // Webpack Module Federation
