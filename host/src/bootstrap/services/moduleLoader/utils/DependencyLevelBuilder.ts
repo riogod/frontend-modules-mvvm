@@ -19,7 +19,7 @@ import type {
   IsModuleLoadedFunction,
   IsModulePreloadedFunction,
 } from '../types';
-import { getModuleDependencies } from './moduleUtils';
+import { getModuleDependencies, hasDependencies } from './moduleUtils';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.dependencyLevelBuilder';
@@ -49,10 +49,11 @@ export class DependencyLevelBuilder {
    * Группирует модули по уровням зависимостей.
    *
    * Алгоритм:
-   * 1. Создаем карту модулей для быстрого доступа
-   * 2. На каждой итерации находим модули, все зависимости которых готовы
-   * 3. Добавляем их в текущий уровень и помечаем как обработанные
-   * 4. Повторяем до обработки всех модулей или обнаружения проблем
+   * 1. Оптимизация: если у всех модулей нет зависимостей, сразу возвращаем один уровень
+   * 2. Создаем карту модулей для быстрого доступа
+   * 3. На каждой итерации находим модули, все зависимости которых готовы
+   * 4. Добавляем их в текущий уровень и помечаем как обработанные
+   * 5. Повторяем до обработки всех модулей или обнаружения проблем
    *
    * @param modules - Массив модулей для группировки
    * @returns Результат группировки с уровнями и пропущенными модулями
@@ -61,6 +62,19 @@ export class DependencyLevelBuilder {
     log.debug(`Группировка ${modules.length} модулей по уровням зависимостей`, {
       prefix: LOG_PREFIX,
     });
+
+    // Оптимизация: если у всех модулей нет зависимостей, сразу возвращаем один уровень
+    const allModulesHaveNoDeps = modules.every((m) => !hasDependencies(m));
+    if (allModulesHaveNoDeps) {
+      log.debug(
+        `Все модули не имеют зависимостей, возвращаем один уровень с ${modules.length} модулями`,
+        { prefix: LOG_PREFIX },
+      );
+      return {
+        levels: [modules],
+        skippedModules: [],
+      };
+    }
 
     const levels: Module[][] = [];
     const processed = new Set<string>();

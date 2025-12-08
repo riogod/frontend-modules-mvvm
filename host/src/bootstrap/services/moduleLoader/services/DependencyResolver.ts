@@ -1,11 +1,11 @@
 /**
  * Резолвер зависимостей модулей.
- * 
+ *
  * Отвечает за:
  * - Получение и валидацию зависимостей модуля
  * - Рекурсивную загрузку зависимостей
  * - Обнаружение циклических зависимостей
- * 
+ *
  * @module services/DependencyResolver
  */
 
@@ -35,11 +35,14 @@ export class DependencyResolutionError extends Error {
 
 /**
  * Резолвер зависимостей модулей.
- * 
+ *
  * Обеспечивает корректную загрузку зависимостей модулей
  * с учетом порядка и обнаружением циклических зависимостей.
  */
 export class DependencyResolver {
+  /** Кеш результатов проверки циклических зависимостей */
+  private readonly circularDepsCache = new Map<string, boolean>();
+
   constructor(private readonly registry: ModuleRegistry) {
     log.debug('DependencyResolver: инициализация', { prefix: LOG_PREFIX });
   }
@@ -50,7 +53,7 @@ export class DependencyResolver {
 
   /**
    * Загружает все зависимости модуля рекурсивно.
-   * 
+   *
    * @param module - Модуль, зависимости которого нужно загрузить
    * @param bootstrap - Инстанс Bootstrap
    * @param loadModule - Функция загрузки модуля
@@ -79,7 +82,7 @@ export class DependencyResolver {
 
   /**
    * Возвращает модули зависимостей по их именам.
-   * 
+   *
    * @param moduleName - Имя модуля, для которого получаем зависимости
    * @param dependencyNames - Массив имен зависимостей
    * @returns Массив модулей зависимостей
@@ -109,7 +112,11 @@ export class DependencyResolver {
     if (missingDependencies.length > 0) {
       const message = `Отсутствуют зависимости для модуля "${moduleName}": ${missingDependencies.join(', ')}`;
       log.error(message, { prefix: LOG_PREFIX });
-      throw new DependencyResolutionError(message, moduleName, missingDependencies);
+      throw new DependencyResolutionError(
+        message,
+        moduleName,
+        missingDependencies,
+      );
     }
 
     log.debug(
@@ -122,22 +129,59 @@ export class DependencyResolver {
 
   /**
    * Проверяет наличие циклических зависимостей.
-   * 
+   *
+   * Оптимизация: использует кеш для избежания повторных проверок.
+   * Сложность: O(n) для первого вызова, O(1) для последующих.
+   *
    * @param module - Начальный модуль
    * @returns true, если есть циклические зависимости
    */
   public hasCircularDependencies(module: Module): boolean {
+    // Проверяем кеш
+    const cached = this.circularDepsCache.get(module.name);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // Быстрая проверка: если зависимостей нет, циклических зависимостей быть не может
+    const dependencies = getModuleDependencies(module);
+    if (dependencies.length === 0) {
+      this.circularDepsCache.set(module.name, false);
+      return false;
+    }
+
+    let hasCircular = false;
     try {
       this.checkForCircularDependencies(module, new Set());
-      return false;
+      hasCircular = false;
     } catch {
-      return true;
+      hasCircular = true;
     }
+
+    // Кешируем результат
+    this.circularDepsCache.set(module.name, hasCircular);
+    return hasCircular;
+  }
+
+  /**
+   * Очищает кеш проверки циклических зависимостей.
+   *
+   * Полезно при динамическом добавлении модулей или изменении зависимостей.
+   */
+  public clearCircularDepsCache(): void {
+    const cacheSize = this.circularDepsCache.size;
+    this.circularDepsCache.clear();
+    log.debug(
+      `Кеш циклических зависимостей очищен (удалено ${cacheSize} записей)`,
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
   }
 
   /**
    * Возвращает полный список зависимостей модуля (включая транзитивные).
-   * 
+   *
    * @param module - Модуль для анализа
    * @returns Массив всех зависимостей
    */
@@ -153,7 +197,7 @@ export class DependencyResolver {
 
   /**
    * Рекурсивно загружает зависимости модуля.
-   * 
+   *
    * @param module - Модуль для загрузки зависимостей
    * @param bootstrap - Инстанс Bootstrap
    * @param visited - Множество посещенных модулей (для обнаружения циклов)
@@ -187,10 +231,14 @@ export class DependencyResolver {
       prefix: LOG_PREFIX,
     });
 
-    const dependencyModules = this.getDependencyModules(module.name, dependencies);
+    const dependencyModules = this.getDependencyModules(
+      module.name,
+      dependencies,
+    );
 
     // Сортируем по приоритету
-    const sortedDependencies = this.registry.sortModulesByPriority(dependencyModules);
+    const sortedDependencies =
+      this.registry.sortModulesByPriority(dependencyModules);
 
     // Загружаем зависимости последовательно
     for (const depModule of sortedDependencies) {
@@ -231,7 +279,7 @@ export class DependencyResolver {
 
   /**
    * Проверяет наличие циклических зависимостей (рекурсивно).
-   * 
+   *
    * @param module - Модуль для проверки
    * @param visited - Множество посещенных модулей
    * @throws {DependencyResolutionError} При обнаружении цикла
@@ -266,7 +314,7 @@ export class DependencyResolver {
 
   /**
    * Собирает все зависимости модуля (включая транзитивные).
-   * 
+   *
    * @param module - Модуль для анализа
    * @param allDeps - Множество для сбора зависимостей
    * @param visited - Множество посещенных модулей
@@ -297,4 +345,3 @@ export class DependencyResolver {
     }
   }
 }
-

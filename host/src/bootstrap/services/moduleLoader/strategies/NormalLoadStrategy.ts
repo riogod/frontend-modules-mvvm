@@ -84,9 +84,14 @@ export class NormalLoadStrategy implements ILoadStrategy {
     });
 
     // Проверяем циклические зависимости перед загрузкой
+    // Оптимизация: проверяем только модули с зависимостями
     const modulesWithCircularDeps: string[] = [];
     for (const module of sortedModules) {
-      if (this.dependencyResolver.hasCircularDependencies(module)) {
+      // Пропускаем проверку для модулей без зависимостей (оптимизация)
+      const hasDeps =
+        module.loadCondition?.dependencies &&
+        module.loadCondition.dependencies.length > 0;
+      if (hasDeps && this.dependencyResolver.hasCircularDependencies(module)) {
         modulesWithCircularDeps.push(module.name);
       }
     }

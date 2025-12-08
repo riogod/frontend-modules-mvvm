@@ -25,6 +25,7 @@ import { LifecycleManager } from '../services/LifecycleManager';
 import { InitLoadStrategy } from '../strategies/InitLoadStrategy';
 import { NormalLoadStrategy } from '../strategies/NormalLoadStrategy';
 import { DependencyLevelBuilder } from '../utils/DependencyLevelBuilder';
+import { hasDependencies } from '../utils/moduleUtils';
 import type { ModuleLoadStatus, LoadModuleOptions } from '../types';
 
 /** Префикс для логирования */
@@ -68,11 +69,17 @@ export class ModuleLoader {
   /** Инстанс Bootstrap (устанавливается при init) */
   private bootstrap: Bootstrap | null = null;
 
-  /** Флаг инициализации */
-  private isInitializedFlag = false;
+  /** Флаг загрузки INIT модулей */
+  private initModulesLoadedFlag = false;
 
   /** Таймаут загрузки модуля по умолчанию (мс) */
   private defaultLoadTimeout: number | undefined = undefined;
+
+  /** Кешированная стратегия загрузки INIT модулей */
+  private initStrategy: InitLoadStrategy | null = null;
+
+  /** Кешированная стратегия загрузки NORMAL модулей */
+  private normalStrategy: NormalLoadStrategy | null = null;
 
   constructor() {
     log.debug('ModuleLoader: создание экземпляра', { prefix: LOG_PREFIX });
@@ -107,12 +114,13 @@ export class ModuleLoader {
   }
 
   /**
-   * Проверяет, инициализирован ли загрузчик.
+   * Проверяет, загружены ли INIT модули.
    *
-   * @returns true, если загрузчик инициализирован
+   * @returns true, если INIT модули загружены
+   * @deprecated Используйте isInitModulesLoaded для большей ясности
    */
   public get initialized(): boolean {
-    return this.isInitializedFlag;
+    return this.initModulesLoadedFlag;
   }
 
   /**
@@ -121,7 +129,7 @@ export class ModuleLoader {
    * @returns true, если INIT модули загружены
    */
   public get isInitModulesLoaded(): boolean {
-    return this.registry.isInitModulesLoaded;
+    return this.initModulesLoadedFlag;
   }
 
   // ============================================
@@ -270,16 +278,20 @@ export class ModuleLoader {
     log.debug('Начало загрузки INIT модулей', { prefix: LOG_PREFIX });
 
     const bootstrap = this.getBootstrapOrThrow();
-    const initStrategy = new InitLoadStrategy(
-      this.registry,
-      this.statusTracker,
-      this.lifecycleManager,
-    );
+
+    // Создаем стратегию один раз и кешируем для переиспользования
+    if (!this.initStrategy) {
+      this.initStrategy = new InitLoadStrategy(
+        this.registry,
+        this.statusTracker,
+        this.lifecycleManager,
+      );
+    }
 
     const initModules = this.registry.getModulesByType(ModuleLoadType.INIT);
-    await initStrategy.loadModules(initModules, bootstrap);
+    await this.initStrategy.loadModules(initModules, bootstrap);
 
-    this.isInitializedFlag = true;
+    this.initModulesLoadedFlag = true;
     log.debug('INIT модули загружены', { prefix: LOG_PREFIX });
   }
 
@@ -292,17 +304,21 @@ export class ModuleLoader {
     log.debug('Начало загрузки NORMAL модулей', { prefix: LOG_PREFIX });
 
     const bootstrap = this.getBootstrapOrThrow();
-    const normalStrategy = new NormalLoadStrategy(
-      this.registry,
-      this.statusTracker,
-      this.lifecycleManager,
-      this.conditionValidator,
-      this.dependencyResolver,
-      (routeName: string) => this.autoLoadModuleByRoute(routeName),
-    );
+
+    // Создаем стратегию один раз и кешируем для переиспользования
+    if (!this.normalStrategy) {
+      this.normalStrategy = new NormalLoadStrategy(
+        this.registry,
+        this.statusTracker,
+        this.lifecycleManager,
+        this.conditionValidator,
+        this.dependencyResolver,
+        (routeName: string) => this.autoLoadModuleByRoute(routeName),
+      );
+    }
 
     const normalModules = this.registry.getModulesByType(ModuleLoadType.NORMAL);
-    await normalStrategy.loadModules(normalModules, bootstrap);
+    await this.normalStrategy.loadModules(normalModules, bootstrap);
 
     log.debug('NORMAL модули загружены', { prefix: LOG_PREFIX });
   }
@@ -334,7 +350,11 @@ export class ModuleLoader {
     }
 
     // Проверяем циклические зависимости перед загрузкой
-    if (this.dependencyResolver.hasCircularDependencies(module)) {
+    // Оптимизация: проверяем только если у модуля есть зависимости
+    const hasDeps =
+      module.loadCondition?.dependencies &&
+      module.loadCondition.dependencies.length > 0;
+    if (hasDeps && this.dependencyResolver.hasCircularDependencies(module)) {
       const allDeps = this.dependencyResolver.getAllDependencies(module);
       throw new Error(
         `Обнаружена циклическая зависимость для модуля "${moduleName}". Зависимости: ${allDeps.join(', ')}`,
@@ -408,6 +428,9 @@ export class ModuleLoader {
    * Предзагружает маршруты и i18n всех модулей.
    *
    * Используется для регистрации маршрутов до старта приложения.
+   *
+   * Оптимизация производительности: загружает только INIT модули синхронно,
+   * NORMAL модули загружаются асинхронно после рендера для улучшения FCP/LCP.
    */
   public async preloadRoutes(): Promise<void> {
     log.debug('Начало предзагрузки маршрутов', { prefix: LOG_PREFIX });
@@ -415,15 +438,209 @@ export class ModuleLoader {
     const bootstrap = this.getBootstrapOrThrow();
     const allModules = this.registry.getModules();
 
-    // Фильтруем модули для предзагрузки
-    const modulesToPreload = allModules.filter(
+    // КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ: Разделяем INIT и NORMAL модули
+    // INIT модули загружаем синхронно (нужны для первого рендера)
+    // NORMAL модули загружаем асинхронно после рендера (не блокируют FCP/LCP)
+    const initModules = allModules.filter(
+      (m) => (m.loadType ?? ModuleLoadType.NORMAL) === ModuleLoadType.INIT,
+    );
+    const normalModules = allModules.filter(
+      (m) => (m.loadType ?? ModuleLoadType.NORMAL) !== ModuleLoadType.INIT,
+    );
+
+    // Загружаем только INIT модули синхронно (они уже загружены через initInitModules,
+    // но нужно зарегистрировать их маршруты, если они еще не зарегистрированы)
+    const initModulesToPreload = initModules.filter(
       (m) => !this.shouldSkipModuleInPreload(m),
     );
 
+    if (initModulesToPreload.length > 0) {
+      log.debug(
+        `Предзагрузка маршрутов INIT модулей: ${initModulesToPreload.length} модулей`,
+        { prefix: LOG_PREFIX },
+      );
+
+      // INIT модули уже загружены, просто регистрируем маршруты
+      for (const module of initModulesToPreload) {
+        if (!this.statusTracker.isPreloadedOrLoaded(module.name)) {
+          await this.preloadModuleWithoutConditionCheck(module, bootstrap);
+        }
+      }
+    }
+
+    // NORMAL модули: загружаем только маршруты синхронно (нужны для router.start())
+    // Полная загрузка (onModuleInit, i18n) происходит асинхронно после рендера
+    if (normalModules.length > 0) {
+      log.debug(
+        `Предзагрузка маршрутов NORMAL модулей: ${normalModules.length} модулей (только маршруты, синхронно)`,
+        { prefix: LOG_PREFIX },
+      );
+
+      // Загружаем только маршруты синхронно, чтобы они были доступны для router.start()
+      await this.preloadNormalModuleRoutesOnly(normalModules, bootstrap);
+
+      // Полная загрузка модулей (onModuleInit, i18n) - асинхронно после рендера
+      this.preloadNormalModulesFullAsync(normalModules, bootstrap).catch(
+        (error) => {
+          log.error('Ошибка полной предзагрузки NORMAL модулей', {
+            prefix: LOG_PREFIX,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
+      );
+    }
+
     log.debug(
-      `Предзагрузка маршрутов: ${modulesToPreload.length} из ${allModules.length} модулей`,
+      'Предзагрузка маршрутов завершена (INIT синхронно, NORMAL асинхронно)',
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
+  }
+
+  /**
+   * Предзагружает только маршруты NORMAL модулей (синхронно, для router.start()).
+   *
+   * Загружает конфиги и регистрирует маршруты, но НЕ вызывает onModuleInit
+   * и НЕ регистрирует i18n. Это делается асинхронно позже.
+   *
+   * @param normalModules - Массив NORMAL модулей
+   * @param bootstrap - Инстанс Bootstrap
+   */
+  private async preloadNormalModuleRoutesOnly(
+    normalModules: Module[],
+    bootstrap: Bootstrap,
+  ): Promise<void> {
+    // Фильтруем модули для предзагрузки
+    const modulesToPreload = normalModules.filter(
+      (m) => !this.shouldSkipModuleInPreload(m),
+    );
+
+    // Проверяем условия для всех модулей
+    const modulesToPreloadFiltered: Module[] = [];
+    for (const module of modulesToPreload) {
+      const shouldSkip = await this.conditionValidator.shouldSkipInPreload(
+        module,
+        bootstrap,
+      );
+      if (!shouldSkip) {
+        modulesToPreloadFiltered.push(module);
+      } else {
+        this.statusTracker.markAsPreloaded(module);
+      }
+    }
+
+    if (modulesToPreloadFiltered.length === 0) {
+      return;
+    }
+
+    // Начинаем резолвить все Promise конфигурации параллельно
+    const configPromises = modulesToPreloadFiltered
+      .filter((m) => m.config instanceof Promise)
+      .map((m) =>
+        this.registry.loadModuleConfig(m).catch((error) => {
+          log.error(`Ошибка предзагрузки конфигурации модуля "${m.name}"`, {
+            prefix: LOG_PREFIX,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }),
+      );
+
+    if (configPromises.length > 0) {
+      await Promise.all(configPromises);
+    }
+
+    // Регистрируем только маршруты (без onModuleInit и i18n)
+    for (const module of modulesToPreloadFiltered) {
+      if (this.statusTracker.isPreloadedOrLoaded(module.name)) {
+        continue;
+      }
+
+      try {
+        // Только регистрируем маршруты из конфига
+        await this.lifecycleManager.registerModuleRoutes(
+          module,
+          bootstrap,
+          (routeName: string) => this.autoLoadModuleByRoute(routeName),
+        );
+
+        // Помечаем как предзагруженный (только маршруты зарегистрированы)
+        // Это позволяет loadNormalModules() понять, что маршруты уже есть,
+        // но модуль еще не загружен полностью
+        this.statusTracker.markAsPreloaded(module);
+
+        log.debug(
+          `Маршруты модуля "${module.name}" зарегистрированы (полная загрузка будет позже)`,
+          { prefix: LOG_PREFIX },
+        );
+      } catch (error) {
+        log.error(`Ошибка регистрации маршрутов модуля "${module.name}"`, {
+          prefix: LOG_PREFIX,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Не пробрасываем ошибку, чтобы не блокировать регистрацию других модулей
+      }
+    }
+  }
+
+  /**
+   * Асинхронно предзагружает полную загрузку NORMAL модулей (onModuleInit, i18n).
+   *
+   * Выполняется после рендера, не блокирует FCP/LCP.
+   *
+   * @param normalModules - Массив NORMAL модулей
+   * @param bootstrap - Инстанс Bootstrap
+   */
+  private async preloadNormalModulesFullAsync(
+    normalModules: Module[],
+    bootstrap: Bootstrap,
+  ): Promise<void> {
+    // Фильтруем только те модули, у которых маршруты уже зарегистрированы
+    const modulesToLoad = normalModules.filter(
+      (m) =>
+        this.statusTracker.isPreloaded(m.name) &&
+        !this.statusTracker.isLoaded(m.name),
+    );
+
+    if (modulesToLoad.length === 0) {
+      return;
+    }
+
+    log.debug(
+      `Полная предзагрузка NORMAL модулей: ${modulesToLoad.length} модулей (асинхронно)`,
       { prefix: LOG_PREFIX },
     );
+
+    // Если у всех модулей нет зависимостей, загружаем параллельно
+    const allModulesHaveNoDeps = modulesToLoad.every(
+      (m) => !hasDependencies(m),
+    );
+
+    if (allModulesHaveNoDeps) {
+      await Promise.all(
+        modulesToLoad.map(async (module: Module) => {
+          try {
+            // Регистрируем i18n и вызываем onModuleInit
+            await this.lifecycleManager.registerModuleI18n(
+              module,
+              bootstrap,
+              (name: string) => this.statusTracker.isLoaded(name),
+            );
+            await this.lifecycleManager.initializeModule(
+              module,
+              bootstrap,
+              false,
+            );
+          } catch (error) {
+            log.error(`Ошибка полной загрузки модуля "${module.name}"`, {
+              prefix: LOG_PREFIX,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }),
+      );
+      return;
+    }
 
     // Группируем по уровням зависимостей
     const levelBuilder = new DependencyLevelBuilder(
@@ -432,24 +649,32 @@ export class ModuleLoader {
       (name: string) => this.statusTracker.isPreloaded(name),
     );
 
-    const { levels } = levelBuilder.buildDependencyLevels(modulesToPreload);
+    const { levels } = levelBuilder.buildDependencyLevels(modulesToLoad);
 
-    // Обрабатываем уровни последовательно
     for (let i = 0; i < levels.length; i++) {
       const levelModules = levels[i];
-      log.debug(
-        `Предзагрузка уровня ${i + 1}/${levels.length} (${levelModules.length} модулей)`,
-        { prefix: LOG_PREFIX },
-      );
-
       await Promise.all(
-        levelModules.map((module: Module) =>
-          this.preloadModule(module, bootstrap),
-        ),
+        levelModules.map(async (module: Module) => {
+          try {
+            await this.lifecycleManager.registerModuleI18n(
+              module,
+              bootstrap,
+              (name: string) => this.statusTracker.isLoaded(name),
+            );
+            await this.lifecycleManager.initializeModule(
+              module,
+              bootstrap,
+              false,
+            );
+          } catch (error) {
+            log.error(`Ошибка полной загрузки модуля "${module.name}"`, {
+              prefix: LOG_PREFIX,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }),
       );
     }
-
-    log.debug('Предзагрузка маршрутов завершена', { prefix: LOG_PREFIX });
   }
 
   // ============================================
@@ -633,15 +858,17 @@ export class ModuleLoader {
     // Это устраняет race condition: если два потока одновременно вызывают preloadModule,
     // оба получат один и тот же Promise
     let wasCreatedByUs = false;
-    const preloadPromise = this.statusTracker.getOrCreatePreloadingPromise(
-      module.name,
-      () => {
-        wasCreatedByUs = true;
-        return this.executePreloadInternal(module, bootstrap);
-      },
-    );
+    let preloadPromise: Promise<void> | undefined;
 
     try {
+      preloadPromise = this.statusTracker.getOrCreatePreloadingPromise(
+        module.name,
+        () => {
+          wasCreatedByUs = true;
+          return this.executePreloadInternal(module, bootstrap);
+        },
+      );
+
       await preloadPromise;
     } catch (error) {
       // Логируем ошибку, но не пробрасываем - она уже обработана в executePreloadInternal
@@ -651,10 +878,71 @@ export class ModuleLoader {
       });
       throw error;
     } finally {
-      // Удаляем Promise только если он был создан нами
-      // Это гарантирует, что мы не удалим Promise, созданный другим потоком
-      if (wasCreatedByUs) {
-        this.statusTracker.removePreloadingPromise(module.name);
+      // Гарантируем очистку Promise в любом случае
+      // Проверяем, что Promise был создан нами и еще существует
+      if (wasCreatedByUs && preloadPromise) {
+        // Проверяем, что это тот же Promise, который мы создали
+        const currentPromise = this.statusTracker.getPreloadingPromise(
+          module.name,
+        );
+        if (currentPromise === preloadPromise) {
+          this.statusTracker.removePreloadingPromise(module.name);
+        }
+      }
+    }
+  }
+
+  /**
+   * Предзагружает один модуль без проверки условий (условия уже проверены).
+   *
+   * Используется в preloadRoutes после предварительной проверки условий.
+   *
+   * @param module - Модуль для предзагрузки
+   * @param bootstrap - Инстанс Bootstrap
+   */
+  private async preloadModuleWithoutConditionCheck(
+    module: Module,
+    bootstrap: Bootstrap,
+  ): Promise<void> {
+    // Проверяем статус
+    if (this.statusTracker.isPreloadedOrLoaded(module.name)) {
+      log.debug(`Модуль "${module.name}" уже предзагружен или загружен`, {
+        prefix: LOG_PREFIX,
+      });
+      return;
+    }
+
+    // Атомарно получаем или создаем Promise предзагрузки
+    let wasCreatedByUs = false;
+    let preloadPromise: Promise<void> | undefined;
+
+    try {
+      preloadPromise = this.statusTracker.getOrCreatePreloadingPromise(
+        module.name,
+        () => {
+          wasCreatedByUs = true;
+          // Пропускаем проверку условий, так как они уже проверены в preloadRoutes
+          this.statusTracker.markAsLoading(module);
+          return this.executePreload(module, bootstrap);
+        },
+      );
+
+      await preloadPromise;
+    } catch (error) {
+      log.debug(`Предзагрузка модуля "${module.name}" завершилась с ошибкой`, {
+        prefix: LOG_PREFIX,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    } finally {
+      // Гарантируем очистку Promise в любом случае
+      if (wasCreatedByUs && preloadPromise) {
+        const currentPromise = this.statusTracker.getPreloadingPromise(
+          module.name,
+        );
+        if (currentPromise === preloadPromise) {
+          this.statusTracker.removePreloadingPromise(module.name);
+        }
       }
     }
   }

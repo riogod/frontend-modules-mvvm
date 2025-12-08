@@ -146,6 +146,54 @@ export class RemoteModuleLoader {
     );
   }
 
+  /**
+   * Полностью сбрасывает состояние загрузчика.
+   *
+   * Очищает:
+   * - Кеш загруженных модулей
+   * - Список загруженных скриптов
+   *
+   * Полезно для:
+   * - HMR (Hot Module Replacement) при разработке
+   * - Тестирования (сброс состояния между тестами)
+   * - Перезагрузки модулей при изменении конфигурации
+   *
+   * **Внимание:** После вызова этого метода все загруженные модули
+   * будут загружены заново при следующем обращении.
+   */
+  public reset(): void {
+    const cacheSize = this.cache.size;
+    const scriptsSize = this.loadedScripts.size;
+
+    this.cache.clear();
+    this.loadedScripts.clear();
+
+    log.debug(
+      `RemoteModuleLoader сброшен (удалено ${cacheSize} модулей из кеша, ${scriptsSize} скриптов)`,
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
+  }
+
+  /**
+   * Возвращает количество загруженных модулей в кеше.
+   *
+   * @returns Количество модулей в кеше
+   */
+  public getCacheSize(): number {
+    return this.cache.size;
+  }
+
+  /**
+   * Возвращает количество загруженных скриптов.
+   *
+   * @returns Количество загруженных скриптов
+   */
+  public getLoadedScriptsCount(): number {
+    return this.loadedScripts.size;
+  }
+
   // ============================================
   // Приватные методы: Загрузка с повторами
   // ============================================
