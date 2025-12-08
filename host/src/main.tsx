@@ -1,8 +1,3 @@
-import 'reflect-metadata';
-// Инициализация shared scope для Vite Federation ПЕРЕД любыми другими импортами
-import { initFederationShared } from './bootstrap/utils/initFederationShared';
-initFederationShared();
-
 import { createRoot } from 'react-dom/client';
 import { CssBaseline, ErrorBoundary } from '@platform/ui';
 import './main.css';
@@ -17,15 +12,19 @@ import { Layout } from './modules/core.layout/view/Layout';
 import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
 import { log, LogLevel } from '@platform/core';
-// import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
+import { initFederationShared } from './bootstrap/utils/initFederationShared';
 
 configure({ enforceActions: 'observed', useProxies: 'always' });
 log.setConfig({ level: LogLevel.DEBUG });
 
+// Инициализация shared scope для Vite Federation в production
+// ВАЖНО: должно быть вызвано ДО загрузки remote модулей
+if (import.meta.env.MODE === 'production') {
+  initFederationShared();
+}
+
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
-    // Устанавливаем глобальный DI контейнер для remote модулей
-    // Это fallback на случай, если React Context недоступен
     setGlobalDIContainer(bootstrap.di);
 
     bootstrap.routerService.router.start(() => {

@@ -5,19 +5,28 @@
  * Vite Federation автоматически создаёт shared scope для зависимостей, указанных в конфигурации.
  * Этот модуль нужен только для случаев, когда shared scope не инициализируется автоматически.
  *
- * Для i18next: хост использует реальный экземпляр напрямую, а remote модули получают его через shared scope.
+ * reflect-metadata уже загружен в bootstrap.app.tsx (первая строка),
+ * который вызывается через async boundary из main.tsx.
+ * Это гарантирует правильный порядок инициализации.
  */
+
+import { log } from '@platform/core';
 
 // Импортируем критические зависимости, которые должны быть shared
 // Используем namespace импорты для получения всего модуля
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import * as ReactDOMClient from 'react-dom/client';
 import * as mobx from 'mobx';
 import * as mobxReactLite from 'mobx-react-lite';
-// НЕ импортируем i18next здесь - хост должен использовать реальный экземпляр
 import * as reactI18next from 'react-i18next';
 import * as inversify from 'inversify';
-import * as reflectMetadata from 'reflect-metadata';
+
+// Внутренние библиотеки платформы - КРИТИЧЕСКИ ВАЖНЫ для shared контекстов
+import * as platformUI from '@platform/ui';
+import * as platformShare from '@platform/share';
+import * as platformCore from '@platform/core';
+import * as platformCommon from '@platform/common';
 
 // Типы для Vite Federation shared scope
 type SharedModule = {
@@ -78,6 +87,10 @@ export function initFederationShared(): void {
     '*': createSharedModule(ReactDOM),
   };
 
+  scope['react-dom/client'] = {
+    '*': createSharedModule(ReactDOMClient),
+  };
+
   scope['mobx'] = {
     '*': createSharedModule(mobx),
   };
@@ -97,13 +110,42 @@ export function initFederationShared(): void {
   scope['inversify'] = {
     '*': createSharedModule(inversify),
   };
-  scope['reflect-metadata'] = {
-    '*': createSharedModule(reflectMetadata),
+
+  // Внутренние библиотеки платформы
+  // КРИТИЧЕСКИ ВАЖНО: @platform/ui содержит DIContext и другие React контексты
+  scope['@platform/ui'] = {
+    '*': createSharedModule(platformUI),
   };
 
-  // eslint-disable-next-line no-console
-  console.debug(
-    '[Federation] Shared scope initialized with',
+  scope['@platform/share'] = {
+    '*': createSharedModule(platformShare),
+  };
+
+  scope['@platform/core'] = {
+    '*': createSharedModule(platformCore),
+  };
+
+  scope['@platform/common'] = {
+    '*': createSharedModule(platformCommon),
+  };
+
+  if (import.meta.env.MODE === 'production') {
+    const globalReflect: typeof Reflect | undefined =
+      (globalThis as any).Reflect ?? (window as any).Reflect;
+
+    if (!globalReflect) {
+      throw new Error(
+        'Reflect is not initialized, import "reflect-metadata" earlier',
+      );
+    }
+    scope['reflect-metadata'] = {
+      '*': createSharedModule(globalReflect),
+    };
+  }
+
+  log.debug(
+    'bootstrap.utils.initFederationShared',
+    'Shared scope initialized with',
     Object.keys(scope).length,
     'modules',
   );

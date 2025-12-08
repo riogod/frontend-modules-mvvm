@@ -16,7 +16,7 @@ import { createInstance, type i18n } from 'i18next';
 import { BootstrapRouterService } from './services/routerService';
 import { BootstrapModuleLoader } from './services/moduleLoader/';
 import { type IAppConfig } from '../config/app';
-import { buildProviderModule } from '@inversifyjs/binding-decorators';
+// import { buildProviderModule } from '@inversifyjs/binding-decorators';
 import { type Module } from '../modules/interface';
 import type { AppStartDTO } from './services/appStart/data/app.dto';
 import { OnAppStartHandler } from './handlers/OnAppStartHandler';
@@ -140,7 +140,7 @@ export class Bootstrap implements IBootstrap {
   initDI(): void {
     log.debug('Initializing DI container', { prefix: 'bootstrap.initDI' });
     // Автоматическая регистрация всех классов с @injectable и @provide через @inversifyjs/binding-decorators
-    void this._di.load(buildProviderModule());
+    // void this._di.load(buildProviderModule());
 
     if (this._APIClient) {
       this._di

@@ -38,7 +38,6 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@inversifyjs/binding-decorators": "^1.1.5",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.5",
     "@riogz/react-router": "^1.0.5",
