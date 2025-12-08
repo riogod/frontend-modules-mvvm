@@ -132,6 +132,7 @@ export type {
   AutoLoadByRouteFunction,
   ModuleFilterFunction,
   ModuleLoaderInitOptions,
+  LoadModuleOptions,
 
   // Типы для remote модулей
   RemoteModuleConfig,

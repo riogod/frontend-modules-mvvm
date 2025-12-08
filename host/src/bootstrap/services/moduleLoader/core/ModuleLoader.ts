@@ -25,7 +25,7 @@ import { LifecycleManager } from '../services/LifecycleManager';
 import { InitLoadStrategy } from '../strategies/InitLoadStrategy';
 import { NormalLoadStrategy } from '../strategies/NormalLoadStrategy';
 import { DependencyLevelBuilder } from '../utils/DependencyLevelBuilder';
-import type { ModuleLoadStatus } from '../types';
+import type { ModuleLoadStatus, LoadModuleOptions } from '../types';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader';
@@ -71,8 +71,8 @@ export class ModuleLoader {
   /** Флаг инициализации */
   private isInitializedFlag = false;
 
-  /** Публичный доступ к списку модулей (для обратной совместимости) */
-  public modules: Module[] = [];
+  /** Таймаут загрузки модуля по умолчанию (мс) */
+  private defaultLoadTimeout: number | undefined = undefined;
 
   constructor() {
     log.debug('ModuleLoader: создание экземпляра', { prefix: LOG_PREFIX });
@@ -129,6 +129,17 @@ export class ModuleLoader {
   // ============================================
 
   /**
+   * Возвращает список всех модулей (readonly).
+   *
+   * Для обратной совместимости с кодом, использующим `loader.modules`.
+   *
+   * @returns Копия массива модулей (нельзя мутировать напрямую)
+   */
+  public get modules(): Module[] {
+    return this.registry.getModules();
+  }
+
+  /**
    * Добавляет модуль в загрузчик.
    *
    * @param module - Модуль для добавления
@@ -136,7 +147,6 @@ export class ModuleLoader {
   public async addModule(module: Module): Promise<void> {
     log.debug(`Добавление модуля: ${module.name}`, { prefix: LOG_PREFIX });
     await this.registry.addModule(module);
-    this.updateModulesArray();
     log.debug(`Модуль "${module.name}" добавлен`, { prefix: LOG_PREFIX });
   }
 
@@ -148,7 +158,6 @@ export class ModuleLoader {
   public async addModules(modules: Module[]): Promise<void> {
     log.debug(`Добавление ${modules.length} модулей`, { prefix: LOG_PREFIX });
     await this.registry.addModules(modules);
-    this.updateModulesArray();
     log.debug(`Добавлено ${modules.length} модулей`, { prefix: LOG_PREFIX });
   }
 
@@ -302,8 +311,12 @@ export class ModuleLoader {
    * Загружает модуль по имени (по требованию).
    *
    * @param moduleName - Имя модуля для загрузки
+   * @param options - Опции загрузки (таймаут и т.д.)
    */
-  public async loadModuleByName(moduleName: string): Promise<void> {
+  public async loadModuleByName(
+    moduleName: string,
+    options?: LoadModuleOptions,
+  ): Promise<void> {
     log.debug(`Загрузка модуля по имени: ${moduleName}`, {
       prefix: LOG_PREFIX,
     });
@@ -320,18 +333,29 @@ export class ModuleLoader {
       );
     }
 
+    // Проверяем циклические зависимости перед загрузкой
+    if (this.dependencyResolver.hasCircularDependencies(module)) {
+      const allDeps = this.dependencyResolver.getAllDependencies(module);
+      throw new Error(
+        `Обнаружена циклическая зависимость для модуля "${moduleName}". Зависимости: ${allDeps.join(', ')}`,
+      );
+    }
+
     const bootstrap = this.getBootstrapOrThrow();
+    const timeout: number | undefined =
+      options?.timeout ?? this.defaultLoadTimeout;
 
     // Загружаем зависимости
     await this.dependencyResolver.loadDependencies(
       module,
       bootstrap,
-      (m: Module, b: Bootstrap) => this.loadSingleModule(m, b),
+      (m: Module, b: Bootstrap) =>
+        this.loadSingleModuleWithTimeout(m, b, timeout),
       (name: string) => this.statusTracker.isLoaded(name),
     );
 
-    // Загружаем сам модуль
-    await this.loadSingleModule(module, bootstrap);
+    // Загружаем сам модуль с таймаутом
+    await this.loadSingleModuleWithTimeout(module, bootstrap, timeout);
 
     log.debug(`Модуль "${moduleName}" загружен`, { prefix: LOG_PREFIX });
   }
@@ -370,7 +394,9 @@ export class ModuleLoader {
           prefix: LOG_PREFIX,
         },
       );
-      await this.loadModuleByName(module.name);
+      await this.loadModuleByName(module.name, {
+        timeout: this.defaultLoadTimeout,
+      });
     }
   }
 
@@ -431,7 +457,80 @@ export class ModuleLoader {
   // ============================================
 
   /**
-   * Загружает один модуль.
+   * Загружает один модуль с опциональным таймаутом.
+   *
+   * @param module - Модуль для загрузки
+   * @param bootstrap - Инстанс Bootstrap
+   * @param timeout - Таймаут загрузки в миллисекундах (опционально)
+   */
+  private async loadSingleModuleWithTimeout(
+    module: Module,
+    bootstrap: Bootstrap,
+    timeout?: number,
+  ): Promise<void> {
+    if (timeout !== undefined) {
+      await this.loadSingleModuleWithTimeoutInternal(
+        module,
+        bootstrap,
+        timeout,
+      );
+    } else {
+      await this.loadSingleModule(module, bootstrap);
+    }
+  }
+
+  /**
+   * Загружает один модуль с таймаутом.
+   *
+   * @param module - Модуль для загрузки
+   * @param bootstrap - Инстанс Bootstrap
+   * @param timeout - Таймаут загрузки в миллисекундах
+   */
+  private async loadSingleModuleWithTimeoutInternal(
+    module: Module,
+    bootstrap: Bootstrap,
+    timeout: number,
+  ): Promise<void> {
+    log.debug(`Загрузка модуля "${module.name}" с таймаутом ${timeout}мс`, {
+      prefix: LOG_PREFIX,
+    });
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        const error = new Error(
+          `Таймаут загрузки модуля "${module.name}" после ${timeout}мс`,
+        );
+        log.error(`Таймаут загрузки модуля "${module.name}"`, {
+          prefix: LOG_PREFIX,
+          error: error.message,
+        });
+        reject(error);
+      }, timeout);
+    });
+
+    try {
+      await Promise.race([
+        this.loadSingleModule(module, bootstrap),
+        timeoutPromise,
+      ]);
+    } catch (error) {
+      // Если это таймаут, помечаем модуль как failed
+      if (error instanceof Error && error.message.includes('Таймаут')) {
+        this.statusTracker.markAsFailed(module, error);
+      }
+      throw error;
+    } finally {
+      // Очищаем таймер, если он еще не сработал
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  /**
+   * Загружает один модуль без таймаута.
    *
    * @param module - Модуль для загрузки
    * @param bootstrap - Инстанс Bootstrap
@@ -512,6 +611,9 @@ export class ModuleLoader {
   /**
    * Предзагружает один модуль.
    *
+   * Использует атомарную операцию getOrCreatePreloadingPromise для устранения race condition
+   * при параллельных вызовах.
+   *
    * @param module - Модуль для предзагрузки
    * @param bootstrap - Инстанс Bootstrap
    */
@@ -527,42 +629,67 @@ export class ModuleLoader {
       return;
     }
 
-    // Проверяем наличие активной предзагрузки
-    const existingPromise = this.statusTracker.getPreloadingPromise(
+    // Атомарно получаем или создаем Promise предзагрузки
+    // Это устраняет race condition: если два потока одновременно вызывают preloadModule,
+    // оба получат один и тот же Promise
+    let wasCreatedByUs = false;
+    const preloadPromise = this.statusTracker.getOrCreatePreloadingPromise(
       module.name,
+      () => {
+        wasCreatedByUs = true;
+        return this.executePreloadInternal(module, bootstrap);
+      },
     );
-    if (existingPromise) {
-      log.debug(`Ожидание завершения предзагрузки "${module.name}"`, {
-        prefix: LOG_PREFIX,
-      });
-      await existingPromise;
-      return;
-    }
 
-    // Проверяем условия (без зависимостей)
+    try {
+      await preloadPromise;
+    } catch (error) {
+      // Логируем ошибку, но не пробрасываем - она уже обработана в executePreloadInternal
+      log.debug(`Предзагрузка модуля "${module.name}" завершилась с ошибкой`, {
+        prefix: LOG_PREFIX,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    } finally {
+      // Удаляем Promise только если он был создан нами
+      // Это гарантирует, что мы не удалим Promise, созданный другим потоком
+      if (wasCreatedByUs) {
+        this.statusTracker.removePreloadingPromise(module.name);
+      }
+    }
+  }
+
+  /**
+   * Внутренний метод выполнения предзагрузки модуля.
+   * Используется внутри Promise factory для правильной обработки ошибок.
+   *
+   * @param module - Модуль для предзагрузки
+   * @param bootstrap - Инстанс Bootstrap
+   */
+  private async executePreloadInternal(
+    module: Module,
+    bootstrap: Bootstrap,
+  ): Promise<void> {
+    // Проверяем условия (без зависимостей) перед выполнением
     const shouldSkip = await this.conditionValidator.shouldSkipInPreload(
       module,
       bootstrap,
     );
+
     if (shouldSkip) {
       log.debug(`Модуль "${module.name}" пропущен при предзагрузке`, {
         prefix: LOG_PREFIX,
       });
+      // Помечаем как предзагруженный (пропущенный), чтобы не пытаться загрузить снова
+      this.statusTracker.markAsPreloaded(module);
       return;
     }
 
     // Помечаем как загружающийся
     this.statusTracker.markAsLoading(module);
 
-    // Создаем Promise предзагрузки
-    const preloadPromise = this.executePreload(module, bootstrap);
-    this.statusTracker.setPreloadingPromise(module.name, preloadPromise);
-
-    try {
-      await preloadPromise;
-    } finally {
-      this.statusTracker.removePreloadingPromise(module.name);
-    }
+    // Выполняем предзагрузку
+    await this.executePreload(module, bootstrap);
   }
 
   /**
@@ -582,10 +709,39 @@ export class ModuleLoader {
     try {
       const loadType = module.loadType ?? ModuleLoadType.NORMAL;
 
-      // Для NORMAL модулей вызываем onModuleInit перед регистрацией роутов
-      if (loadType === ModuleLoadType.NORMAL) {
-        await this.lifecycleManager.initializeModule(module, bootstrap, false);
+      // INIT модули не должны предзагружаться через preloadRoutes,
+      // они загружаются через initInitModules. Но если это произошло,
+      // просто регистрируем маршруты и i18n без вызова onModuleInit
+      if (loadType === ModuleLoadType.INIT) {
+        log.debug(
+          `Предзагрузка INIT модуля "${module.name}" (только маршруты и i18n)`,
+          { prefix: LOG_PREFIX },
+        );
+
+        // Регистрируем маршруты
+        await this.lifecycleManager.registerModuleRoutes(
+          module,
+          bootstrap,
+          (routeName: string) => this.autoLoadModuleByRoute(routeName),
+        );
+
+        // Регистрируем i18n
+        await this.lifecycleManager.registerModuleI18n(
+          module,
+          bootstrap,
+          (name: string) => this.statusTracker.isLoaded(name),
+        );
+
+        // Не вызываем onModuleInit - он будет вызван в InitLoadStrategy
+        this.statusTracker.markAsPreloaded(module);
+        log.debug(`INIT модуль "${module.name}" предзагружен`, {
+          prefix: LOG_PREFIX,
+        });
+        return;
       }
+
+      // Для NORMAL модулей вызываем onModuleInit перед регистрацией роутов
+      await this.lifecycleManager.initializeModule(module, bootstrap, false);
 
       // Регистрируем маршруты
       await this.lifecycleManager.registerModuleRoutes(
@@ -600,11 +756,6 @@ export class ModuleLoader {
         bootstrap,
         (name: string) => this.statusTracker.isLoaded(name),
       );
-
-      // Для INIT модулей инициализируем без onModuleInit (уже вызван)
-      if (loadType === ModuleLoadType.INIT) {
-        await this.lifecycleManager.initializeModule(module, bootstrap, true);
-      }
 
       this.statusTracker.markAsPreloaded(module);
       log.debug(`Модуль "${module.name}" предзагружен`, { prefix: LOG_PREFIX });
@@ -657,12 +808,5 @@ export class ModuleLoader {
       );
     }
     return this.bootstrap;
-  }
-
-  /**
-   * Обновляет публичный массив модулей.
-   */
-  private updateModulesArray(): void {
-    this.modules = this.registry.getModules();
   }
 }

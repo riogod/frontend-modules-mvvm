@@ -10,4 +10,5 @@ export {
   createScopeName,
   delay,
 } from './remoteUtils';
+export { getModuleDependencies, hasDependencies } from './moduleUtils';
 

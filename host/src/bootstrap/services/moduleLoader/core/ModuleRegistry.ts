@@ -1,14 +1,14 @@
 /**
  * Реестр модулей.
- * 
+ *
  * Отвечает за:
  * - Хранение и управление коллекцией модулей
  * - Кеширование маршрутов модулей
  * - Поиск модулей по различным критериям
  * - Загрузку динамических конфигураций
- * 
+ *
  * Реализует паттерн Repository для работы с модулями.
- * 
+ *
  * @module core/ModuleRegistry
  */
 
@@ -31,20 +31,20 @@ export class ModuleRegistryError extends Error {
 
 /**
  * Реестр модулей приложения.
- * 
+ *
  * Обеспечивает централизованное хранение и управление модулями.
  * Поддерживает кеширование маршрутов для оптимизации производительности.
  */
 export class ModuleRegistry {
   /** Хранилище модулей (Map для O(1) доступа по имени) */
   private readonly modulesByName = new Map<string, Module>();
-  
+
   /** Кеш соответствия имени маршрута к модулю */
   private readonly routeToModuleCache = new Map<string, Module>();
-  
+
   /** Кеш маршрутов модулей */
   private readonly routesCache = new Map<string, RouteCacheEntry>();
-  
+
   /** Флаг, указывающий, были ли загружены INIT модули */
   private initModulesLoadedFlag = false;
 
@@ -58,10 +58,10 @@ export class ModuleRegistry {
 
   /**
    * Добавляет модуль в реестр.
-   * 
+   *
    * Для INIT модулей автоматически кеширует маршруты.
    * Для модулей с динамическим конфигом маршруты кешируются при первом обращении.
-   * 
+   *
    * @param module - Модуль для добавления
    * @throws {ModuleRegistryError} Если модуль с таким именем уже существует
    * @throws {ModuleRegistryError} Если INIT модули уже были загружены
@@ -69,9 +69,12 @@ export class ModuleRegistry {
   public async addModule(module: Module): Promise<void> {
     this.validateCanAddModule(module);
 
-    log.debug(`Добавление модуля: ${module.name} (тип: ${this.getModuleLoadType(module)})`, {
-      prefix: LOG_PREFIX,
-    });
+    log.debug(
+      `Добавление модуля: ${module.name} (тип: ${this.getModuleLoadType(module)})`,
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
 
     this.modulesByName.set(module.name, module);
 
@@ -80,21 +83,25 @@ export class ModuleRegistry {
       await this.cacheModuleRoutes(module);
     }
 
-    log.debug(`Модуль "${module.name}" добавлен в реестр`, { prefix: LOG_PREFIX });
+    log.debug(`Модуль "${module.name}" добавлен в реестр`, {
+      prefix: LOG_PREFIX,
+    });
   }
 
   /**
    * Добавляет несколько модулей в реестр.
-   * 
+   *
    * @param modules - Массив модулей для добавления
    */
   public async addModules(modules: Module[]): Promise<void> {
-    log.debug(`Добавление ${modules.length} модулей в реестр`, { prefix: LOG_PREFIX });
-    
+    log.debug(`Добавление ${modules.length} модулей в реестр`, {
+      prefix: LOG_PREFIX,
+    });
+
     for (const module of modules) {
       await this.addModule(module);
     }
-    
+
     log.debug(`Добавлено ${modules.length} модулей`, { prefix: LOG_PREFIX });
   }
 
@@ -104,21 +111,17 @@ export class ModuleRegistry {
 
   /**
    * Возвращает модуль по имени.
-   * 
+   *
    * @param name - Имя модуля
    * @returns Модуль или undefined, если не найден
    */
   public getModule(name: string): Module | undefined {
-    const module = this.modulesByName.get(name);
-    log.debug(`Поиск модуля "${name}": ${module ? 'найден' : 'не найден'}`, {
-      prefix: LOG_PREFIX,
-    });
-    return module;
+    return this.modulesByName.get(name);
   }
 
   /**
    * Возвращает все модули.
-   * 
+   *
    * @returns Массив всех модулей (копия)
    */
   public getModules(): Module[] {
@@ -127,7 +130,7 @@ export class ModuleRegistry {
 
   /**
    * Проверяет наличие модуля в реестре.
-   * 
+   *
    * @param name - Имя модуля
    * @returns true, если модуль существует
    */
@@ -137,7 +140,7 @@ export class ModuleRegistry {
 
   /**
    * Возвращает количество модулей в реестре.
-   * 
+   *
    * @returns Количество модулей
    */
   public get count(): number {
@@ -150,55 +153,34 @@ export class ModuleRegistry {
 
   /**
    * Возвращает модули указанного типа загрузки.
-   * 
+   *
    * @param loadType - Тип загрузки (INIT или NORMAL)
    * @returns Массив модулей указанного типа
    */
   public getModulesByType(loadType: ModuleLoadType): Module[] {
-    const modules = this.getModules().filter(
+    return this.getModules().filter(
       (m) => this.getModuleLoadType(m) === loadType,
     );
-    
-    log.debug(`Найдено ${modules.length} модулей типа ${loadType}`, {
-      prefix: LOG_PREFIX,
-    });
-    
-    return modules;
   }
 
   /**
    * Возвращает модуль по имени маршрута.
-   * 
+   *
    * Сначала ищет по полному имени маршрута, затем по первому сегменту.
-   * 
+   *
    * @param routeName - Имя маршрута (например, "todo" или "todo.list")
    * @returns Модуль или undefined, если не найден
    */
   public getModuleByRouteName(routeName: string): Module | undefined {
     // Поиск по полному имени
-    let module = this.routeToModuleCache.get(routeName);
+    const module = this.routeToModuleCache.get(routeName);
     if (module) {
-      log.debug(`Модуль найден по полному имени маршрута: ${routeName}`, {
-        prefix: LOG_PREFIX,
-      });
       return module;
     }
 
     // Поиск по первому сегменту
     const firstSegment = routeName.split('.')[0];
-    module = this.routeToModuleCache.get(firstSegment);
-    
-    if (module) {
-      log.debug(`Модуль найден по первому сегменту маршрута: ${firstSegment}`, {
-        prefix: LOG_PREFIX,
-      });
-    } else {
-      log.debug(`Модуль не найден для маршрута: ${routeName}`, {
-        prefix: LOG_PREFIX,
-      });
-    }
-    
-    return module;
+    return this.routeToModuleCache.get(firstSegment);
   }
 
   // ============================================
@@ -207,9 +189,9 @@ export class ModuleRegistry {
 
   /**
    * Возвращает маршруты модуля с кешированием.
-   * 
+   *
    * Для модулей с динамическим конфигом загружает конфигурацию при первом обращении.
-   * 
+   *
    * @param module - Модуль
    * @returns Маршруты модуля или undefined
    */
@@ -235,24 +217,35 @@ export class ModuleRegistry {
     log.debug(`Получение маршрутов для модуля "${module.name}"`, {
       prefix: LOG_PREFIX,
     });
-    
+
     const routes = config.ROUTES();
     this.routesCache.set(module.name, {
       routes,
       cachedAt: Date.now(),
     });
-    
+
     log.debug(`Закешировано ${routes.length} маршрутов для "${module.name}"`, {
       prefix: LOG_PREFIX,
     });
-    
+
     return routes;
   }
 
   /**
    * Загружает динамическую конфигурацию модуля, если она является Promise.
-   * 
-   * @param module - Модуль для загрузки конфигурации
+   *
+   * **ВАЖНО: Мутирует объект модуля!**
+   *
+   * После загрузки Promise заменяется на резолвленную конфигурацию напрямую в объекте модуля.
+   * Это сделано для оптимизации: последующие обращения к `module.config` не требуют
+   * повторной загрузки и сразу получают готовую конфигурацию.
+   *
+   * **Побочные эффекты:**
+   * - Объект модуля изменяется после первого вызова этого метода
+   * - Все ссылки на модуль видят обновленную конфигурацию
+   * - Это нормальное поведение и не является багом
+   *
+   * @param module - Модуль для загрузки конфигурации (будет мутирован)
    */
   public async loadModuleConfig(module: Module): Promise<void> {
     if (!(module.config instanceof Promise)) {
@@ -265,9 +258,10 @@ export class ModuleRegistry {
 
     try {
       const config = await module.config;
-      // Заменяем Promise на загруженную конфигурацию
+      // ВАЖНО: Мутируем объект модуля, заменяя Promise на резолвленную конфигурацию
+      // Это сделано намеренно для оптимизации - последующие обращения не требуют повторной загрузки
       (module as { config: typeof config }).config = config;
-      
+
       log.debug(`Конфигурация загружена для "${module.name}"`, {
         prefix: LOG_PREFIX,
       });
@@ -286,22 +280,16 @@ export class ModuleRegistry {
 
   /**
    * Сортирует модули по приоритету загрузки.
-   * 
+   *
    * @param modules - Массив модулей для сортировки
    * @returns Отсортированный массив (новый массив, исходный не изменяется)
    */
   public sortModulesByPriority(modules: Module[]): Module[] {
-    const sorted = [...modules].sort((a, b) => {
+    return [...modules].sort((a, b) => {
       const priorityA = a.loadPriority ?? 0;
       const priorityB = b.loadPriority ?? 0;
       return priorityA - priorityB;
     });
-
-    log.debug(`Отсортировано ${sorted.length} модулей по приоритету`, {
-      prefix: LOG_PREFIX,
-    });
-    
-    return sorted;
   }
 
   // ============================================
@@ -310,9 +298,9 @@ export class ModuleRegistry {
 
   /**
    * Устанавливает флаг загрузки INIT модулей.
-   * 
+   *
    * После установки флага добавление новых модулей запрещено.
-   * 
+   *
    * @param value - Значение флага
    */
   public setInitModulesLoaded(value: boolean): void {
@@ -324,7 +312,7 @@ export class ModuleRegistry {
 
   /**
    * Проверяет, загружены ли INIT модули.
-   * 
+   *
    * @returns true, если INIT модули загружены
    */
   public get isInitModulesLoaded(): boolean {
@@ -337,7 +325,7 @@ export class ModuleRegistry {
 
   /**
    * Валидирует возможность добавления модуля.
-   * 
+   *
    * @param module - Модуль для проверки
    * @throws {ModuleRegistryError} Если добавление невозможно
    */
@@ -357,7 +345,7 @@ export class ModuleRegistry {
 
   /**
    * Возвращает тип загрузки модуля.
-   * 
+   *
    * @param module - Модуль
    * @returns Тип загрузки
    */
@@ -367,7 +355,7 @@ export class ModuleRegistry {
 
   /**
    * Кеширует маршруты модуля для быстрого поиска.
-   * 
+   *
    * @param module - Модуль для кеширования маршрутов
    */
   private async cacheModuleRoutes(module: Module): Promise<void> {
@@ -379,14 +367,17 @@ export class ModuleRegistry {
       return;
     }
 
-    log.debug(`Кеширование маршрутов модуля "${module.name}" (${routes.length} маршрутов)`, {
-      prefix: LOG_PREFIX,
-    });
+    log.debug(
+      `Кеширование маршрутов модуля "${module.name}" (${routes.length} маршрутов)`,
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
 
     for (const route of routes) {
       // Кешируем по полному имени маршрута
       this.routeToModuleCache.set(route.name, module);
-      
+
       // Кешируем по первому сегменту для обратной совместимости
       const firstSegment = route.name.split('.')[0];
       if (!this.routeToModuleCache.has(firstSegment)) {
@@ -399,4 +390,3 @@ export class ModuleRegistry {
     });
   }
 }
-

@@ -1,31 +1,32 @@
 /**
  * Построитель уровней зависимостей.
- * 
+ *
  * Отвечает за:
  * - Группировку модулей по уровням зависимостей
  * - Обеспечение параллельной загрузки независимых модулей
  * - Обнаружение и обработку проблем с зависимостями
- * 
+ *
  * Реализует паттерн Builder для построения структуры зависимостей.
- * 
+ *
  * @module utils/DependencyLevelBuilder
  */
 
 import { log } from '@platform/core';
 import type { Module } from '../../../../modules/interface';
 import type { ModuleRegistry } from '../core/ModuleRegistry';
+import type { DependencyLevelResult, SkippedModuleInfo } from '../types';
 import type {
-  DependencyLevelResult,
-  SkippedModuleInfo,
+  IsModuleLoadedFunction,
+  IsModulePreloadedFunction,
 } from '../types';
-import type { IsModuleLoadedFunction, IsModulePreloadedFunction } from '../types';
+import { getModuleDependencies } from './moduleUtils';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.dependencyLevelBuilder';
 
 /**
  * Построитель уровней зависимостей для параллельной загрузки модулей.
- * 
+ *
  * Группирует модули таким образом, что:
  * - Модули на одном уровне не зависят друг от друга
  * - Модули на уровне N зависят только от модулей на уровнях < N
@@ -46,13 +47,13 @@ export class DependencyLevelBuilder {
 
   /**
    * Группирует модули по уровням зависимостей.
-   * 
+   *
    * Алгоритм:
    * 1. Создаем карту модулей для быстрого доступа
    * 2. На каждой итерации находим модули, все зависимости которых готовы
    * 3. Добавляем их в текущий уровень и помечаем как обработанные
    * 4. Повторяем до обработки всех модулей или обнаружения проблем
-   * 
+   *
    * @param modules - Массив модулей для группировки
    * @returns Результат группировки с уровнями и пропущенными модулями
    */
@@ -67,11 +68,7 @@ export class DependencyLevelBuilder {
     const skippedModules: SkippedModuleInfo[] = [];
 
     while (processed.size < modules.length) {
-      const currentLevel = this.findReadyModules(
-        modules,
-        moduleMap,
-        processed,
-      );
+      const currentLevel = this.findReadyModules(modules, moduleMap, processed);
 
       if (currentLevel.length === 0) {
         // Не удалось найти модули для текущего уровня
@@ -80,14 +77,17 @@ export class DependencyLevelBuilder {
           processed,
           skippedModules,
         );
-        
+
         if (result.shouldBreak) {
           break;
         }
-        
+
         // Если есть циклическая зависимость, выбрасываем ошибку
         if (result.hasCircularDependency) {
-          const unprocessed = this.getUnprocessedModuleNames(modules, processed);
+          const unprocessed = this.getUnprocessedModuleNames(
+            modules,
+            processed,
+          );
           throw new Error(
             `Обнаружена циклическая зависимость. Необработанные модули: ${unprocessed.join(', ')}`,
           );
@@ -118,13 +118,13 @@ export class DependencyLevelBuilder {
 
   /**
    * Проверяет, готовы ли все зависимости модуля.
-   * 
+   *
    * Зависимость считается готовой, если:
    * - Модуль уже загружен
    * - Модуль предзагружен
    * - Модуль обработан в текущем цикле
    * - Модуль существует, но не входит в список для обработки
-   * 
+   *
    * @param module - Модуль для проверки
    * @param moduleMap - Карта модулей для обработки
    * @param processed - Множество обработанных модулей
@@ -135,8 +135,8 @@ export class DependencyLevelBuilder {
     moduleMap: Map<string, Module>,
     processed: Set<string>,
   ): boolean {
-    const dependencies = this.getModuleDependencies(module);
-    
+    const dependencies = getModuleDependencies(module);
+
     if (dependencies.length === 0) {
       return true;
     }
@@ -174,7 +174,7 @@ export class DependencyLevelBuilder {
 
   /**
    * Создает карту модулей для быстрого доступа.
-   * 
+   *
    * @param modules - Массив модулей
    * @returns Map с модулями по именам
    */
@@ -188,7 +188,7 @@ export class DependencyLevelBuilder {
 
   /**
    * Находит модули, готовые к обработке на текущем уровне.
-   * 
+   *
    * @param modules - Все модули
    * @param moduleMap - Карта модулей
    * @param processed - Множество обработанных модулей
@@ -216,7 +216,7 @@ export class DependencyLevelBuilder {
 
   /**
    * Обрабатывает ситуацию, когда не удалось найти модули для уровня.
-   * 
+   *
    * @param modules - Все модули
    * @param processed - Множество обработанных модулей
    * @param skippedModules - Массив для сбора пропущенных модулей
@@ -231,7 +231,7 @@ export class DependencyLevelBuilder {
     const modulesWithMissingDeps: SkippedModuleInfo[] = [];
 
     for (const module of unprocessedModules) {
-      const dependencies = this.getModuleDependencies(module);
+      const dependencies = getModuleDependencies(module);
       const missingDeps = dependencies.filter((depName) => {
         const depModule = this.registry.getModule(depName);
         return !depModule && !this.isModuleLoaded(depName);
@@ -248,9 +248,9 @@ export class DependencyLevelBuilder {
     if (modulesWithMissingDeps.length > 0) {
       // Есть модули с отсутствующими зависимостями - пропускаем их
       log.warn(
-        `Пропуск модулей с отсутствующими зависимостями: ${
-          modulesWithMissingDeps.map((m) => m.moduleName).join(', ')
-        }`,
+        `Пропуск модулей с отсутствующими зависимостями: ${modulesWithMissingDeps
+          .map((m) => m.moduleName)
+          .join(', ')}`,
         { prefix: LOG_PREFIX },
       );
 
@@ -267,18 +267,8 @@ export class DependencyLevelBuilder {
   }
 
   /**
-   * Возвращает зависимости модуля.
-   * 
-   * @param module - Модуль
-   * @returns Массив имен зависимостей
-   */
-  private getModuleDependencies(module: Module): string[] {
-    return module.loadCondition?.dependencies ?? [];
-  }
-
-  /**
    * Возвращает имена необработанных модулей.
-   * 
+   *
    * @param modules - Все модули
    * @param processed - Множество обработанных модулей
    * @returns Массив имен необработанных модулей
@@ -287,9 +277,6 @@ export class DependencyLevelBuilder {
     modules: Module[],
     processed: Set<string>,
   ): string[] {
-    return modules
-      .filter((m) => !processed.has(m.name))
-      .map((m) => m.name);
+    return modules.filter((m) => !processed.has(m.name)).map((m) => m.name);
   }
 }
-

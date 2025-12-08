@@ -14,6 +14,7 @@ import type { Module } from '../../../../modules/interface';
 import type { Bootstrap } from '../../../index';
 import type { ModuleRegistry } from '../core/ModuleRegistry';
 import type { LoadModuleFunction, IsModuleLoadedFunction } from '../types';
+import { getModuleDependencies } from '../utils/moduleUtils';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.dependencyResolver';
@@ -62,6 +63,11 @@ export class DependencyResolver {
     loadModule: LoadModuleFunction,
     isModuleLoaded: IsModuleLoadedFunction,
   ): Promise<void> {
+    // Быстрая проверка: если зависимостей нет, сразу выходим
+    if (!getModuleDependencies(module).length) {
+      return;
+    }
+
     await this.loadDependenciesRecursive(
       module,
       bootstrap,
@@ -162,7 +168,8 @@ export class DependencyResolver {
     isModuleLoaded: IsModuleLoadedFunction,
   ): Promise<void> {
     // Проверяем наличие зависимостей
-    if (!module.loadCondition?.dependencies?.length) {
+    const dependencies = getModuleDependencies(module);
+    if (dependencies.length === 0) {
       return;
     }
 
@@ -180,7 +187,6 @@ export class DependencyResolver {
       prefix: LOG_PREFIX,
     });
 
-    const dependencies = module.loadCondition.dependencies;
     const dependencyModules = this.getDependencyModules(module.name, dependencies);
 
     // Сортируем по приоритету
@@ -276,11 +282,12 @@ export class DependencyResolver {
 
     visited.add(module.name);
 
-    if (!module.loadCondition?.dependencies?.length) {
+    const dependencies = getModuleDependencies(module);
+    if (dependencies.length === 0) {
       return;
     }
 
-    for (const depName of module.loadCondition.dependencies) {
+    for (const depName of dependencies) {
       allDeps.add(depName);
 
       const depModule = this.registry.getModule(depName);

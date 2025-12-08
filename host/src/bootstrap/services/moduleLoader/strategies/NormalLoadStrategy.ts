@@ -83,6 +83,20 @@ export class NormalLoadStrategy implements ILoadStrategy {
       prefix: LOG_PREFIX,
     });
 
+    // Проверяем циклические зависимости перед загрузкой
+    const modulesWithCircularDeps: string[] = [];
+    for (const module of sortedModules) {
+      if (this.dependencyResolver.hasCircularDependencies(module)) {
+        modulesWithCircularDeps.push(module.name);
+      }
+    }
+
+    if (modulesWithCircularDeps.length > 0) {
+      const message = `Обнаружены циклические зависимости в модулях: ${modulesWithCircularDeps.join(', ')}`;
+      log.error(message, { prefix: LOG_PREFIX });
+      throw new Error(message);
+    }
+
     // Группируем по уровням зависимостей
     const levelBuilder = new DependencyLevelBuilder(
       this.registry,

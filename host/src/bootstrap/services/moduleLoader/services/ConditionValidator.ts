@@ -15,6 +15,7 @@ import type { AccessControlModel } from '@platform/common';
 import type { Module } from '../../../../modules/interface';
 import type { Bootstrap } from '../../../index';
 import type { IsModuleLoadedFunction } from '../types';
+import { getModuleDependencies } from '../utils/moduleUtils';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.conditionValidator';
@@ -98,7 +99,8 @@ export class ConditionValidator {
       return { canLoad: true };
     }
 
-    const { featureFlags, accessPermissions, dependencies } = module.loadCondition;
+    const { featureFlags, accessPermissions } = module.loadCondition;
+    const dependencies = getModuleDependencies(module);
 
     // Проверка feature flags
     if (featureFlags && featureFlags.length > 0) {
@@ -136,7 +138,7 @@ export class ConditionValidator {
     }
 
     // Проверка зависимостей
-    if (dependencies && dependencies.length > 0) {
+    if (dependencies.length > 0) {
       const missingDeps = this.findMissingDependencies(dependencies, isModuleLoaded);
       if (missingDeps.length > 0) {
         log.debug(

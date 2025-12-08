@@ -55,3 +55,16 @@ export interface ModuleLoaderInitOptions {
   defaultLoadTimeout?: number;
 }
 
+/**
+ * Опции загрузки модуля.
+ */
+export interface LoadModuleOptions {
+  /**
+   * Таймаут загрузки модуля в миллисекундах.
+   * Если не указан, используется значение по умолчанию или таймаут не применяется.
+   * 
+   * @default undefined (без таймаута)
+   */
+  timeout?: number;
+}
+

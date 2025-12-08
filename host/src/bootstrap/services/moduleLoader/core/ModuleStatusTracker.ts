@@ -1,11 +1,11 @@
 /**
  * Трекер статусов модулей.
- * 
+ *
  * Отвечает за:
  * - Хранение и управление статусами загрузки модулей
  * - Синхронизацию параллельных операций через Promise-механизм
  * - Предоставление информации о текущем состоянии модулей
- * 
+ *
  * @module core/ModuleStatusTracker
  */
 
@@ -17,24 +17,24 @@ import {
   type ModuleStatusSummary,
   type StatusChangeHandler,
   type ModuleStatusChangeEvent,
-} from '../types';
+} from '../types/status.types';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.statusTracker';
 
 /**
  * Класс для отслеживания статусов загрузки модулей.
- * 
+ *
  * Реализует паттерн Observer для уведомления об изменениях статусов.
  * Обеспечивает потокобезопасность через Map с Promise для параллельных операций.
  */
 export class ModuleStatusTracker {
   /** Хранилище информации о загруженных модулях */
   private readonly loadedModules = new Map<string, LoadedModule>();
-  
+
   /** Хранилище Promise для синхронизации параллельных операций предзагрузки */
   private readonly preloadingPromises = new Map<string, Promise<void>>();
-  
+
   /** Обработчики изменения статусов */
   private readonly statusChangeHandlers: StatusChangeHandler[] = [];
 
@@ -48,7 +48,7 @@ export class ModuleStatusTracker {
 
   /**
    * Устанавливает статус "загружается" для модуля.
-   * 
+   *
    * @param module - Модуль для обновления статуса
    */
   public markAsLoading(module: Module): void {
@@ -60,7 +60,7 @@ export class ModuleStatusTracker {
 
   /**
    * Устанавливает статус "предзагружен" для модуля.
-   * 
+   *
    * @param module - Модуль для обновления статуса
    */
   public markAsPreloaded(module: Module): void {
@@ -72,7 +72,7 @@ export class ModuleStatusTracker {
 
   /**
    * Устанавливает статус "загружен" для модуля.
-   * 
+   *
    * @param module - Модуль для обновления статуса
    */
   public markAsLoaded(module: Module): void {
@@ -84,16 +84,16 @@ export class ModuleStatusTracker {
 
   /**
    * Устанавливает статус "ошибка" для модуля.
-   * 
+   *
    * @param module - Модуль для обновления статуса
    * @param error - Ошибка загрузки
    */
   public markAsFailed(module: Module, error: unknown): void {
     const normalizedError =
       error instanceof Error ? error : new Error(String(error));
-    
+
     this.setStatus(module, ModuleLoadStatus.FAILED, normalizedError);
-    
+
     log.error(`Модуль "${module.name}" помечен как неудавшийся`, {
       prefix: LOG_PREFIX,
       error: normalizedError.message,
@@ -106,7 +106,7 @@ export class ModuleStatusTracker {
 
   /**
    * Проверяет, загружен ли модуль полностью.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns true, если модуль полностью загружен
    */
@@ -116,7 +116,7 @@ export class ModuleStatusTracker {
 
   /**
    * Проверяет, предзагружен ли модуль.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns true, если модуль предзагружен
    */
@@ -126,7 +126,7 @@ export class ModuleStatusTracker {
 
   /**
    * Проверяет, предзагружен или загружен ли модуль.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns true, если модуль предзагружен или загружен
    */
@@ -140,7 +140,7 @@ export class ModuleStatusTracker {
 
   /**
    * Проверяет, загружается ли модуль в данный момент.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns true, если модуль в процессе загрузки
    */
@@ -150,21 +150,20 @@ export class ModuleStatusTracker {
 
   /**
    * Проверяет, загружен ли модуль или загружается.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns true, если модуль загружен или загружается
    */
   public isLoadedOrLoading(moduleName: string): boolean {
     const status = this.getStatus(moduleName);
     return (
-      status === ModuleLoadStatus.LOADED ||
-      status === ModuleLoadStatus.LOADING
+      status === ModuleLoadStatus.LOADED || status === ModuleLoadStatus.LOADING
     );
   }
 
   /**
    * Возвращает текущий статус модуля.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns Статус модуля или undefined, если модуль не отслеживается
    */
@@ -174,7 +173,7 @@ export class ModuleStatusTracker {
 
   /**
    * Возвращает информацию о загруженном модуле.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns Информация о модуле или undefined
    */
@@ -189,11 +188,14 @@ export class ModuleStatusTracker {
   /**
    * Регистрирует Promise предзагрузки для модуля.
    * Используется для синхронизации параллельных операций.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @param promise - Promise предзагрузки
    */
-  public setPreloadingPromise(moduleName: string, promise: Promise<void>): void {
+  public setPreloadingPromise(
+    moduleName: string,
+    promise: Promise<void>,
+  ): void {
     this.preloadingPromises.set(moduleName, promise);
     log.debug(`Promise предзагрузки установлен для "${moduleName}"`, {
       prefix: LOG_PREFIX,
@@ -201,8 +203,47 @@ export class ModuleStatusTracker {
   }
 
   /**
+   * Атомарно получает существующий Promise или создает новый.
+   *
+   * Устраняет race condition при параллельных вызовах preloadModule:
+   * - Если Promise уже существует, возвращает его
+   * - Если нет, создает новый через factory и сохраняет его
+   *
+   * @param moduleName - Имя модуля
+   * @param factory - Функция для создания нового Promise (вызывается только если Promise не существует)
+   * @returns Существующий или новый Promise
+   */
+  public getOrCreatePreloadingPromise(
+    moduleName: string,
+    factory: () => Promise<void>,
+  ): Promise<void> {
+    // Атомарная проверка и создание
+    const existingPromise = this.preloadingPromises.get(moduleName);
+
+    if (existingPromise) {
+      log.debug(
+        `Используется существующий Promise предзагрузки для "${moduleName}"`,
+        {
+          prefix: LOG_PREFIX,
+        },
+      );
+      return existingPromise;
+    }
+
+    // Создаем новый Promise
+    const newPromise = factory();
+    this.preloadingPromises.set(moduleName, newPromise);
+
+    log.debug(`Создан новый Promise предзагрузки для "${moduleName}"`, {
+      prefix: LOG_PREFIX,
+    });
+
+    return newPromise;
+  }
+
+  /**
    * Возвращает Promise предзагрузки для модуля.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns Promise предзагрузки или undefined
    */
@@ -212,7 +253,7 @@ export class ModuleStatusTracker {
 
   /**
    * Проверяет, есть ли активный Promise предзагрузки.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns true, если есть активный Promise
    */
@@ -222,7 +263,7 @@ export class ModuleStatusTracker {
 
   /**
    * Удаляет Promise предзагрузки для модуля.
-   * 
+   *
    * @param moduleName - Имя модуля
    */
   public removePreloadingPromise(moduleName: string): void {
@@ -234,7 +275,7 @@ export class ModuleStatusTracker {
 
   /**
    * Ожидает завершения предзагрузки модуля, если она выполняется.
-   * 
+   *
    * @param moduleName - Имя модуля
    * @returns Promise, который завершается после окончания предзагрузки
    */
@@ -261,17 +302,36 @@ export class ModuleStatusTracker {
 
   /**
    * Подписывается на изменения статусов модулей.
-   * 
+   *
+   * **ВАЖНО: Необходимо вызывать функцию отписки!**
+   * Если не отписаться, обработчик будет накапливаться в памяти и вызываться
+   * при каждом изменении статуса модуля в течение всего жизненного цикла приложения.
+   * Это может привести к утечке памяти и неожиданному поведению.
+   *
    * @param handler - Обработчик изменения статуса
-   * @returns Функция для отписки
+   * @returns Функция для отписки. **Обязательно вызовите её при размонтировании компонента или завершении использования.**
+   *
+   * @example
+   * ```typescript
+   * const unsubscribe = statusTracker.onStatusChange((event) => {
+   *   console.log(`Модуль ${event.moduleName} изменил статус`);
+   * });
+   *
+   * // При размонтировании компонента или завершении использования:
+   * unsubscribe();
+   * ```
    */
   public onStatusChange(handler: StatusChangeHandler): () => void {
     this.statusChangeHandlers.push(handler);
-    
+
     return () => {
       const index = this.statusChangeHandlers.indexOf(handler);
       if (index > -1) {
         this.statusChangeHandlers.splice(index, 1);
+        log.debug(
+          `Обработчик изменения статуса отписан (осталось ${this.statusChangeHandlers.length})`,
+          { prefix: LOG_PREFIX },
+        );
       }
     };
   }
@@ -282,7 +342,7 @@ export class ModuleStatusTracker {
 
   /**
    * Возвращает сводную информацию о статусах всех модулей.
-   * 
+   *
    * @returns Сводка статусов
    */
   public getSummary(): ModuleStatusSummary {
@@ -310,7 +370,7 @@ export class ModuleStatusTracker {
 
   /**
    * Возвращает список всех отслеживаемых модулей.
-   * 
+   *
    * @returns Массив имен модулей
    */
   public getTrackedModuleNames(): string[] {
@@ -318,8 +378,19 @@ export class ModuleStatusTracker {
   }
 
   /**
+   * Возвращает количество активных подписчиков на изменения статусов.
+   *
+   * Полезно для отладки и мониторинга потенциальных утечек памяти.
+   *
+   * @returns Количество активных обработчиков
+   */
+  public getActiveHandlersCount(): number {
+    return this.statusChangeHandlers.length;
+  }
+
+  /**
    * Очищает информацию о модуле.
-   * 
+   *
    * @param moduleName - Имя модуля
    */
   public clear(moduleName: string): void {
@@ -332,14 +403,30 @@ export class ModuleStatusTracker {
 
   /**
    * Полностью очищает трекер.
+   *
+   * Очищает все данные трекера, включая:
+   * - Информацию о загруженных модулях
+   * - Promise предзагрузки
+   * - Все подписки на изменения статусов
+   *
+   * **Внимание:** После вызова этого метода все подписчики будут удалены
+   * и больше не будут получать уведомления об изменениях статусов.
    */
   public clearAll(): void {
-    const count = this.loadedModules.size;
+    const modulesCount = this.loadedModules.size;
+    const promisesCount = this.preloadingPromises.size;
+    const handlersCount = this.statusChangeHandlers.length;
+
     this.loadedModules.clear();
     this.preloadingPromises.clear();
-    log.debug(`Трекер очищен (удалено ${count} записей)`, {
-      prefix: LOG_PREFIX,
-    });
+    this.statusChangeHandlers.length = 0; // Очищаем массив обработчиков
+
+    log.debug(
+      `Трекер очищен (удалено ${modulesCount} модулей, ${promisesCount} Promise, ${handlersCount} обработчиков)`,
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
   }
 
   // ============================================
@@ -348,7 +435,7 @@ export class ModuleStatusTracker {
 
   /**
    * Устанавливает статус модуля и уведомляет подписчиков.
-   * 
+   *
    * @param module - Модуль
    * @param status - Новый статус
    * @param error - Ошибка (опционально)
@@ -380,7 +467,7 @@ export class ModuleStatusTracker {
 
   /**
    * Уведомляет всех подписчиков об изменении статуса.
-   * 
+   *
    * @param event - Событие изменения статуса
    */
   private notifyStatusChange(event: ModuleStatusChangeEvent): void {
@@ -396,4 +483,3 @@ export class ModuleStatusTracker {
     }
   }
 }
-
