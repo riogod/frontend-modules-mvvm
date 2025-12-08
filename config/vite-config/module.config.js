@@ -12,22 +12,30 @@ import fs from 'fs';
  * Модули используют shared из host если доступно, иначе fallback на свою копию
  */
 const defaultShared = {
-  react: { singleton: true, requiredVersion: false },
-  'react-dom': { singleton: true, requiredVersion: false },
-  mobx: { singleton: true, requiredVersion: false },
-  'mobx-react-lite': { singleton: true, requiredVersion: false },
-  i18next: { singleton: true, requiredVersion: false },
-  'react-i18next': { singleton: true, requiredVersion: false },
-  inversify: { singleton: true, requiredVersion: false },
-  'reflect-metadata': { singleton: true, requiredVersion: false },
-  '@riogz/react-router': { singleton: true, requiredVersion: false },
-  '@riogz/router': { singleton: true, requiredVersion: false },
-  '@riogz/router-plugin-browser': { singleton: true, requiredVersion: false },
+  react: { singleton: true, requiredVersion: false, eager: true },
+  'react-dom': { singleton: true, requiredVersion: false, eager: true },
+  mobx: { singleton: true, requiredVersion: false, eager: true },
+  'mobx-react-lite': { singleton: true, requiredVersion: false, eager: true },
+  i18next: { singleton: true, requiredVersion: false, eager: true },
+  'react-i18next': { singleton: true, requiredVersion: false, eager: true },
+  inversify: { singleton: true, requiredVersion: false, eager: true },
+  'reflect-metadata': { singleton: true, requiredVersion: false, eager: true },
+  '@riogz/react-router': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
+  '@riogz/router': { singleton: true, requiredVersion: false, eager: true },
+  '@riogz/router-plugin-browser': {
+    singleton: true,
+    requiredVersion: false,
+    eager: true,
+  },
   // Внутренние библиотеки - резолвятся через алиасы
-  '@platform/core': { singleton: true, requiredVersion: false },
-  '@platform/ui': { singleton: true, requiredVersion: false },
-  '@platform/common': { singleton: true, requiredVersion: false },
-  '@platform/share': { singleton: true, requiredVersion: false },
+  '@platform/core': { singleton: true, requiredVersion: false, eager: true },
+  '@platform/ui': { singleton: true, requiredVersion: false, eager: true },
+  '@platform/common': { singleton: true, requiredVersion: false, eager: true },
+  '@platform/share': { singleton: true, requiredVersion: false, eager: true },
   '@emotion/react': {
     singleton: true,
     requiredVersion: false,
@@ -200,11 +208,7 @@ export async function createModuleConfig(options) {
     ...base,
     server,
     preview,
-    // base должен быть установлен так, чтобы пути к файлам были правильными
-    // Файлы собираются в dist/modules/{moduleName}/latest/
-    base:
-      localConfig.base ||
-      (isProduction ? `/modules/${moduleName}/latest/` : '/'),
+    base: './',
     build: {
       outDir,
       target: 'esnext',
@@ -223,6 +227,7 @@ export async function createModuleConfig(options) {
           entryFileNames: '[name].js',
           chunkFileNames: '[name]-[hash].js',
           assetFileNames: '[name]-[hash][extname]',
+          publicPath: 'auto',
         },
       },
       ...build,

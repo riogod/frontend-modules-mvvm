@@ -592,11 +592,15 @@ async function createDevServer() {
       } else {
         // Проксируем на удаленный сервер
         // Поддерживаем все HTTP методы: GET, POST, PUT, DELETE, PATCH, OPTIONS
-        // Приоритет: apiUrl модуля > customUrl модуля > url модуля > settings.apiUrl > глобальный apiUrl
+        // Приоритет: apiUrl модуля > customUrl модуля > settings.apiUrl > глобальный apiUrl
+        // url модуля может указывать на remoteEntry.js, поэтому явно исключаем такие ссылки
+        const isRemoteEntryUrl =
+          typeof moduleConfig.url === 'string' &&
+          /remoteEntry\.js($|\?)/.test(moduleConfig.url);
         const apiUrl =
           moduleConfig.apiUrl ||
           moduleConfig.customUrl ||
-          moduleConfig.url ||
+          (!isRemoteEntryUrl ? moduleConfig.url : undefined) ||
           activeConfig.settings?.apiUrl ||
           config.apiUrl ||
           '';
