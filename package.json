@@ -59,7 +59,6 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/preset-react": "7.28.5",
-    "@chromatic-com/storybook": "^4.1.2",
     "@emotion/babel-plugin": "11.13.5",
     "@originjs/vite-plugin-federation": "^1.4.1",
     "@storybook/addon-a11y": "9.1.7",
