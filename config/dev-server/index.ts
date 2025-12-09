@@ -172,13 +172,40 @@ function getModuleByPath(urlPath: string): string | null {
 }
 
 /**
- * Обогащает ответ /app/start данными из манифеста
+ * Обогащает ответ /app/start данными из манифеста.
+ * Приводит remoteEntry к абсолютному URL с учетом remoteServerUrl.
  */
-function enrichAppStartResponse(originalResponse: any): any {
+function enrichAppStartResponse(
+  originalResponse: any,
+  remoteServerUrl: string,
+): any {
   const manifest = loadManifest();
   if (!manifest) {
     return originalResponse;
   }
+
+  // Нормализуем remoteEntry до абсолютного URL при наличии remoteServerUrl
+  const normalizeRemoteEntry = (remoteEntry?: string) => {
+    if (!remoteEntry) return remoteEntry;
+
+    // Уже абсолютный URL
+    if (/^https?:\/\//i.test(remoteEntry)) {
+      return remoteEntry;
+    }
+
+    // Нет настроенного удаленного хоста — оставляем как есть
+    if (!remoteServerUrl || remoteServerUrl.trim() === '') {
+      return remoteEntry;
+    }
+
+    try {
+      const base = remoteServerUrl.trim().replace(/\/+$/, '');
+      return new URL(remoteEntry, `${base}/`).toString();
+    } catch {
+      // В случае ошибки парсинга не ломаем ответ
+      return remoteEntry;
+    }
+  };
 
   // Если ответ уже имеет структуру с data, обогащаем её
   if (originalResponse.data) {
@@ -206,17 +233,32 @@ function enrichAppStartResponse(originalResponse: any): any {
       };
     }
 
-    // Добавляем модули из манифеста
-    if (manifest.modules && manifest.modules.length > 0) {
-      originalResponse.data.modules = manifest.modules.map((module) => ({
-        name: module.name,
-        loadType: module.loadType,
-        loadPriority: module.loadPriority,
-        remoteEntry: module.remoteEntry,
-        dependencies: module.dependencies || [],
-        featureFlags: module.featureFlags || [],
-        accessPermissions: module.accessPermissions || [],
-      }));
+    // Мержим модули: backend + manifest (manifest может добавлять/оверрайдить)
+    if (originalResponse.data.modules || manifest.modules) {
+      const merged = new Map<string, any>();
+
+      // Сначала бэкендовые модули
+      (originalResponse.data.modules || []).forEach((module: any) => {
+        merged.set(module.name, {
+          ...module,
+          remoteEntry: normalizeRemoteEntry(module.remoteEntry),
+        });
+      });
+
+      // Затем модули из манифеста (могут добавлять или переопределять)
+      (manifest.modules || []).forEach((module) => {
+        merged.set(module.name, {
+          name: module.name,
+          loadType: module.loadType,
+          loadPriority: module.loadPriority,
+          remoteEntry: normalizeRemoteEntry(module.remoteEntry),
+          dependencies: module.dependencies || [],
+          featureFlags: module.featureFlags || [],
+          accessPermissions: module.accessPermissions || [],
+        });
+      });
+
+      originalResponse.data.modules = Array.from(merged.values());
     }
   }
 
@@ -265,6 +307,7 @@ async function createDevServer() {
   // Приоритет: settings.apiUrl > глобальный apiUrl
   const hostUseLocalMocks = activeConfig.settings?.useLocalMocks !== false;
   const hostApiUrl = activeConfig.settings?.apiUrl || config.apiUrl || '';
+  const remoteServerUrl = config.remoteServerUrl || '';
 
   console.log(
     `[DevServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'}`,
@@ -318,7 +361,7 @@ async function createDevServer() {
             'utf-8',
           );
           const data = JSON.parse(appStartDataContent);
-          const enriched = enrichAppStartResponse(data);
+          const enriched = enrichAppStartResponse(data, remoteServerUrl);
           res.status(200).json(enriched);
           return;
         } catch (error) {
@@ -382,12 +425,15 @@ async function createDevServer() {
               modules: [],
             },
           };
-          const enriched = enrichAppStartResponse(baseResponse);
+          const enriched = enrichAppStartResponse(
+            baseResponse,
+            remoteServerUrl,
+          );
           res.status(304).json(enriched);
           return;
         }
 
-        const enriched = enrichAppStartResponse(response.data);
+        const enriched = enrichAppStartResponse(response.data, remoteServerUrl);
         res.status(response.status).json(enriched);
         return;
       }
@@ -402,7 +448,7 @@ async function createDevServer() {
           modules: [],
         },
       };
-      const enriched = enrichAppStartResponse(baseResponse);
+      const enriched = enrichAppStartResponse(baseResponse, remoteServerUrl);
       res.json(enriched);
     } catch (error: any) {
       // Если ошибка связана с ответом (например, 304 без validateStatus)
@@ -424,13 +470,19 @@ async function createDevServer() {
               modules: [],
             },
           };
-          const enriched = enrichAppStartResponse(baseResponse);
+          const enriched = enrichAppStartResponse(
+            baseResponse,
+            remoteServerUrl,
+          );
           res.status(304).json(enriched);
           return;
         }
 
         // Для других статусов отправляем данные
-        const enriched = enrichAppStartResponse(error.response.data || {});
+        const enriched = enrichAppStartResponse(
+          error.response.data || {},
+          remoteServerUrl,
+        );
         res.status(status).json(enriched);
         return;
       }
@@ -438,18 +490,18 @@ async function createDevServer() {
       // Компактный вывод ошибки
       const errorUrl = error.config?.url || hostApiUrl || '/app/start';
       const errorCode = error.code || 'UNKNOWN';
-      
+
       // Для ECONNREFUSED выводим более компактное сообщение
       if (errorCode === 'ECONNREFUSED') {
         console.error(
-          `[DevServer] Backend server unavailable: ${errorUrl} (${errorCode})`
+          `[DevServer] Backend server unavailable: ${errorUrl} (${errorCode})`,
         );
       } else {
         console.error(
-          `[DevServer] Error handling /app/start: ${errorCode} - ${error.message || 'Unknown error'}`
+          `[DevServer] Error handling /app/start: ${errorCode} - ${error.message || 'Unknown error'}`,
         );
       }
-      
+
       res.status(500).json({
         error: 'Internal server error',
         message: error.message,
@@ -463,13 +515,66 @@ async function createDevServer() {
 
     // Определяем модуль по пути
     const moduleName = getModuleByPath(urlPath);
+    // Если модуль не распознан — пробуем просто проксировать на backend
     if (!moduleName) {
-      res.status(404).json({ error: 'Not found' });
+      if (hostApiUrl) {
+        try {
+          const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${urlPath}`;
+          const response = await axios({
+            method: req.method as any,
+            url: targetUrl,
+            headers: req.headers,
+            data: ['POST', 'PUT', 'PATCH'].includes(req.method.toUpperCase())
+              ? req.body
+              : undefined,
+            params: req.query,
+          });
+
+          Object.entries(response.headers).forEach(([key, value]) => {
+            if (value) res.setHeader(key, String(value));
+          });
+
+          res.status(response.status).send(response.data);
+        } catch (error: any) {
+          const status = error.response?.status || 500;
+          res
+            .status(status)
+            .json(error.response?.data || { error: 'Proxy error' });
+        }
+      } else {
+        res.status(404).json({ error: 'Not found' });
+      }
       return;
     }
 
     const moduleConfig = activeConfig.modules[moduleName];
     if (!moduleConfig) {
+      // Если модуль отсутствует в конфиге, но backend задан — проксируем
+      if (hostApiUrl) {
+        try {
+          const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${urlPath}`;
+          const response = await axios({
+            method: req.method as any,
+            url: targetUrl,
+            headers: req.headers,
+            data: ['POST', 'PUT', 'PATCH'].includes(req.method.toUpperCase())
+              ? req.body
+              : undefined,
+            params: req.query,
+          });
+          Object.entries(response.headers).forEach(([key, value]) => {
+            if (value) res.setHeader(key, String(value));
+          });
+          res.status(response.status).send(response.data);
+        } catch (error: any) {
+          const status = error.response?.status || 500;
+          res
+            .status(status)
+            .json(error.response?.data || { error: 'Proxy error' });
+        }
+        return;
+      }
+
       res.status(404).json({ error: 'Module not configured' });
       return;
     }
@@ -583,9 +688,69 @@ async function createDevServer() {
               error,
             );
           }
+          // Если мока нет — пробуем проксировать на backend
+          if (hostApiUrl) {
+            try {
+              const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${urlPath}`;
+              const response = await axios({
+                method: req.method as any,
+                url: targetUrl,
+                headers: req.headers,
+                data: ['POST', 'PUT', 'PATCH'].includes(
+                  req.method.toUpperCase(),
+                )
+                  ? req.body
+                  : undefined,
+                params: req.query,
+              });
+
+              Object.entries(response.headers).forEach(([key, value]) => {
+                if (value) res.setHeader(key, String(value));
+              });
+
+              res.status(response.status).send(response.data);
+              return;
+            } catch (error: any) {
+              const status = error.response?.status || 500;
+              res
+                .status(status)
+                .json(error.response?.data || { error: 'Proxy error' });
+              return;
+            }
+          }
           res.status(404).json({ error: 'No matching mock handler found' });
           return;
         } else {
+          // Нет моков — пробуем проксировать на backend
+          if (hostApiUrl) {
+            try {
+              const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${urlPath}`;
+              const response = await axios({
+                method: req.method as any,
+                url: targetUrl,
+                headers: req.headers,
+                data: ['POST', 'PUT', 'PATCH'].includes(
+                  req.method.toUpperCase(),
+                )
+                  ? req.body
+                  : undefined,
+                params: req.query,
+              });
+
+              Object.entries(response.headers).forEach(([key, value]) => {
+                if (value) res.setHeader(key, String(value));
+              });
+
+              res.status(response.status).send(response.data);
+              return;
+            } catch (error: any) {
+              const status = error.response?.status || 500;
+              res
+                .status(status)
+                .json(error.response?.data || { error: 'Proxy error' });
+              return;
+            }
+          }
           res.status(404).json({ error: 'No mock handlers available' });
           return;
         }
@@ -728,4 +893,3 @@ createDevServer().catch((error) => {
   console.error('[DevServer] Failed to start server:', error);
   process.exit(1);
 });
-

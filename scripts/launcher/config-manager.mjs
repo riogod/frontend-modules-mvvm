@@ -57,6 +57,7 @@ export class ConfigManager {
     return {
       version: '1.0.0',
       lastUsed: null,
+      recentUsed: [],
       remoteServerUrl: '',
       logLevel: 'INFO', // Уровень логирования по умолчанию
       useLocalMocks: true, // Использовать локальные моки по умолчанию
@@ -72,6 +73,9 @@ export class ConfigManager {
    */
   getList() {
     const lastUsed = this.config.lastUsed;
+    const recent = Array.isArray(this.config.recentUsed)
+      ? this.config.recentUsed
+      : [];
     const list = Object.entries(this.config.configurations).map(
       ([id, config]) => ({
         id,
@@ -83,8 +87,18 @@ export class ConfigManager {
       }),
     );
 
-    // Сортируем: последняя использованная первой, остальные по количеству использований
+    // Сортируем: сначала по истории recentUsed (LRU-порядок), затем lastUsed, затем usageCount
     return list.sort((a, b) => {
+      const ai = recent.indexOf(a.id);
+      const bi = recent.indexOf(b.id);
+
+      const aInRecent = ai !== -1;
+      const bInRecent = bi !== -1;
+
+      if (aInRecent && bInRecent) return ai - bi;
+      if (aInRecent) return -1;
+      if (bInRecent) return 1;
+
       if (a.isLastUsed) return -1;
       if (b.isLastUsed) return 1;
       return (b.usageCount || 0) - (a.usageCount || 0);
@@ -158,6 +172,11 @@ export class ConfigManager {
     if (this.config.lastUsed === id) {
       this.config.lastUsed = null;
     }
+    if (Array.isArray(this.config.recentUsed)) {
+      this.config.recentUsed = this.config.recentUsed.filter(
+        (item) => item !== id,
+      );
+    }
     this.save();
   }
 
@@ -169,6 +188,12 @@ export class ConfigManager {
     if (this.config.configurations[id]) {
       this.config.configurations[id].usageCount =
         (this.config.configurations[id].usageCount || 0) + 1;
+      // Обновляем историю последних запусков (LRU)
+      const recent = Array.isArray(this.config.recentUsed)
+        ? this.config.recentUsed
+        : [];
+      const nextRecent = [id, ...recent.filter((item) => item !== id)];
+      this.config.recentUsed = nextRecent;
       this.config.lastUsed = id;
       this.save();
     }
