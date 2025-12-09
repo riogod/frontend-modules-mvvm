@@ -19,14 +19,24 @@ import type { ModuleConfig } from '../../../interface';
 
 import { ModuleRegistry } from './ModuleRegistry';
 import { ModuleStatusTracker } from './ModuleStatusTracker';
-import { ConditionValidator } from '../services/ConditionValidator';
-import { DependencyResolver } from '../services/DependencyResolver';
 import { LifecycleManager } from '../services/LifecycleManager';
 import { InitLoadStrategy } from '../strategies/InitLoadStrategy';
 import { NormalLoadStrategy } from '../strategies/NormalLoadStrategy';
-import { DependencyLevelBuilder } from '../utils/DependencyLevelBuilder';
 import { hasDependencies } from '../utils/moduleUtils';
 import type { ModuleLoadStatus, LoadModuleOptions } from '../types';
+import type { ConditionValidator } from '../dev/ConditionValidator';
+import type { DependencyResolver } from '../dev/DependencyResolver';
+import type { DependencyLevelBuilder } from '../dev/DependencyLevelBuilder';
+
+type DevToolsModule = {
+  ConditionValidator: new () => ConditionValidator;
+  DependencyResolver: new (registry: ModuleRegistry) => DependencyResolver;
+  DependencyLevelBuilder: new (
+    registry: ModuleRegistry,
+    isLoaded: (name: string) => boolean,
+    isPreloaded?: (name: string) => boolean,
+  ) => DependencyLevelBuilder;
+};
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader';
@@ -53,14 +63,17 @@ export class ModuleLoader {
   /** Трекер статусов модулей */
   private readonly statusTracker: ModuleStatusTracker;
 
-  /** Валидатор условий загрузки */
-  private readonly conditionValidator: ConditionValidator;
-
-  /** Резолвер зависимостей */
-  private readonly dependencyResolver: DependencyResolver;
-
   /** Менеджер жизненного цикла */
   private readonly lifecycleManager: LifecycleManager;
+
+  /** Dev-валидатор условий (инициализируется лениво и только в DEV) */
+  private conditionValidator: ConditionValidator | null = null;
+
+  /** Dev-резолвер зависимостей (инициализируется лениво и только в DEV) */
+  private dependencyResolver: DependencyResolver | null = null;
+
+  /** Кеш промиса загрузки dev-утилит */
+  private devToolsPromise: Promise<DevToolsModule> | null = null;
 
   // ============================================
   // Состояние
@@ -87,8 +100,6 @@ export class ModuleLoader {
     // Инициализация компонентов
     this.registry = new ModuleRegistry();
     this.statusTracker = new ModuleStatusTracker();
-    this.conditionValidator = new ConditionValidator();
-    this.dependencyResolver = new DependencyResolver(this.registry);
     this.lifecycleManager = new LifecycleManager(this.registry);
 
     log.debug('ModuleLoader: компоненты инициализированы', {
@@ -311,8 +322,6 @@ export class ModuleLoader {
         this.registry,
         this.statusTracker,
         this.lifecycleManager,
-        this.conditionValidator,
-        this.dependencyResolver,
         (routeName: string) => this.autoLoadModuleByRoute(routeName),
       );
     }
@@ -354,8 +363,9 @@ export class ModuleLoader {
     const hasDeps =
       module.loadCondition?.dependencies &&
       module.loadCondition.dependencies.length > 0;
-    if (hasDeps && this.dependencyResolver.hasCircularDependencies(module)) {
-      const allDeps = this.dependencyResolver.getAllDependencies(module);
+    const dependencyResolver = await this.getDependencyResolver();
+    if (hasDeps && dependencyResolver?.hasCircularDependencies(module)) {
+      const allDeps = dependencyResolver.getAllDependencies(module);
       throw new Error(
         `Обнаружена циклическая зависимость для модуля "${moduleName}". Зависимости: ${allDeps.join(', ')}`,
       );
@@ -366,13 +376,15 @@ export class ModuleLoader {
       options?.timeout ?? this.defaultLoadTimeout;
 
     // Загружаем зависимости
-    await this.dependencyResolver.loadDependencies(
-      module,
-      bootstrap,
-      (m: Module, b: Bootstrap) =>
-        this.loadSingleModuleWithTimeout(m, b, timeout),
-      (name: string) => this.statusTracker.isLoaded(name),
-    );
+    if (dependencyResolver) {
+      await dependencyResolver.loadDependencies(
+        module,
+        bootstrap,
+        (m: Module, b: Bootstrap) =>
+          this.loadSingleModuleWithTimeout(m, b, timeout),
+        (name: string) => this.statusTracker.isLoaded(name),
+      );
+    }
 
     // Загружаем сам модуль с таймаутом
     await this.loadSingleModuleWithTimeout(module, bootstrap, timeout);
@@ -519,10 +531,7 @@ export class ModuleLoader {
     // Проверяем условия для всех модулей
     const modulesToPreloadFiltered: Module[] = [];
     for (const module of modulesToPreload) {
-      const shouldSkip = await this.conditionValidator.shouldSkipInPreload(
-        module,
-        bootstrap,
-      );
+      const shouldSkip = await this.shouldSkipPreloadInDev(module, bootstrap);
       if (!shouldSkip) {
         modulesToPreloadFiltered.push(module);
       } else {
@@ -642,14 +651,12 @@ export class ModuleLoader {
       return;
     }
 
-    // Группируем по уровням зависимостей
-    const levelBuilder = new DependencyLevelBuilder(
-      this.registry,
+    // Группируем по уровням зависимостей (в DEV используем тяжелый билдер, в PROD плоский список)
+    const levels = (await this.buildDependencyLevels(
+      modulesToLoad,
       (name: string) => this.statusTracker.isLoaded(name),
       (name: string) => this.statusTracker.isPreloaded(name),
-    );
-
-    const { levels } = levelBuilder.buildDependencyLevels(modulesToLoad);
+    )) ?? [modulesToLoad];
 
     for (let i = 0; i < levels.length; i++) {
       const levelModules = levels[i];
@@ -785,11 +792,7 @@ export class ModuleLoader {
     }
 
     // Проверяем условия загрузки
-    const canLoad = await this.conditionValidator.validateLoadConditions(
-      module,
-      bootstrap,
-      (name: string) => this.statusTracker.isLoaded(name),
-    );
+    const canLoad = await this.canLoadModule(module, bootstrap);
 
     if (!canLoad) {
       log.debug(`Модуль "${module.name}": условия загрузки не выполнены`, {
@@ -959,10 +962,7 @@ export class ModuleLoader {
     bootstrap: Bootstrap,
   ): Promise<void> {
     // Проверяем условия (без зависимостей) перед выполнением
-    const shouldSkip = await this.conditionValidator.shouldSkipInPreload(
-      module,
-      bootstrap,
-    );
+    const shouldSkip = await this.shouldSkipPreloadInDev(module, bootstrap);
 
     if (shouldSkip) {
       log.debug(`Модуль "${module.name}" пропущен при предзагрузке`, {
@@ -1077,6 +1077,120 @@ export class ModuleLoader {
     }
 
     return false;
+  }
+
+  // ============================================
+  // Приватные методы: Dev/Prod развилки
+  // ============================================
+
+  /**
+   * Загружает dev-утилиты лениво.
+   * В prod возвращает null, чтобы не тянуть тяжелый код.
+   */
+  private async getDevTools() {
+    if (!import.meta.env.DEV) {
+      return null;
+    }
+
+    if (!this.devToolsPromise) {
+      this.devToolsPromise = import('../dev').then((mod) => ({
+        ConditionValidator: mod.ConditionValidator,
+        DependencyResolver: mod.DependencyResolver,
+        DependencyLevelBuilder: mod.DependencyLevelBuilder,
+      }));
+    }
+
+    return this.devToolsPromise;
+  }
+
+  /**
+   * Возвращает dev-валидатор условий (только в DEV).
+   */
+  private async getConditionValidator(): Promise<ConditionValidator | null> {
+    const devTools = await this.getDevTools();
+    if (!devTools) {
+      return null;
+    }
+
+    if (!this.conditionValidator) {
+      this.conditionValidator = new devTools.ConditionValidator();
+    }
+
+    return this.conditionValidator;
+  }
+
+  /**
+   * Возвращает dev-резолвер зависимостей (только в DEV).
+   */
+  private async getDependencyResolver(): Promise<DependencyResolver | null> {
+    const devTools = await this.getDevTools();
+    if (!devTools) {
+      return null;
+    }
+
+    if (!this.dependencyResolver) {
+      this.dependencyResolver = new devTools.DependencyResolver(this.registry);
+    }
+
+    return this.dependencyResolver;
+  }
+
+  /**
+   * Выполняет проверку условий загрузки.
+   * В prod условия считаются выполненными (сервер уже отфильтровал данные).
+   */
+  private async canLoadModule(
+    module: Module,
+    bootstrap: Bootstrap,
+  ): Promise<boolean> {
+    const validator = await this.getConditionValidator();
+    if (!validator) {
+      return true;
+    }
+
+    return validator.validateLoadConditions(module, bootstrap, (name: string) =>
+      this.statusTracker.isLoaded(name),
+    );
+  }
+
+  /**
+   * Проверяет, нужно ли пропустить модуль на этапе предзагрузки.
+   * В prod всегда возвращает false (условия уже проверены на сервере).
+   */
+  private async shouldSkipPreloadInDev(
+    module: Module,
+    bootstrap: Bootstrap,
+  ): Promise<boolean> {
+    const validator = await this.getConditionValidator();
+    if (!validator) {
+      return false;
+    }
+
+    return validator.shouldSkipInPreload(module, bootstrap);
+  }
+
+  /**
+   * Строит уровни зависимостей в DEV, в PROD возвращает null
+   * (используем плоский список как один уровень).
+   */
+  private async buildDependencyLevels(
+    modules: Module[],
+    isLoaded: (name: string) => boolean,
+    isPreloaded?: (name: string) => boolean,
+  ): Promise<Module[][] | null> {
+    const devTools = await this.getDevTools();
+    if (!devTools) {
+      return null;
+    }
+
+    const builder = new devTools.DependencyLevelBuilder(
+      this.registry,
+      isLoaded,
+      isPreloaded,
+    );
+
+    const { levels } = builder.buildDependencyLevels(modules);
+    return levels;
   }
 
   // ============================================

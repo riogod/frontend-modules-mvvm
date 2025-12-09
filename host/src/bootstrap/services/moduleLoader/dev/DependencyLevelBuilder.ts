@@ -1,5 +1,5 @@
 /**
- * Построитель уровней зависимостей.
+ * Построитель уровней зависимостей (DEV-ONLY).
  *
  * Отвечает за:
  * - Группировку модулей по уровням зависимостей
@@ -8,7 +8,7 @@
  *
  * Реализует паттерн Builder для построения структуры зависимостей.
  *
- * @module utils/DependencyLevelBuilder
+ * @module dev/DependencyLevelBuilder
  */
 
 import { log } from '@platform/core';
@@ -19,7 +19,7 @@ import type {
   IsModuleLoadedFunction,
   IsModulePreloadedFunction,
 } from '../types';
-import { getModuleDependencies, hasDependencies } from './moduleUtils';
+import { getModuleDependencies, hasDependencies } from '../utils/moduleUtils';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.dependencyLevelBuilder';
@@ -116,7 +116,9 @@ export class DependencyLevelBuilder {
       if (currentLevel.length > 0) {
         levels.push(currentLevel);
         log.debug(
-          `Уровень ${levels.length}: ${currentLevel.map((m) => m.name).join(', ')}`,
+          `Уровень ${levels.length}: ${currentLevel
+            .map((m) => m.name)
+            .join(', ')}`,
           { prefix: LOG_PREFIX },
         );
       }
@@ -294,3 +296,5 @@ export class DependencyLevelBuilder {
     return modules.filter((m) => !processed.has(m.name)).map((m) => m.name);
   }
 }
+
+

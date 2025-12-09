@@ -16,10 +16,8 @@ import type { ILoadStrategy } from './LoadStrategy';
 import type { ModuleRegistry } from '../core/ModuleRegistry';
 import type { ModuleStatusTracker } from '../core/ModuleStatusTracker';
 import type { LifecycleManager } from '../services/LifecycleManager';
-import type { ConditionValidator } from '../services/ConditionValidator';
-import type { DependencyResolver } from '../services/DependencyResolver';
-import { DependencyLevelBuilder } from '../utils/DependencyLevelBuilder';
 import type { AutoLoadByRouteFunction } from '../types';
+import { loadNormalModulesProd } from '../prod';
 
 /** Префикс для логирования */
 const LOG_PREFIX = 'moduleLoader.normalStrategy';
@@ -37,8 +35,6 @@ export class NormalLoadStrategy implements ILoadStrategy {
     private readonly registry: ModuleRegistry,
     private readonly statusTracker: ModuleStatusTracker,
     private readonly lifecycleManager: LifecycleManager,
-    private readonly conditionValidator: ConditionValidator,
-    private readonly dependencyResolver: DependencyResolver,
     private readonly autoLoadHandler: AutoLoadByRouteFunction,
   ) {
     log.debug('NormalLoadStrategy: инициализация', { prefix: LOG_PREFIX });
@@ -65,7 +61,6 @@ export class NormalLoadStrategy implements ILoadStrategy {
     modules: Module[],
     bootstrap: Bootstrap,
   ): Promise<void> {
-    // Проверяем, загружены ли INIT модули
     if (!this.registry.isInitModulesLoaded) {
       log.error('INIT модули должны быть загружены первыми', {
         prefix: LOG_PREFIX,
@@ -73,181 +68,38 @@ export class NormalLoadStrategy implements ILoadStrategy {
       throw new Error('INIT модули должны быть загружены первыми');
     }
 
-    // Фильтруем только NORMAL модули
     const normalModules = modules.filter((m) => this.isApplicable(m));
-
-    // Сортируем по приоритету
     const sortedModules = this.registry.sortModulesByPriority(normalModules);
 
-    log.debug(`Загрузка ${sortedModules.length} NORMAL модулей`, {
-      prefix: LOG_PREFIX,
-    });
-
-    // Проверяем циклические зависимости перед загрузкой
-    // Оптимизация: проверяем только модули с зависимостями
-    const modulesWithCircularDeps: string[] = [];
-    for (const module of sortedModules) {
-      // Пропускаем проверку для модулей без зависимостей (оптимизация)
-      const hasDeps =
-        module.loadCondition?.dependencies &&
-        module.loadCondition.dependencies.length > 0;
-      if (hasDeps && this.dependencyResolver.hasCircularDependencies(module)) {
-        modulesWithCircularDeps.push(module.name);
-      }
-    }
-
-    if (modulesWithCircularDeps.length > 0) {
-      const message = `Обнаружены циклические зависимости в модулях: ${modulesWithCircularDeps.join(', ')}`;
-      log.error(message, { prefix: LOG_PREFIX });
-      throw new Error(message);
-    }
-
-    // Группируем по уровням зависимостей
-    const levelBuilder = new DependencyLevelBuilder(
-      this.registry,
-      (name: string) => this.statusTracker.isLoaded(name),
-      (name: string) => this.statusTracker.isPreloaded(name),
-    );
-
-    const { levels, skippedModules } =
-      levelBuilder.buildDependencyLevels(sortedModules);
-
-    if (skippedModules.length > 0) {
-      log.warn(
-        `Пропущено ${skippedModules.length} модулей из-за отсутствующих зависимостей`,
-        { prefix: LOG_PREFIX },
-      );
-    }
-
-    // Загружаем уровни последовательно, модули внутри уровня - параллельно
-    for (let i = 0; i < levels.length; i++) {
-      const levelModules = levels[i];
-      log.debug(
-        `Обработка уровня ${i + 1}/${levels.length} (${levelModules.length} модулей)`,
-        { prefix: LOG_PREFIX },
-      );
-
-      await Promise.all(
-        levelModules.map((module: Module) =>
-          this.loadSingleModule(module, bootstrap),
-        ),
-      );
-
-      log.debug(`Уровень ${i + 1}/${levels.length} завершен`, {
+    // === РАЗВИЛКА Dev/Prod ===
+    if (import.meta.env.DEV) {
+      log.debug('[DEV] Используем dev-загрузчик для NORMAL модулей', {
         prefix: LOG_PREFIX,
       });
-    }
 
-    log.debug('Все NORMAL модули обработаны', { prefix: LOG_PREFIX });
-  }
-
-  /**
-   * Загружает один NORMAL модуль.
-   *
-   * @param module - Модуль для загрузки
-   * @param bootstrap - Инстанс Bootstrap
-   */
-  private async loadSingleModule(
-    module: Module,
-    bootstrap: Bootstrap,
-  ): Promise<void> {
-    // Проверяем, не загружен ли уже
-    if (this.statusTracker.isLoadedOrLoading(module.name)) {
-      log.debug(`NORMAL модуль "${module.name}" уже загружен или загружается`, {
-        prefix: LOG_PREFIX,
-      });
-      return;
-    }
-
-    // Если модуль предзагружен, просто помечаем как загруженный
-    if (this.statusTracker.isPreloaded(module.name)) {
-      log.debug(
-        `NORMAL модуль "${module.name}" предзагружен, помечаем как загруженный`,
-        {
-          prefix: LOG_PREFIX,
-        },
-      );
-      this.statusTracker.markAsLoaded(module);
-      return;
-    }
-
-    // Проверяем условия загрузки
-    const canLoad = await this.conditionValidator.validateLoadConditions(
-      module,
-      bootstrap,
-      (name: string) => this.statusTracker.isLoaded(name),
-    );
-
-    if (!canLoad) {
-      log.debug(
-        `NORMAL модуль "${module.name}": условия загрузки не выполнены`,
-        {
-          prefix: LOG_PREFIX,
-        },
-      );
-      this.statusTracker.markAsFailed(
-        module,
-        new Error(`Условия загрузки не выполнены для модуля ${module.name}`),
-      );
-      return;
-    }
-
-    log.debug(`Загрузка NORMAL модуля "${module.name}"`, {
-      prefix: LOG_PREFIX,
-    });
-
-    // Загружаем зависимости
-    await this.dependencyResolver.loadDependencies(
-      module,
-      bootstrap,
-      (m: Module, b: Bootstrap) => this.loadSingleModuleInternal(m, b),
-      (name: string) => this.statusTracker.isLoaded(name),
-    );
-
-    // Загружаем сам модуль
-    await this.loadSingleModuleInternal(module, bootstrap);
-  }
-
-  /**
-   * Внутренний метод загрузки модуля (без проверки зависимостей).
-   *
-   * @param module - Модуль для загрузки
-   * @param bootstrap - Инстанс Bootstrap
-   */
-  private async loadSingleModuleInternal(
-    module: Module,
-    bootstrap: Bootstrap,
-  ): Promise<void> {
-    if (this.statusTracker.isLoadedOrLoading(module.name)) {
-      return;
-    }
-
-    this.statusTracker.markAsLoading(module);
-
-    try {
-      // Инициализируем модуль
-      await this.lifecycleManager.initializeModule(module, bootstrap, false);
-
-      // Регистрируем ресурсы
-      await this.lifecycleManager.registerModuleResources(
-        module,
+      // Динамический импорт dev-логики
+      const { loadNormalModulesDev } = await import('../dev');
+      await loadNormalModulesDev(sortedModules, {
+        registry: this.registry,
+        statusTracker: this.statusTracker,
+        lifecycleManager: this.lifecycleManager,
         bootstrap,
-        (name: string) => this.statusTracker.isLoaded(name),
-        this.autoLoadHandler,
-      );
-
-      this.statusTracker.markAsLoaded(module);
-
-      log.debug(`NORMAL модуль "${module.name}" загружен успешно`, {
+        autoLoadHandler: this.autoLoadHandler,
+      });
+    } else {
+      log.debug('[PROD] Используем prod-загрузчик для NORMAL модулей', {
         prefix: LOG_PREFIX,
       });
-    } catch (error) {
-      this.statusTracker.markAsFailed(module, error);
-      log.error(`Ошибка загрузки NORMAL модуля "${module.name}"`, {
-        prefix: LOG_PREFIX,
-        error: error instanceof Error ? error.message : String(error),
+
+      // В prod-режиме считаем, что модули уже отсортированы сервером
+      // Пока используем плоский список как один уровень
+      await loadNormalModulesProd([sortedModules], {
+        registry: this.registry,
+        statusTracker: this.statusTracker,
+        lifecycleManager: this.lifecycleManager,
+        bootstrap,
+        autoLoadHandler: this.autoLoadHandler,
       });
-      throw error;
     }
   }
 }

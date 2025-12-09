@@ -1,12 +1,12 @@
 /**
- * Резолвер зависимостей модулей.
+ * Резолвер зависимостей модулей (DEV-ONLY).
  *
  * Отвечает за:
  * - Получение и валидацию зависимостей модуля
  * - Рекурсивную загрузку зависимостей
  * - Обнаружение циклических зависимостей
  *
- * @module services/DependencyResolver
+ * @module dev/DependencyResolver
  */
 
 import { log } from '@platform/core';
@@ -264,9 +264,10 @@ export class DependencyResolver {
           prefix: LOG_PREFIX,
         });
       } else {
-        log.debug(`Зависимость "${depModule.name}" уже загружена, пропускаем`, {
-          prefix: LOG_PREFIX,
-        });
+        log.debug(
+          `Зависимость "${depModule.name}" уже загружена, пропускаем`,
+          { prefix: LOG_PREFIX },
+        );
       }
     }
 
@@ -345,3 +346,5 @@ export class DependencyResolver {
     }
   }
 }
+
+

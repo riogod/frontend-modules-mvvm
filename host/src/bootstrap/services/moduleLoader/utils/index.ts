@@ -3,7 +3,6 @@
  * @module utils
  */
 
-export { DependencyLevelBuilder } from './DependencyLevelBuilder';
 export {
   checkRemoteAvailability,
   getRemoteBasePath,

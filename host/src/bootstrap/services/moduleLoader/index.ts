@@ -59,13 +59,9 @@ export {
 // ============================================
 
 export {
-  ConditionValidator,
-  DependencyResolver,
-  DependencyResolutionError,
   LifecycleManager,
   RemoteModuleLoader,
   remoteModuleLoader,
-  type ValidationResult,
 } from './services';
 
 // ============================================
@@ -80,11 +76,20 @@ export {
 } from './strategies';
 
 // ============================================
+// Prod-only исполняющие компоненты
+// ============================================
+
+export {
+  loadInitModulesProd,
+  loadNormalModulesProd,
+  type ProdExecutorContext,
+} from './prod';
+
+// ============================================
 // Утилиты
 // ============================================
 
 export {
-  DependencyLevelBuilder,
   checkRemoteAvailability,
   getRemoteBasePath,
   createScopeName,

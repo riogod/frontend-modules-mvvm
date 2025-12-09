@@ -1,13 +1,13 @@
 /**
- * Валидатор условий загрузки модулей.
- * 
+ * Валидатор условий загрузки модулей (DEV-ONLY).
+ *
  * Отвечает за:
  * - Проверку feature flags
  * - Проверку прав доступа (permissions)
  * - Проверку зависимостей модулей
  * - Комплексную валидацию условий загрузки
- * 
- * @module services/ConditionValidator
+ *
+ * @module dev/ConditionValidator
  */
 
 import { IOC_CORE_TOKENS, log } from '@platform/core';
@@ -38,7 +38,7 @@ export interface ValidationResult {
 
 /**
  * Валидатор условий загрузки модулей.
- * 
+ *
  * Проверяет выполнение условий перед загрузкой модуля:
  * - Feature flags (функциональные флаги)
  * - Access permissions (права доступа)
@@ -55,7 +55,7 @@ export class ConditionValidator {
 
   /**
    * Проверяет все условия загрузки модуля.
-   * 
+   *
    * @param module - Модуль для проверки
    * @param bootstrap - Инстанс Bootstrap
    * @param isModuleLoaded - Функция проверки загрузки модуля
@@ -76,7 +76,7 @@ export class ConditionValidator {
 
   /**
    * Проверяет все условия загрузки модуля с детальным результатом.
-   * 
+   *
    * @param module - Модуль для проверки
    * @param bootstrap - Инстанс Bootstrap
    * @param isModuleLoaded - Функция проверки загрузки модуля
@@ -112,7 +112,9 @@ export class ConditionValidator {
         return {
           canLoad: false,
           reason: 'Feature flags не выполнены',
-          details: { featureFlags: { required: featureFlags, missing: featureFlags } },
+          details: {
+            featureFlags: { required: featureFlags, missing: featureFlags },
+          },
         };
       }
     }
@@ -131,7 +133,10 @@ export class ConditionValidator {
           canLoad: false,
           reason: 'Права доступа не выполнены',
           details: {
-            permissions: { required: accessPermissions, missing: accessPermissions },
+            permissions: {
+              required: accessPermissions,
+              missing: accessPermissions,
+            },
           },
         };
       }
@@ -139,7 +144,10 @@ export class ConditionValidator {
 
     // Проверка зависимостей
     if (dependencies.length > 0) {
-      const missingDeps = this.findMissingDependencies(dependencies, isModuleLoaded);
+      const missingDeps = this.findMissingDependencies(
+        dependencies,
+        isModuleLoaded,
+      );
       if (missingDeps.length > 0) {
         log.debug(
           `Модуль "${module.name}": отсутствуют зависимости: ${missingDeps.join(', ')}`,
@@ -148,7 +156,9 @@ export class ConditionValidator {
         return {
           canLoad: false,
           reason: `Отсутствуют зависимости: ${missingDeps.join(', ')}`,
-          details: { dependencies: { required: dependencies, missing: missingDeps } },
+          details: {
+            dependencies: { required: dependencies, missing: missingDeps },
+          },
         };
       }
     }
@@ -165,7 +175,7 @@ export class ConditionValidator {
 
   /**
    * Проверяет наличие всех требуемых feature flags.
-   * 
+   *
    * @param featureFlags - Массив требуемых feature flags
    * @param bootstrap - Инстанс Bootstrap
    * @returns true, если все флаги присутствуют
@@ -181,9 +191,12 @@ export class ConditionValidator {
     try {
       const accessControlModel = this.getAccessControlModel(bootstrap);
       if (!accessControlModel) {
-        log.debug('AccessControlModel не найден, feature flags проверка не пройдена', {
-          prefix: LOG_PREFIX,
-        });
+        log.debug(
+          'AccessControlModel не найден, feature flags проверка не пройдена',
+          {
+            prefix: LOG_PREFIX,
+          },
+        );
         return false;
       }
 
@@ -206,7 +219,7 @@ export class ConditionValidator {
 
   /**
    * Проверяет наличие всех требуемых прав доступа.
-   * 
+   *
    * @param permissions - Массив требуемых прав
    * @param bootstrap - Инстанс Bootstrap
    * @returns true, если все права присутствуют
@@ -247,7 +260,7 @@ export class ConditionValidator {
 
   /**
    * Проверяет, загружены ли все зависимости модуля.
-   * 
+   *
    * @param dependencies - Массив имен зависимостей
    * @param isModuleLoaded - Функция проверки загрузки модуля
    * @returns true, если все зависимости загружены
@@ -260,7 +273,10 @@ export class ConditionValidator {
       prefix: LOG_PREFIX,
     });
 
-    const missingDeps = this.findMissingDependencies(dependencies, isModuleLoaded);
+    const missingDeps = this.findMissingDependencies(
+      dependencies,
+      isModuleLoaded,
+    );
     const result = missingDeps.length === 0;
 
     if (!result) {
@@ -274,7 +290,7 @@ export class ConditionValidator {
 
   /**
    * Находит отсутствующие зависимости.
-   * 
+   *
    * @param dependencies - Массив имен зависимостей
    * @param isModuleLoaded - Функция проверки загрузки модуля
    * @returns Массив имен отсутствующих зависимостей
@@ -292,9 +308,9 @@ export class ConditionValidator {
 
   /**
    * Проверяет условия для предзагрузки модуля (без проверки зависимостей).
-   * 
+   *
    * Используется при предзагрузке, когда зависимости еще не загружены.
-   * 
+   *
    * @param module - Модуль для проверки
    * @param bootstrap - Инстанс Bootstrap
    * @returns true, если модуль можно предзагрузить
@@ -313,9 +329,12 @@ export class ConditionValidator {
     if (featureFlags && featureFlags.length > 0) {
       const hasFlags = await this.checkFeatureFlags(featureFlags, bootstrap);
       if (!hasFlags) {
-        log.debug(`Модуль "${module.name}" пропущен при предзагрузке: feature flags`, {
-          prefix: LOG_PREFIX,
-        });
+        log.debug(
+          `Модуль "${module.name}" пропущен при предзагрузке: feature flags`,
+          {
+            prefix: LOG_PREFIX,
+          },
+        );
         return true;
       }
     }
@@ -326,9 +345,12 @@ export class ConditionValidator {
         bootstrap,
       );
       if (!hasPermissions) {
-        log.debug(`Модуль "${module.name}" пропущен при предзагрузке: права доступа`, {
-          prefix: LOG_PREFIX,
-        });
+        log.debug(
+          `Модуль "${module.name}" пропущен при предзагрузке: права доступа`,
+          {
+            prefix: LOG_PREFIX,
+          },
+        );
         return true;
       }
     }
@@ -342,7 +364,7 @@ export class ConditionValidator {
 
   /**
    * Получает AccessControlModel из DI контейнера.
-   * 
+   *
    * @param bootstrap - Инстанс Bootstrap
    * @returns AccessControlModel или null, если не найден
    */
@@ -356,4 +378,5 @@ export class ConditionValidator {
     }
   }
 }
+
 
