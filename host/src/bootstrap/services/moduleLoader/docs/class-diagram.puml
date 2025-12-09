@@ -1,0 +1,222 @@
+@startuml Class Diagram - ModuleLoader Architecture
+
+!theme plain
+skinparam classAttributeIconSize 0
+
+package "moduleLoader" {
+  class ModuleLoader {
+    - registry: ModuleRegistry
+    - statusTracker: ModuleStatusTracker
+    - conditionValidator: ConditionValidator
+    - dependencyResolver: DependencyResolver
+    - lifecycleManager: LifecycleManager
+    - bootstrap: Bootstrap
+    - initModulesLoadedFlag: boolean
+    - initStrategy: InitLoadStrategy
+    - normalStrategy: NormalLoadStrategy
+    --
+    + init(bootstrap: Bootstrap): void
+    + addModules(modules: Module[]): Promise<void>
+    + initInitModules(): Promise<void>
+    + loadNormalModules(): Promise<void>
+    + preloadRoutes(): Promise<void>
+    + loadModuleByName(name: string): Promise<void>
+    + getModule(name: string): Module
+    + isModuleLoaded(name: string): boolean
+    + isModulePreloaded(name: string): boolean
+    + get isInitModulesLoaded(): boolean
+  }
+
+  class ModuleRegistry {
+    - modulesByName: Map<string, Module>
+    - routeToModuleCache: Map<string, Module>
+    - routesCache: Map<string, RouteCacheEntry>
+    - initModulesLoadedFlag: boolean
+    --
+    + addModule(module: Module): Promise<void>
+    + addModules(modules: Module[]): Promise<void>
+    + getModule(name: string): Module
+    + getModules(): Module[]
+    + hasModule(name: string): boolean
+    + getModuleRoutes(module: Module): Promise<IRoutes>
+    + loadModuleConfig(module: Module): Promise<void>
+    + getModulesByType(loadType: ModuleLoadType): Module[]
+    + sortModulesByPriority(modules: Module[]): Module[]
+  }
+
+  class ModuleStatusTracker {
+    - loadedModules: Map<string, LoadedModule>
+    - preloadingPromises: Map<string, Promise<void>>
+    - statusChangeHandlers: StatusChangeHandler[]
+    --
+    + markAsLoading(module: Module): void
+    + markAsPreloaded(module: Module): void
+    + markAsLoaded(module: Module): void
+    + markAsFailed(module: Module, error: unknown): void
+    + getStatus(name: string): ModuleLoadStatus
+    + isLoaded(name: string): boolean
+    + isPreloaded(name: string): boolean
+    + onStatusChange(handler: StatusChangeHandler): () => void
+    + getOrCreatePreloadingPromise(name: string): Promise<void>
+  }
+
+  class ConditionValidator {
+    --
+    + validateLoadConditions(module: Module, bootstrap: Bootstrap, isModuleLoaded: IsModuleLoadedFunction): Promise<boolean>
+    + validateLoadConditionsWithDetails(module: Module, bootstrap: Bootstrap, isModuleLoaded: IsModuleLoadedFunction): Promise<ValidationResult>
+    + shouldSkipInPreload(module: Module, bootstrap: Bootstrap): Promise<boolean>
+    - validateFeatureFlags(module: Module, bootstrap: Bootstrap): boolean
+    - validatePermissions(module: Module, bootstrap: Bootstrap): boolean
+  }
+
+  class DependencyResolver {
+    - registry: ModuleRegistry
+    - circularDepsCache: Map<string, boolean>
+    --
+    + hasCircularDependencies(module: Module): boolean
+    + loadDependencies(module: Module, bootstrap: Bootstrap, loadFn: Function, isLoadedFn: Function): Promise<void>
+    + resolveDependencies(module: Module): string[]
+    + clearCircularDepsCache(): void
+  }
+
+  class LifecycleManager {
+    - registry: ModuleRegistry
+    - initializedModules: Set<string>
+    --
+    + initializeModule(module: Module, bootstrap: Bootstrap, skipOnModuleInit: boolean): Promise<void>
+    + registerModuleResources(module: Module, bootstrap: Bootstrap, isModuleLoaded: Function, autoLoadHandler: Function): Promise<void>
+    + registerModuleRoutes(module: Module, bootstrap: Bootstrap, autoLoadHandler: Function): Promise<void>
+    + registerModuleI18n(module: Module, bootstrap: Bootstrap, isModuleLoaded: Function): Promise<void>
+    + isModuleInitialized(name: string): boolean
+  }
+
+  abstract class ILoadStrategy {
+    + {abstract} name: string
+    + {abstract} isApplicable(module: Module): boolean
+    + {abstract} loadModules(modules: Module[], bootstrap: Bootstrap): Promise<void>
+  }
+
+  class InitLoadStrategy {
+    - registry: ModuleRegistry
+    - statusTracker: ModuleStatusTracker
+    - lifecycleManager: LifecycleManager
+    + name: string
+    --
+    + isApplicable(module: Module): boolean
+    + loadModules(modules: Module[], bootstrap: Bootstrap): Promise<void>
+    - loadSingleModule(module: Module, bootstrap: Bootstrap): Promise<void>
+  }
+
+  class NormalLoadStrategy {
+    - registry: ModuleRegistry
+    - statusTracker: ModuleStatusTracker
+    - lifecycleManager: LifecycleManager
+    - conditionValidator: ConditionValidator
+    - dependencyResolver: DependencyResolver
+    - autoLoadHandler: AutoLoadByRouteFunction
+    + name: string
+    --
+    + isApplicable(module: Module): boolean
+    + loadModules(modules: Module[], bootstrap: Bootstrap): Promise<void>
+    - loadSingleModule(module: Module, bootstrap: Bootstrap): Promise<void>
+  }
+
+  class DependencyLevelBuilder {
+    - registry: ModuleRegistry
+    - isModuleLoaded: IsModuleLoadedFunction
+    - isModulePreloaded: IsModulePreloadedFunction
+    --
+    + buildDependencyLevels(modules: Module[]): DependencyLevelResult
+    - findReadyModules(modules: Module[], moduleMap: Map, processed: Set): Module[]
+    - buildModuleMap(modules: Module[]): Map
+  }
+
+  class RemoteModuleLoader {
+    - cache: Map<string, Promise<ModuleConfig>>
+    - loadedScripts: Set<string>
+    --
+    + loadRemoteModule(name: string, remoteEntry: string, options: LoadRemoteModuleOptions): Promise<ModuleConfig>
+    + clearCache(): void
+    + invalidateCache(name: string): void
+    + reset(): void
+    + getCacheSize(): number
+    + getLoadedScriptsCount(): number
+    - loadWithRetry(name: string, remoteEntry: string, retries: number, timeout: number): Promise<ModuleConfig>
+    - doLoad(name: string, remoteEntry: string): Promise<ModuleConfig>
+  }
+}
+
+class Bootstrap {
+  + moduleLoader: ModuleLoader
+  + routerService: RouterService
+  + di: Container
+  + i18n: i18n
+  --
+  + initModuleLoader(): void
+}
+
+class Module {
+  + name: string
+  + loadType: ModuleLoadType
+  + remoteEntry: string
+  + config: ModuleConfig | Promise<ModuleConfig>
+  + loadPriority: number
+  + loadCondition: LoadCondition
+}
+
+enum ModuleLoadStatus {
+  PENDING
+  LOADING
+  PRELOADED
+  LOADED
+  FAILED
+}
+
+enum ModuleLoadType {
+  INIT
+  NORMAL
+}
+
+' Relationships
+ModuleLoader *-- ModuleRegistry : uses
+ModuleLoader *-- ModuleStatusTracker : uses
+ModuleLoader *-- ConditionValidator : uses
+ModuleLoader *-- DependencyResolver : uses
+ModuleLoader *-- LifecycleManager : uses
+ModuleLoader --> InitLoadStrategy : creates
+ModuleLoader --> NormalLoadStrategy : creates
+ModuleLoader --> Bootstrap : uses
+
+ModuleRegistry --> Module : stores
+ModuleRegistry --> ModuleLoadType : uses
+
+ModuleStatusTracker --> ModuleLoadStatus : uses
+ModuleStatusTracker --> Module : tracks
+
+DependencyResolver --> ModuleRegistry : uses
+DependencyResolver --> Module : resolves
+
+LifecycleManager --> ModuleRegistry : uses
+LifecycleManager --> Module : manages
+
+InitLoadStrategy ..|> ILoadStrategy : implements
+NormalLoadStrategy ..|> ILoadStrategy : implements
+InitLoadStrategy --> ModuleRegistry : uses
+InitLoadStrategy --> ModuleStatusTracker : uses
+InitLoadStrategy --> LifecycleManager : uses
+
+NormalLoadStrategy --> ModuleRegistry : uses
+NormalLoadStrategy --> ModuleStatusTracker : uses
+NormalLoadStrategy --> LifecycleManager : uses
+NormalLoadStrategy --> ConditionValidator : uses
+NormalLoadStrategy --> DependencyResolver : uses
+
+DependencyLevelBuilder --> ModuleRegistry : uses
+DependencyLevelBuilder --> Module : builds
+
+RemoteModuleLoader --> Module : loads
+
+Bootstrap --> ModuleLoader : contains
+
+@enduml
+

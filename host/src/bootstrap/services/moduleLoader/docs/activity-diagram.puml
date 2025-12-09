@@ -1,0 +1,137 @@
+@startuml Activity Diagram - Module Loading Process
+
+!theme plain
+
+start
+
+:Bootstrap инициализация;
+
+:Создание handler chain;
+
+:ModulesDiscoveryHandler\nЗагрузка манифеста;
+
+:ModulesHandler\nИнициализация ModuleLoader;
+
+:Регистрация модулей\n(addModules);
+
+partition "Загрузка INIT модулей" {
+  :Получение INIT модулей;
+  :Сортировка по приоритету;
+  
+  repeat
+    :Загрузка модуля;
+    :markAsLoading();
+    
+    if (Динамический конфиг?) then (да)
+      :Загрузка конфигурации\n(RemoteModuleLoader);
+    else (нет)
+      :Использование статического конфига;
+    endif
+    
+    :Вызов onModuleInit();
+    :Регистрация маршрутов;
+    :Регистрация i18n;
+    :markAsLoaded();
+  repeat while (Есть еще INIT модули?)
+  
+  :Установка флага\ninitModulesLoadedFlag = true;
+}
+
+:RouterPostHandler\nПредзагрузка маршрутов;
+
+partition "Предзагрузка INIT модулей" {
+  repeat
+    if (Пропустить модуль?) then (да)
+      :Пропуск;
+    else (нет)
+      if (Уже предзагружен?) then (да)
+        :Пропуск;
+      else (нет)
+        :Регистрация маршрутов;
+        :markAsPreloaded();
+      endif
+    endif
+  repeat while (Есть еще INIT модули?)
+}
+
+partition "Предзагрузка NORMAL модулей (синхронно)" {
+  :Фильтрация модулей;
+  
+  :Параллельная загрузка\nPromise конфигураций;
+  
+  repeat
+    if (Условия не выполнены?) then (да)
+      :Пропуск модуля;
+    else (нет)
+      if (Динамический конфиг?) then (да)
+        :Загрузка конфигурации;
+      endif
+      
+      :Регистрация маршрутов\n(только маршруты);
+      :markAsPreloaded();
+    endif
+  repeat while (Есть еще NORMAL модули?)
+  
+  :Запуск асинхронной\nполной загрузки NORMAL модулей;
+  note right: Выполняется после рендера
+}
+
+:router.start();
+
+:Рендер приложения;
+
+partition "Загрузка NORMAL модулей" {
+  :Получение NORMAL модулей;
+  :Сортировка по приоритету;
+  
+  :Проверка циклических зависимостей;
+  
+  if (Обнаружены циклы?) then (да)
+    :Выброс ошибки;
+    stop
+  else (нет)
+  endif
+  
+  :Построение уровней зависимостей\n(DependencyLevelBuilder);
+  
+  if (Все модули без зависимостей?) then (да)
+    :Один уровень со всеми модулями;
+  else (нет)
+    :Построение графа зависимостей;
+    :Группировка по уровням;
+  endif
+  
+  repeat :Для каждого уровня;
+    repeat :Параллельно для каждого модуля в уровне;
+      
+      if (Уже загружен?) then (да)
+        :Пропуск;
+      else (нет)
+        if (Условия загрузки не выполнены?) then (да)
+          :markAsFailed();
+        else (нет)
+          :Загрузка зависимостей;
+          
+          if (Ошибка загрузки?) then (да)
+            :markAsFailed();
+            stop
+          else (нет)
+            :markAsLoading();
+            :Вызов onModuleInit();
+            :Регистрация маршрутов;
+            :Регистрация i18n;
+            :markAsLoaded();
+          endif
+        endif
+      endif
+      
+    repeat while (Есть еще модули в уровне?)
+  repeat while (Есть еще уровни?)
+}
+
+:Приложение готово;
+
+stop
+
+@enduml
+

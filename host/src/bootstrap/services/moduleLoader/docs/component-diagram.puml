@@ -1,0 +1,139 @@
+@startuml Component Diagram - ModuleLoader System Architecture
+
+!theme plain
+skinparam componentStyle rectangle
+
+package "Bootstrap System" {
+  component [Bootstrap] as Bootstrap
+  component [ModulesHandler] as ModulesHandler
+  component [RouterPostHandler] as RouterPostHandler
+  component [RouterService] as Router
+  component [DI Container] as DI
+  component [i18n] as I18n
+}
+
+package "ModuleLoader Core" {
+  component [ModuleLoader\nFacade] as ModuleLoader {
+    interface "ILoadStrategy" as IStrategy
+  }
+  
+  component [ModuleRegistry\nRepository] as Registry
+  component [ModuleStatusTracker\nObserver] as StatusTracker
+}
+
+package "ModuleLoader Services" {
+  component [ConditionValidator] as Validator
+  component [DependencyResolver] as Resolver
+  component [LifecycleManager] as Lifecycle
+  component [RemoteModuleLoader] as RemoteLoader
+}
+
+package "ModuleLoader Strategies" {
+  component [InitLoadStrategy] as InitStrategy
+  component [NormalLoadStrategy] as NormalStrategy
+}
+
+package "ModuleLoader Utils" {
+  component [DependencyLevelBuilder] as LevelBuilder
+  component [Module Utils] as Utils
+}
+
+package "External" {
+  component [Module Federation] as Federation
+  component [Vite Dev Server] as Vite
+  component [Remote Modules] as RemoteModules
+}
+
+' Bootstrap System connections
+Bootstrap --> ModuleLoader : init()
+Bootstrap --> Router : uses
+Bootstrap --> DI : uses
+Bootstrap --> I18n : uses
+
+ModulesHandler --> Bootstrap : handle()
+ModulesHandler --> ModuleLoader : addModules()\ninitInitModules()
+
+RouterPostHandler --> Bootstrap : handle()
+RouterPostHandler --> ModuleLoader : preloadRoutes()
+
+' ModuleLoader Core connections
+ModuleLoader --> Registry : manages modules
+ModuleLoader --> StatusTracker : tracks status
+ModuleLoader --> Validator : validates conditions
+ModuleLoader --> Resolver : resolves dependencies
+ModuleLoader --> Lifecycle : manages lifecycle
+ModuleLoader --> InitStrategy : creates
+ModuleLoader --> NormalStrategy : creates
+
+InitStrategy ..|> IStrategy : implements
+NormalStrategy ..|> IStrategy : implements
+
+InitStrategy --> Registry : reads modules
+InitStrategy --> StatusTracker : updates status
+InitStrategy --> Lifecycle : initializes modules
+
+NormalStrategy --> Registry : reads modules
+NormalStrategy --> StatusTracker : updates status
+NormalStrategy --> Lifecycle : initializes modules
+NormalStrategy --> Validator : checks conditions
+NormalStrategy --> Resolver : loads dependencies
+NormalStrategy --> LevelBuilder : builds levels
+
+' Service connections
+Lifecycle --> Registry : loads config
+Lifecycle --> Router : registers routes
+Lifecycle --> I18n : registers resources
+Lifecycle --> DI : uses container
+
+Resolver --> Registry : resolves modules
+Resolver --> LevelBuilder : uses
+
+LevelBuilder --> Registry : reads modules
+LevelBuilder --> Utils : uses helpers
+
+' External connections
+RemoteLoader --> Federation : loads modules
+RemoteLoader --> RemoteModules : fetches configs
+
+Registry --> RemoteLoader : loads remote configs
+Registry --> Vite : loads local configs (dev)
+
+' Data flow annotations
+note right of ModuleLoader
+  **Facade Pattern**
+  Единая точка входа для
+  всех операций с модулями
+end note
+
+note right of Registry
+  **Repository Pattern**
+  Хранит и управляет
+  коллекцией модулей
+end note
+
+note right of StatusTracker
+  **Observer Pattern**
+  Уведомляет о изменениях
+  статусов модулей
+end note
+
+note right of InitStrategy
+  **Strategy Pattern**
+  Последовательная загрузка
+  INIT модулей
+end note
+
+note right of NormalStrategy
+  **Strategy Pattern**
+  Параллельная загрузка
+  NORMAL модулей
+end note
+
+note right of LevelBuilder
+  **Builder Pattern**
+  Группирует модули по
+  уровням зависимостей
+end note
+
+@enduml
+
