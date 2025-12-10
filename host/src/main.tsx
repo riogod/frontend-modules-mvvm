@@ -1,6 +1,4 @@
 import { createRoot } from 'react-dom/client';
-// Инициализация share scope для Module Federation в dev (share React и др.)
-import './federation/registerShared';
 import { CssBaseline, ErrorBoundary } from '@platform/ui';
 import './main.css';
 import { Bootstrap, initBootstrap } from './bootstrap';
