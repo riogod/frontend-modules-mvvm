@@ -56,7 +56,11 @@ export class ViteRunner {
     // 4. Подготовить переменные окружения
     // Приоритет: переменная окружения > настройка из конфигурации > значение по умолчанию
     const configSettings = config.settings || {};
-    const logLevel = process.env.LOG_LEVEL || configSettings.logLevel || 'INFO';
+    const logLevel =
+      process.env.VITE_LOG_LEVEL ||
+      process.env.LOG_LEVEL ||
+      configSettings.logLevel ||
+      'INFO';
 
     // Настройка использования моков
     const useLocalMocks =
@@ -70,7 +74,8 @@ export class ViteRunner {
     const env = {
       ...process.env,
       VITE_LOCAL_MODULES: localModules.join(','),
-      LOG_LEVEL: logLevel,
+      LOG_LEVEL: logLevel, // для совместимости со старыми местами
+      VITE_LOG_LEVEL: logLevel, // чтобы попасть в import.meta.env на клиенте
       VITE_USE_LOCAL_MOCKS: String(useLocalMocks),
       VITE_API_URL: '',
       VITE_USE_PROXY_SERVER: 'true',
