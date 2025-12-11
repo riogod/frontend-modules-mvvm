@@ -6,10 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class ModuleDiscovery {
-  constructor() {
-    const rootDir = path.resolve(__dirname, '../..');
-    this.packagesDir = path.resolve(rootDir, 'packages');
-    this.hostModulesDir = path.resolve(rootDir, 'host/src/modules');
+  /**
+   * @param {string} [rootDir] - Корневая директория проекта
+   */
+  constructor(rootDir = null) {
+    const projectRoot = rootDir || path.resolve(__dirname, '../../..');
+    this.packagesDir = path.resolve(projectRoot, 'packages');
+    this.hostModulesDir = path.resolve(projectRoot, 'host/src/modules');
   }
 
   /**
@@ -50,4 +53,3 @@ export class ModuleDiscovery {
     return fs.existsSync(path.join(this.packagesDir, moduleName));
   }
 }
-

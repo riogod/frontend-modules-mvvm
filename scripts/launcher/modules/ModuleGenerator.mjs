@@ -10,9 +10,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class ModuleGenerator {
-  constructor() {
-    this.templatesDir = path.resolve(__dirname, '../templates/module');
-    this.packagesDir = path.resolve(__dirname, '../../packages');
+  /**
+   * @param {string} [rootDir] - Корневая директория проекта
+   */
+  constructor(rootDir = null) {
+    const projectRoot = rootDir || path.resolve(__dirname, '../../..');
+    this.templatesDir = path.resolve(projectRoot, 'scripts/templates/module');
+    this.packagesDir = path.resolve(projectRoot, 'packages');
   }
 
   /**
@@ -115,7 +119,7 @@ export class ModuleGenerator {
    */
   async generateModule(answers) {
     const modulePath = path.join(this.packagesDir, answers.name);
-    
+
     // Подготовка переменных для замены
     const variables = {
       '{{MODULE_NAME}}': answers.name,
@@ -143,7 +147,7 @@ export class ModuleGenerator {
 
     for (const entry of entries) {
       const srcPath = path.join(src, entry.name);
-      
+
       // Убираем .template из имени файла
       let destName = entry.name.replace(/\.template$/, '');
       const destPath = path.join(dest, destName);
@@ -164,7 +168,7 @@ export class ModuleGenerator {
           const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           destName = destName.replace(new RegExp(escapedKey, 'g'), value);
         }
-        
+
         const finalDestPath = path.join(path.dirname(destPath), destName);
         fs.writeFileSync(finalDestPath, content, 'utf-8');
       }
@@ -178,14 +182,20 @@ export class ModuleGenerator {
     // Устанавливаем зависимости в корне проекта (npm workspaces)
     try {
       // Используем --legacy-peer-deps для обхода конфликтов peer dependencies
-      execSync('npm install --legacy-peer-deps', { 
-        cwd: path.resolve(__dirname, '../..'), 
-        stdio: 'pipe' 
+      execSync('npm install --legacy-peer-deps', {
+        cwd: path.resolve(__dirname, '../..'),
+        stdio: 'pipe',
       });
     } catch (error) {
       // Если установка не удалась, это не критично - зависимости можно установить вручную
-      console.log(chalk.yellow('\n⚠️  Не удалось автоматически установить зависимости.'));
-      console.log(chalk.gray('Вы можете установить их вручную: npm install --legacy-peer-deps\n'));
+      console.log(
+        chalk.yellow('\n⚠️  Не удалось автоматически установить зависимости.'),
+      );
+      console.log(
+        chalk.gray(
+          'Вы можете установить их вручную: npm install --legacy-peer-deps\n',
+        ),
+      );
       // Не пробрасываем ошибку дальше, так как модуль уже создан
     }
   }
@@ -237,7 +247,9 @@ export class ModuleGenerator {
           // Пробуем открыть в Cursor
           execSync(`cursor ${modulePath}`, { stdio: 'ignore' });
         } catch {
-          console.log(chalk.yellow('Не удалось открыть редактор автоматически'));
+          console.log(
+            chalk.yellow('Не удалось открыть редактор автоматически'),
+          );
         }
       }
     }
@@ -284,16 +296,19 @@ export class ModuleGenerator {
       if (error.stack) {
         console.error(chalk.gray(error.stack));
       }
-      
+
       // Проверяем, был ли модуль создан хотя бы частично
       const modulePath = path.join(this.packagesDir, answers.name);
       if (fs.existsSync(modulePath)) {
-        console.log(chalk.yellow(`\n⚠️  Модуль частично создан в ${modulePath}`));
-        console.log(chalk.gray('Вы можете удалить его вручную или исправить ошибки.\n'));
+        console.log(
+          chalk.yellow(`\n⚠️  Модуль частично создан в ${modulePath}`),
+        );
+        console.log(
+          chalk.gray('Вы можете удалить его вручную или исправить ошибки.\n'),
+        );
       }
-      
+
       return null;
     }
   }
 }
-

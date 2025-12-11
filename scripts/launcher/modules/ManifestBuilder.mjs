@@ -29,7 +29,13 @@ function normalizeUrl(url = '') {
  * Создает структуру манифеста на основе конфигурации модулей
  * Обогащает манифест данными из локальных модулей (mockModuleData, mockModuleInfo)
  */
-export class ManifestGenerator {
+export class ManifestBuilder {
+  /**
+   * @param {string} [rootDir] - Корневая директория проекта
+   */
+  constructor(rootDir = null) {
+    this.rootDir = rootDir || path.resolve(__dirname, '../../..');
+  }
   /**
    * Загружает конфиг локального модуля и извлекает mockModuleData и mockModuleInfo
    * Использует более надежный парсинг с поддержкой вложенных объектов
@@ -239,7 +245,7 @@ export class ManifestGenerator {
    * @returns {Object} Манифест для Module Federation
    */
   generate(config, moduleDiscovery = null) {
-    const rootDir = path.resolve(__dirname, '../..');
+    const rootDir = this.rootDir;
     // Всегда создаем новый манифест с актуальным timestamp
     // Это гарантирует, что манифест всегда содержит свежие данные из модулей
     const manifest = {
