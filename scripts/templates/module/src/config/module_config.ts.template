@@ -16,5 +16,27 @@ export default {
     i18n.addResourceBundle('en', '{{MODULE_NAME}}', en_{{MODULE_NAME_VAR}});
     i18n.addResourceBundle('ru', '{{MODULE_NAME}}', ru_{{MODULE_NAME_VAR}});
   },
+  // Данные для dev/server и манифеста (используются ManifestBuilder и dev-server)
+  mockModuleInfo: {
+    name: '{{MODULE_NAME}}',
+    version: '1.0.0',
+    loadType: 'normal',
+    loadPriority: 1,
+    remoteEntry: '',
+    dependencies: [],
+    featureFlags: ['{{MODULE_NAME}}.module.load.feature'],
+    accessPermissions: ['{{MODULE_NAME}}.module.load.permission'],
+  },
+  mockModuleData: {
+    features: {
+      '{{MODULE_NAME}}.module.load.feature': true,
+    },
+    permissions: {
+      '{{MODULE_NAME}}.module.load.permission': true,
+    },
+    params: {
+      '{{MODULE_NAME}}.module.load.param': 'SomeValue',
+    },
+  },
 } as ModuleConfig;
 

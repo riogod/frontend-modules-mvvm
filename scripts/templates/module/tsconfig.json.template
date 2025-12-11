@@ -7,31 +7,18 @@
     "strict": true,
     "types": ["node"],
     "declaration": true,
-    "declarationMap": true,
-    "resolveJsonModule": true
+    "declarationMap": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.json",
-    "../../host/src/modules/core/**/*.ts",
-    "../../host/src/bootstrap/**/*.ts",
-    "../../libs/*/src/**/*.ts",
-    "../../libs/*/src/**/*.tsx"
+    "src/**/*.json"
   ],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.tsx",
-    "src/**/*.test.tsx",
-    "../../libs/*/src/**/*.test.ts",
-    "../../libs/*/src/**/*.test.tsx",
-    "../../libs/*/src/**/*.spec.ts",
-    "../../libs/*/src/**/*.spec.tsx",
-    "../../libs/*/src/**/__tests__/**/*",
-    "../../host/src/**/__tests__/**/*",
-    "../../host/src/**/*.test.ts",
-    "../../host/src/**/*.spec.ts"
+    "src/**/*.test.tsx"
   ],
   "extends": "../../tsconfig.base.json"
 }
