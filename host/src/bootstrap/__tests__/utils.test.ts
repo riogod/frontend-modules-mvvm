@@ -50,26 +50,26 @@ describe('findSegment', () => {
     },
   ];
 
-  it('should return an empty array if no segment is found', () => {
+  it('должен возвращать пустой массив, если сегмент не найден', () => {
     const result = findSegment(mockMenu, ['nonexistent']);
     expect(result).toEqual([]);
   });
 
-  it('should return the correct segment if it exists', () => {
+  it('должен возвращать правильный сегмент, если он существует', () => {
     const result = findSegment(mockMenu, ['home']);
     expect(result).toEqual(['0']);
   });
 
-  it('should return the correct nested segment if it exists', () => {
+  it('должен возвращать правильный вложенный сегмент, если он существует', () => {
     const result = findSegment(mockMenu, ['home', 'about']);
     expect(result).toEqual(['0', '0']);
   });
 
-  it('should return the correct nested segment if it exists and has children', () => {
+  it('должен возвращать правильный вложенный сегмент, если он существует и имеет дочерние элементы', () => {
     const result = findSegment(mockMenu, ['home', 'about', 'contact']);
     expect(result).toEqual(['0', '0', '0']);
   });
-  it('should return the correct nested segment if it exists and has children', () => {
+  it('должен возвращать правильный вложенный сегмент, если он существует и имеет дочерние элементы', () => {
     const result = findSegment(mockMenu, ['blog', 'post']);
     expect(result).toEqual(['1', '0']);
   });

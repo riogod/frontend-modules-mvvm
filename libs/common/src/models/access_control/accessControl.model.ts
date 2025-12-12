@@ -13,34 +13,33 @@ export class AccessControlModel {
   private _permissionsCache = new Map<object, Record<string, boolean>>();
 
   get allFeatureFlags(): Partial<AccessControlsType> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this._featureFlags;
   }
 
   get allPermissions(): Partial<AccessControlsType> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this._permissions;
   }
 
-  constructor(
-  ) {
+  constructor() {
     makeAutoObservable(this);
   }
 
   /**
    *  Метод для получения списка feature flags.
-   * 
+   *
    *  Возвращает объект с ключами из enum и значениями feature flags.
    *  Ключи - ключи enum'а, значения - значения feature flags из _featureFlags.
-   * 
+   *
    *  Если feature flag не найден, то значение false.
-   * 
+   *
    *  Результаты мемоизируются для повышения производительности.
    *  Кеш автоматически инвалидируется при изменении _featureFlags.
-   * 
+   *
    * @param enumParam ENUM со списком feature flags
    */
-  getFeatureFlags<T extends Record<string, string | number>>(enumParam: T): Record<keyof T, boolean> {
+  getFeatureFlags<T extends Record<string, string | number>>(
+    enumParam: T,
+  ): Record<keyof T, boolean> {
     // Проверяем кеш
     const cached = this._featureFlagsCache.get(enumParam);
     if (cached) {
@@ -56,7 +55,9 @@ export class AccessControlModel {
         return;
       }
       const typedKey = key as keyof T;
-      mappedFT[typedKey] = Boolean(this._featureFlags[String(enumParam[typedKey])]);
+      mappedFT[typedKey] = Boolean(
+        this._featureFlags[String(enumParam[typedKey])],
+      );
     });
 
     // Сохраняем в кеш
@@ -116,18 +117,20 @@ export class AccessControlModel {
 
   /**
    *  Метод для получения списка permissions.
-   * 
+   *
    *  Возвращает объект с ключами из enum и значениями permissions.
    *  Ключи - ключи enum'а, значения - значения permissions из _permissions.
-   * 
+   *
    *  Если permission не найден, то значение false.
-   * 
+   *
    *  Результаты мемоизируются для повышения производительности.
    *  Кеш автоматически инвалидируется при изменении _permissions.
-   * 
+   *
    * @param enumParam ENUM со списком permissions
    */
-  getPermissions<T extends Record<string, string | number>>(enumParam: T): Record<keyof T, boolean> {
+  getPermissions<T extends Record<string, string | number>>(
+    enumParam: T,
+  ): Record<keyof T, boolean> {
     // Проверяем кеш
     const cached = this._permissionsCache.get(enumParam);
     if (cached) {
@@ -143,11 +146,16 @@ export class AccessControlModel {
         return;
       }
       const typedKey = key as keyof T;
-      mappedPermissions[typedKey] = Boolean(this._permissions[String(enumParam[typedKey])]);
+      mappedPermissions[typedKey] = Boolean(
+        this._permissions[String(enumParam[typedKey])],
+      );
     });
 
     // Сохраняем в кеш
-    this._permissionsCache.set(enumParam, mappedPermissions as Record<string, boolean>);
+    this._permissionsCache.set(
+      enumParam,
+      mappedPermissions as Record<string, boolean>,
+    );
 
     return mappedPermissions;
   }
@@ -195,7 +203,9 @@ export class AccessControlModel {
    */
   includesPermissions(permissions: string[] | string): boolean {
     if (permissions instanceof Array) {
-      return permissions.every((permission: string) => this._permissions[permission]);
+      return permissions.every(
+        (permission: string) => this._permissions[permission],
+      );
     }
 
     return Boolean(this._permissions[permissions]);
@@ -214,5 +224,4 @@ export class AccessControlModel {
   private _invalidatePermissionsCache(): void {
     this._permissionsCache.clear();
   }
-
 }

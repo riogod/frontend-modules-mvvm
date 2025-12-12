@@ -44,6 +44,15 @@ describe('bootstrap', () => {
           ],
           I18N: vi.fn(),
           onModuleInit: vi.fn(),
+          mockModuleInfo: {
+            name: 'core',
+            loadType: ModuleLoadType.INIT,
+            loadPriority: 1,
+            remoteEntry: '',
+            dependencies: [],
+            featureFlags: [],
+            accessPermissions: [],
+          },
         },
       },
       {
@@ -56,6 +65,15 @@ describe('bootstrap', () => {
             },
           ],
           I18N: vi.fn(),
+          mockModuleInfo: {
+            name: 'todo',
+            loadType: ModuleLoadType.NORMAL,
+            loadPriority: 1,
+            remoteEntry: '',
+            dependencies: [],
+            featureFlags: [],
+            accessPermissions: [],
+          },
         },
       },
       {
@@ -67,6 +85,15 @@ describe('bootstrap', () => {
               path: '/api-example',
             },
           ],
+          mockModuleInfo: {
+            name: 'api',
+            loadType: ModuleLoadType.NORMAL,
+            loadPriority: 1,
+            remoteEntry: '',
+            dependencies: [],
+            featureFlags: [],
+            accessPermissions: [],
+          },
         },
       },
       {
@@ -74,6 +101,15 @@ describe('bootstrap', () => {
         config: {
           ROUTES: () => [],
           mockHandlers: [],
+          mockModuleInfo: {
+            name: 'demo',
+            loadType: ModuleLoadType.NORMAL,
+            loadPriority: 1,
+            remoteEntry: '',
+            dependencies: [],
+            featureFlags: [],
+            accessPermissions: [],
+          },
         },
       },
     ];
@@ -85,18 +121,25 @@ describe('bootstrap', () => {
   });
 
   describe('constructor', () => {
-    test('should not call mock service if not in development ', () => {
+    test('не должен вызывать mock service, если не в режиме development', () => {
       // mockService больше не используется, так как все моки обрабатываются через dev-server
     });
 
-    test.skip('should call mock service if in development ', () => {
+    test.skip('должен вызывать mock service, если в режиме development', () => {
       // Тест пропущен: mockService больше не используется, моки обрабатываются через proxy-server
     });
   });
 
   describe('getAPIClient getter', () => {
-    test('should throw error if getAPIClient is not defined', () => {
+    test('должен выбрасывать ошибку, если getAPIClient не определен', () => {
+      // Подавляем вывод в stderr от logger
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
       expect(() => bootstrap.getAPIClient).toThrow();
+
+      consoleErrorSpy.mockRestore();
     });
 
     // test('should return APIClient after initialization', async () => {
@@ -106,14 +149,14 @@ describe('bootstrap', () => {
   });
 
   describe('di getter', () => {
-    test('should return instance of di container', () => {
+    test('должен возвращать экземпляр DI контейнера', () => {
       expect(bootstrap.di).not.toBeNull();
       expect(bootstrap.di).toBeInstanceOf(Container);
     });
   });
 
   describe('initAPIClient', () => {
-    test('should set APIClient', () => {
+    test('должен устанавливать APIClient', () => {
       bootstrap.initAPIClient('test');
       expect(bootstrap.getAPIClient).not.toBeNull();
       expect(bootstrap.getAPIClient).toBeInstanceOf(APIClient);
@@ -121,17 +164,17 @@ describe('bootstrap', () => {
   });
 
   describe('initDI', () => {
-    test('should set DI container', () => {
+    test('должен устанавливать DI контейнер', () => {
       bootstrap.initDI();
       expect(bootstrap.di).not.toBeNull();
       expect(bootstrap.di).toBeInstanceOf(Container);
     });
-    test('should bind APIClient to DI container', () => {
+    test('должен привязывать APIClient к DI контейнеру', () => {
       bootstrap.initAPIClient('test');
       bootstrap.initDI();
       expect(bootstrap.di.isBound(IOC_CORE_TOKENS.APIClient)).toBe(true);
     });
-    test('should not bind APIClient to DI container', () => {
+    test('не должен привязывать APIClient к DI контейнеру', () => {
       bootstrap.initDI();
       // APIClient не должен быть зарегистрирован, если он не был инициализирован
       // С autobind: true isBound может выбросить ошибку для классов без @injectable/@provide
@@ -180,7 +223,7 @@ describe('bootstrap', () => {
       await bootstrap.moduleLoader.initInitModules();
     });
 
-    test('should initialize module routes if routes are defined', async () => {
+    test('должен инициализировать маршруты модуля, если они определены', async () => {
       let moduleConfig = modules[0].config;
       // Для remote INIT модулей config может быть Promise
       if (moduleConfig instanceof Promise) {
@@ -191,7 +234,7 @@ describe('bootstrap', () => {
       }
     });
 
-    test('should call onModuleInit if onModuleInit is defined', async () => {
+    test('должен вызывать onModuleInit, если он определен', async () => {
       let moduleConfig = modules[0].config;
       // Для remote INIT модулей config может быть Promise
       if (moduleConfig instanceof Promise) {
@@ -202,7 +245,7 @@ describe('bootstrap', () => {
       }
     });
 
-    test('should add i18n dictionaries if I18N is defined', async () => {
+    test('должен добавлять словари i18n, если I18N определен', async () => {
       let moduleConfig = modules[0].config;
       // Для remote INIT модулей config может быть Promise
       if (moduleConfig instanceof Promise) {
@@ -212,7 +255,7 @@ describe('bootstrap', () => {
       expect(moduleConfig.I18N).toBeCalled();
     });
 
-    test.skip('should add mock handlers if  NODE_ENV is development, mockHandlers and mockService is defined', async () => {
+    test.skip('должен добавлять mock handlers, если NODE_ENV - development, mockHandlers и mockService определены', async () => {
       // Тест пропущен: mockService больше не используется, моки обрабатываются через proxy-server
       process.env.NODE_ENV = 'development';
       bootstrap = new Bootstrap(modules);

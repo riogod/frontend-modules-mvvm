@@ -133,7 +133,6 @@ export class ManifestBuilder {
 
           mockModuleInfo = {
             name: extractString('name') || moduleName,
-            version: extractString('version') || '1.0.0',
             loadType: extractString('loadType') || 'normal',
             loadPriority: extractNumber('loadPriority') || 1,
             remoteEntry: '',

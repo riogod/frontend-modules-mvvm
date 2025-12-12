@@ -6,7 +6,7 @@ describe('DIHandler', () => {
     initDI: vi.fn(),
   } as any;
 
-  test('should call initDI bootstrap method', async () => {
+  test('должен вызывать метод initDI bootstrap', async () => {
     const handler = new DIHandler({});
 
     await handler.handle(bootstrapMock);

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { BootstrapRouterService } from '../routerService';
 import { type Router } from '@riogz/router';
 import { type IMenuItem, type IRoutes } from '@platform/core';
@@ -25,7 +26,12 @@ describe('BootstrapRouterService', () => {
       const inst = new BootstrapRouterService();
       inst.initRouter(routes, 'my-app');
 
+      // Подавляем вывод в stderr от logger
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       expect(() => inst.initRouter(routes, 'my-app')).toThrowError();
+
+      consoleErrorSpy.mockRestore();
     });
   });
 

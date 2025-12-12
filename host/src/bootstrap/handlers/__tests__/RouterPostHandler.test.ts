@@ -18,7 +18,7 @@ describe('RouterPostHandler', () => {
     },
   } as any;
 
-  test('should initialize APIClient with apiUrl', async () => {
+  test('должен инициализировать APIClient с apiUrl', async () => {
     const testUrl = 'test_url';
     const testPrefix = 'test_prefix';
     const routerPostInit = 'postInit';

@@ -55,7 +55,6 @@ export function generateManifest(options: GenerateManifestOptions): AppManifest 
 
       modules.push({
         name: moduleName,
-        version,
         loadType: ModuleLoadType.NORMAL,
         loadPriority: 1,
         remoteEntry: `${baseUrl}${moduleName}/${versionPath}/assets/remoteEntry.js`,

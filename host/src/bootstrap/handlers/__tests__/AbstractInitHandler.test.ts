@@ -23,17 +23,17 @@ describe('AbstractInitHandler', () => {
     bootstrap = {} as Bootstrap;
   });
 
-  test('should set next handler correctly', () => {
+  test('должен корректно устанавливать следующий обработчик', () => {
     const result = abstractInitHandler.setNext(nextHandler);
     expect(result).toBe(nextHandler);
   });
 
-  test('should return the original bootstrap when next handler does not exist', async () => {
+  test('должен возвращать исходный bootstrap, когда следующий обработчик не существует', async () => {
     const result = await abstractInitHandler.handle(bootstrap);
     expect(result).toBe(bootstrap);
   });
 
-  test('should call next handler when next handler exists', async () => {
+  test('должен вызывать следующий обработчик, когда он существует', async () => {
     abstractInitHandler.setNext(nextHandler);
     const result = await nextHandler.handle(bootstrap);
 

@@ -21,7 +21,6 @@ export default {
   mockHandlers: handlers,
   mockModuleInfo: {
     name: 'api_example',
-    version: '1.0.0',
     loadType: 'normal',
     loadPriority: 2,
     remoteEntry: '',

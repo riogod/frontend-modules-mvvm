@@ -38,7 +38,6 @@ export function generateManifest(options) {
             const versionPath = versionStrategy === 'latest' ? 'latest' : version;
             modules.push({
                 name: moduleName,
-                version,
                 loadType: ModuleLoadType.NORMAL,
                 loadPriority: 1,
                 remoteEntry: `${baseUrl}${moduleName}/${versionPath}/assets/remoteEntry.js`,

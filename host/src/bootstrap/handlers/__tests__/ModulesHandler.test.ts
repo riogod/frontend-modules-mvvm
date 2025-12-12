@@ -13,7 +13,7 @@ describe('ModulesHandler', () => {
     },
   } as any;
 
-  test('should call initModules bootstrap method', async () => {
+  test('должен вызывать метод initModules bootstrap', async () => {
     const handler = new ModulesHandler({});
 
     await handler.handle(bootstrapMock);

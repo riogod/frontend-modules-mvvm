@@ -19,7 +19,6 @@ export default {
   // Данные для dev/server и манифеста (используются ManifestBuilder и dev-server)
   mockModuleInfo: {
     name: '{{MODULE_NAME}}',
-    version: '1.0.0',
     loadType: 'normal',
     loadPriority: 1,
     remoteEntry: '',

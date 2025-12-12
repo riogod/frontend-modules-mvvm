@@ -24,14 +24,14 @@ describe('InitI18nHandler', () => {
     bootstrap.i18n.init = vi.fn().mockResolvedValue(undefined);
   });
 
-  test('should initialize i18n with the provided options', async () => {
+  test('должен инициализировать i18n с предоставленными опциями', async () => {
     await handler.handle(bootstrap);
 
     expect(bootstrap.i18n.use).toHaveBeenCalledWith(LanguageDetector);
     expect(bootstrap.i18n.use).toHaveBeenCalledWith(initReactI18next);
   });
 
-  test('should call the superclass handle method', async () => {
+  test('должен вызывать метод handle суперкласса', async () => {
     const superHandleSpy = vi.spyOn(handler, 'handle');
 
     await handler.handle(bootstrap);

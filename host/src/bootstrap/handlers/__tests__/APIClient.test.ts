@@ -6,7 +6,7 @@ describe('APIClientHandler', () => {
     initAPIClient: vi.fn(),
   } as any;
 
-  test('should initialize APIClient with apiUrl', async () => {
+  test('должен инициализировать APIClient с apiUrl', async () => {
     const testUrl: string = 'test_url';
 
     const handler = new APIClientHandler({
@@ -18,7 +18,7 @@ describe('APIClientHandler', () => {
     expect(bootstrapMock.initAPIClient).toBeCalledWith(testUrl);
   });
 
-  test('should throw error if apiUrl is not defined', async () => {
+  test('должен выбрасывать ошибку, если apiUrl не определен', async () => {
     const handler = new APIClientHandler({});
 
     await expect(handler.handle(bootstrapMock)).rejects.toThrow();

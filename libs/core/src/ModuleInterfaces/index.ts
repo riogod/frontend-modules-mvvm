@@ -22,7 +22,6 @@ export interface ModuleI18n {
  */
 export interface ModuleManifestEntry {
   name: string;
-  version?: string;
   loadType: ModuleLoadType;
   loadPriority?: number;
   remoteEntry: string;
