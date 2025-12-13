@@ -137,6 +137,9 @@ export class LifecycleManager {
       prefix: LOG_PREFIX,
     });
 
+    // Проверяем, был ли модуль изначально динамическим (до загрузки конфигурации)
+    const wasDynamicModule = module.config instanceof Promise;
+
     const routes = await this.registry.getModuleRoutes(module);
     if (!routes) {
       log.debug(`Модуль "${module.name}": нет маршрутов для регистрации`, {
@@ -147,7 +150,7 @@ export class LifecycleManager {
 
     // Для модулей с динамическим конфигом оборачиваем маршруты
     const routesToRegister =
-      module.config instanceof Promise && autoLoadHandler
+      wasDynamicModule && autoLoadHandler
         ? this.wrapRoutesWithAutoLoad(routes, autoLoadHandler)
         : routes;
 

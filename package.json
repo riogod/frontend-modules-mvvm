@@ -24,7 +24,7 @@
     "lint:module-api": "eslint packages/api_example/src",
     "lint:modules": "npm run lint:module-todo && npm run lint:module-api",
     "lint": "npm run lint:host && npm run lint:lib-core && npm run lint:lib-ui && npm run lint:modules",
-    "test:host": "vitest --config host/vite.config.mts",
+    "test:host": "vitest --config host/vite.config.mts  --reporter=tree",
     "test:lib-core": "vitest --config libs/core/vite.config.mts",
     "test:lib-ui": "vitest --config libs/ui/vite.config.mts",
     "build:host:analyze": "vite build --config host/vite.config.mts --mode analyze",
