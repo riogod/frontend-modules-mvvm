@@ -262,7 +262,8 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
         return null;
       }
     } else {
-      const remoteEntry = String(entry.remoteEntry);
+      // добавляем cache-buster для избежания кеширования remoteEntry.js
+      const remoteEntry = String(entry.remoteEntry) + '?v=' + Date.now();
       config = this.createRemoteConfigLoader(moduleName, remoteEntry);
       log.debug(
         'ModulesDiscoveryHandler: remote config loader created',
