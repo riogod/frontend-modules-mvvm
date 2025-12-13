@@ -18,7 +18,7 @@
 ```typescript
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
-import { createViteConfig } from '../config/vite-config/createViteConfig.ts';
+import { createViteConfig } from '@platform/vite-config';
 
 export default defineConfig(
   createViteConfig({
@@ -26,11 +26,12 @@ export default defineConfig(
     dirname: __dirname,
     // Опционально: путь к локальному конфигу для расширения
     localConfigPath: './vite.config.local.mts',
-  })
+  }),
 );
 ```
 
 **Особенности конфига для host:**
+
 - Включает React и SVGR плагины
 - Настройки сервера (порт 4200) и preview (порт 4300)
 - Сложная конфигурация сборки с manualChunks для оптимизации
@@ -44,7 +45,7 @@ export default defineConfig(
 ```typescript
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
-import { createViteConfig } from '../../config/vite-config/createViteConfig.ts';
+import { createViteConfig } from '@platform/vite-config';
 
 export default defineConfig(
   createViteConfig({
@@ -54,11 +55,12 @@ export default defineConfig(
     external: ['react', 'react-dom', 'react/jsx-runtime'], // для ui добавьте больше
     // Опционально: путь к локальному конфигу для расширения
     localConfigPath: './vite.config.local.mts',
-  })
+  }),
 );
 ```
 
 **Особенности конфига для lib:**
+
 - Включает React плагин (опционально)
 - Library mode с настройками для сборки библиотек
 - Автоматическая поддержка dts плагина (отключается в тестах)
@@ -118,12 +120,21 @@ export default {
 
 ```
 config/vite-config/
-├── index.ts              # TypeScript экспорты
-├── base.config.ts        # Базовый конфиг
-├── host.config.ts        # Конфиг для host приложений
-├── lib.config.ts         # Конфиг для библиотек
-├── createViteConfig.ts   # Фабрика конфигураций
-├── types.ts              # TypeScript типы
+├── index.js              # Основные экспорты
+├── index.d.ts            # TypeScript типы
+├── base.config.js        # Базовый конфиг
+├── host.config.js        # Конфиг для host приложений
+├── lib.config.js         # Конфиг для библиотек
+├── module.config.js      # Конфиг для модулей
+├── createViteConfig.js   # Фабрика конфигураций
+├── plugins/
+│   ├── types.ts          # TypeScript типы для плагинов
+│   ├── moduleAliases.js
+│   ├── manifestMiddleware.js
+│   └── loadManifest.js
+├── build-utils/
+│   ├── generateManifest.js
+│   └── utils.js
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -132,4 +143,3 @@ config/vite-config/
 ## Миграция со старых конфигов
 
 Старые `vite.config.mts` файлы можно заменить на простые обертки, которые используют фабрику. Все специфичные настройки можно вынести в `vite.config.local.mts`.
-
