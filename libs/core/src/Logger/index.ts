@@ -1,2 +1,2 @@
 export { log, createLogger } from './Logger';
-export { LogLevel, type ILogger, type ILoggerConfig } from './interfaces';
+export { LogLevel, type ILogger, type ILoggerConfig, type IErrorMonitoringCallback } from './interfaces';
