@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import { log } from '../Logger';
 import type { IRequestOption } from './interfaces';
 
 /**
@@ -10,7 +11,10 @@ export class APIClient {
   api: AxiosInstance;
   errorCb = new Map<string, (error: AxiosError) => void>();
 
-  constructor(private baseURL: string, withCredentials: boolean = false) {
+  constructor(
+    private baseURL: string,
+    withCredentials: boolean = false,
+  ) {
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
@@ -29,7 +33,6 @@ export class APIClient {
     this.errorCb.set(id, cb);
   }
 
-
   /**
    * Отправляет запрос к серверу и возвращает ответ.
    * Метод принимает дженерик с типами Req и Resp, где Req - тип запроса и Resp - тип ответа.
@@ -47,7 +50,7 @@ export class APIClient {
       url: option.route,
       headers: {
         ...option.headers,
-      }
+      },
     };
 
     if (option.requestObj) {
@@ -55,7 +58,9 @@ export class APIClient {
     }
 
     if (option.validationSchema && option.validationSchema.request) {
-      const result = option.validationSchema.request.safeParse(requestConfig.data);
+      const result = option.validationSchema.request.safeParse(
+        requestConfig.data,
+      );
       if (!result.success) {
         return Promise.reject<Resp>(result.error);
       }
@@ -65,7 +70,9 @@ export class APIClient {
       const response = await this.api.request<Resp>(requestConfig);
 
       if (option.validationSchema && option.validationSchema.response) {
-        const result = option.validationSchema.response.safeParse(response.data);
+        const result = option.validationSchema.response.safeParse(
+          response.data,
+        );
 
         if (!result.success) {
           return Promise.reject<Resp>(result.error);
@@ -74,6 +81,56 @@ export class APIClient {
 
       return response.data;
     } catch (error: unknown) {
+      // Используем оригинальный Error объект (особенно важно для AxiosError)
+      // чтобы сохранить всю информацию и предотвратить дублирование
+      // Если это не Error, создаем новый, но для AxiosError используем оригинал
+      let errorObj: Error;
+      if (error instanceof Error) {
+        errorObj = error;
+      } else {
+        errorObj = new Error(String(error));
+      }
+
+      // Логируем ошибку через log.error (это автоматически отправит в мониторинг)
+      // Это гарантирует, что все ошибки из APIClient попадут в мониторинг,
+      // даже если они обрабатываются через errorCb или catch
+      const errorMessage = axios.isAxiosError(error)
+        ? `Request failed: ${error.message} (${error.response?.status || 'no status'})`
+        : errorObj.message;
+
+      // Добавляем дополнительную информацию об ошибке напрямую к Error объекту
+      // Это гарантирует, что информация попадет в мониторинг через extractErrorFromArgs
+      if (axios.isAxiosError(error)) {
+        Object.assign(errorObj, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: error.config?.url,
+          method: error.config?.method?.toUpperCase(),
+          baseURL: error.config?.baseURL,
+          request: {
+            url: error.config?.url,
+            method: error.config?.method?.toUpperCase(),
+            baseURL: error.config?.baseURL,
+            timeout: error.config?.timeout,
+            headers: error.config?.headers,
+            data: error.config?.data,
+            params: error.config?.params,
+          },
+          response: error.response
+            ? {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                headers: error.response.headers,
+                data: error.response.data,
+              }
+            : undefined,
+          code: error.code,
+        });
+      }
+
+      log.error(errorMessage, { prefix: 'APIClient' }, errorObj);
+
+      // Вызываем errorCb, если он установлен для данного статуса
       if (
         axios.isAxiosError(error) &&
         error.response &&
@@ -86,7 +143,7 @@ export class APIClient {
         }
       }
 
-      return Promise.reject<Resp>(error instanceof Error ? error : new Error(String(error)));
+      return Promise.reject<Resp>(errorObj);
     }
   }
 }

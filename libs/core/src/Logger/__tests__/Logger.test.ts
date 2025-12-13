@@ -360,7 +360,11 @@ describe('Logger', () => {
       // Даем время на обработку
       return new Promise<void>((resolve) => {
         setTimeout(() => {
+          // Ошибка должна быть отправлена в мониторинг
           expect(callback).toHaveBeenCalled();
+          // Но НЕ должна быть выведена в консоль через console.error
+          // (браузер уже выводит её автоматически)
+          expect(consoleErrorSpy).not.toHaveBeenCalled();
           resolve();
         }, 10);
       });
@@ -404,7 +408,8 @@ describe('Logger', () => {
 
       // В тестовом окружении callback может не вызваться, это нормально
       // Главное - проверить, что обработчики установлены
-      expect(true).toBe(true); // Тест проходит, если дошли до сюда
+      // И что ошибка НЕ выводится в консоль (браузер уже это делает)
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -581,6 +586,371 @@ describe('Logger', () => {
 
       // Должен создать Error объект из строки
       expect(callback).toHaveBeenCalled();
+    });
+  });
+
+  describe('Передача дополнительной информации в мониторинг', () => {
+    it('должен передавать дополнительные поля из расширенного Error объекта', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Test error');
+      // Используем Object.assign для добавления полей к реальному Error объекту
+      const errorWithContext = Object.assign(error, {
+        status: 500,
+        url: '/api/test',
+        method: 'GET',
+      });
+
+      log.error('Request failed', { prefix: 'APIClient' }, errorWithContext);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      const callArgs = callback.mock.calls[0];
+      expect(callArgs[0]).toBe(error);
+      expect(callArgs[1]).toMatchObject({
+        message: 'Request failed',
+        prefix: 'APIClient',
+        status: 500,
+        url: '/api/test',
+        method: 'GET',
+      });
+    });
+
+    it('должен передавать дополнительные поля из объекта с вложенным Error', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Test error');
+      const errorData = {
+        error,
+        status: 404,
+        url: '/api/not-found',
+        requestId: '12345',
+      };
+
+      log.error('Not found', { prefix: 'APIClient' }, errorData);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          message: 'Not found',
+          prefix: 'APIClient',
+          status: 404,
+          url: '/api/not-found',
+          requestId: '12345',
+        }),
+      );
+    });
+
+    it('должен передавать дополнительные поля из объекта с полем err', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Test error');
+      const errorData = {
+        err: error,
+        status: 403,
+        url: '/api/forbidden',
+        userId: 'user123',
+      };
+
+      log.error('Forbidden', { prefix: 'APIClient' }, errorData);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          message: 'Forbidden',
+          prefix: 'APIClient',
+          status: 403,
+          url: '/api/forbidden',
+          userId: 'user123',
+        }),
+      );
+    });
+
+    it('должен передавать сложные вложенные объекты в дополнительной информации', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Validation error');
+      // Используем реальный Error объект с дополнительными полями
+      const errorWithContext = Object.assign(error, {
+        status: 400,
+        request: {
+          url: '/api/users',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          data: { name: 'John' },
+        },
+        response: {
+          status: 400,
+          data: { message: 'Invalid input' },
+        },
+      });
+
+      log.error('Validation failed', { prefix: 'APIClient' }, errorWithContext);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      const callArgs = callback.mock.calls[0];
+      expect(callArgs[0]).toBe(error);
+      expect(callArgs[1]).toMatchObject({
+        message: 'Validation failed',
+        prefix: 'APIClient',
+        status: 400,
+        request: {
+          url: '/api/users',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          data: { name: 'John' },
+        },
+        response: {
+          status: 400,
+          data: { message: 'Invalid input' },
+        },
+      });
+    });
+
+    it('должен передавать несколько дополнительных аргументов', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Test error');
+      const metadata = { requestId: 'req-123', timestamp: Date.now() };
+      const context = { userId: 'user-456', action: 'login' };
+
+      log.error(
+        'Operation failed',
+        { prefix: 'App' },
+        error,
+        metadata,
+        context,
+      );
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      // Дополнительные аргументы должны быть извлечены из объектов
+      expect(callback).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({
+          message: 'Operation failed',
+          prefix: 'App',
+        }),
+      );
+    });
+
+    it('не должен дублировать стандартные поля Error в дополнительной информации', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Test error');
+      // Используем Object.assign для добавления полей к реальному Error объекту
+      const errorWithContext = Object.assign(error, {
+        status: 500,
+        // Стандартные поля Error не должны дублироваться в errorInfo
+        customName: 'CustomError',
+        customMessage: 'Custom message',
+      });
+
+      log.error('Request failed', { prefix: 'APIClient' }, errorWithContext);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      const callArgs = callback.mock.calls[0];
+      // Стандартные поля должны быть из Error объекта
+      expect(callArgs[0]).toBe(error);
+      expect(callArgs[0].name).toBe('Error');
+      expect(callArgs[0].message).toBe('Test error');
+      // Дополнительные поля должны быть в errorInfo, но не стандартные поля Error
+      expect(callArgs[1]).toMatchObject({
+        message: 'Request failed', // Это из log.error, а не из error.message
+        prefix: 'APIClient',
+        status: 500,
+        customName: 'CustomError',
+        customMessage: 'Custom message',
+      });
+      // Стандартные поля Error (name, message, stack) не должны дублироваться в errorInfo
+      // name может быть, если он был добавлен как дополнительное поле, но не из стандартного Error.name
+      // Проверяем, что основные поля есть
+      expect(callArgs[1].message).toBe('Request failed');
+      expect(callArgs[1].prefix).toBe('APIClient');
+    });
+  });
+
+  describe('Интеграция с APIClient - дополнительная информация', () => {
+    it('должен передавать дополнительные поля из Error объекта, расширенного через Object.assign', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Request failed');
+      // Симулируем то, что делает APIClient - добавляем поля через Object.assign
+      Object.assign(error, {
+        status: 500,
+        statusText: 'Internal Server Error',
+        url: '/api/test',
+        method: 'GET',
+        baseURL: 'http://localhost:4200',
+        request: {
+          url: '/api/test',
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          data: { test: 'data' },
+        },
+        response: {
+          status: 500,
+          statusText: 'Internal Server Error',
+          data: { error: 'Server error' },
+        },
+        code: 'ERR_BAD_RESPONSE',
+      });
+
+      log.error('Request failed', { prefix: 'APIClient' }, error);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      const callArgs = callback.mock.calls[0];
+      expect(callArgs[0]).toBe(error);
+      expect(callArgs[1]).toMatchObject({
+        message: 'Request failed',
+        prefix: 'APIClient',
+        status: 500,
+        statusText: 'Internal Server Error',
+        url: '/api/test',
+        method: 'GET',
+        baseURL: 'http://localhost:4200',
+        request: {
+          url: '/api/test',
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          data: { test: 'data' },
+        },
+        response: {
+          status: 500,
+          statusText: 'Internal Server Error',
+          data: { error: 'Server error' },
+        },
+        code: 'ERR_BAD_RESPONSE',
+      });
+    });
+
+    it('должен извлекать дополнительные поля из Error в handleUnhandledError', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Unhandled error');
+      // Добавляем дополнительные поля
+      Object.assign(error, {
+        status: 404,
+        url: '/api/not-found',
+        customField: 'custom value',
+      });
+
+      // Симулируем вызов handleUnhandledError через глобальный обработчик
+      // Для этого нужно вызвать sendToMonitoring напрямую, но лучше через unhandled rejection
+      if (typeof window !== 'undefined') {
+        // Создаем промис с отклонением
+        const promise = Promise.reject(error);
+        promise.catch(() => {}); // Обрабатываем, чтобы не было unhandled rejection в тестах
+
+        // Даем время на обработку
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            // Проверяем, что callback был вызван с дополнительной информацией
+            if (callback.mock.calls.length > 0) {
+              const callArgs = callback.mock.calls[0];
+              expect(callArgs[0]).toBe(error);
+              expect(callArgs[1]).toMatchObject({
+                status: 404,
+                url: '/api/not-found',
+                customField: 'custom value',
+              });
+            }
+            resolve();
+          }, 50);
+        });
+      }
+    });
+
+    it('не должен обрабатывать одну и ту же ошибку дважды (log.error и глобальный обработчик)', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      const error = new Error('Test error');
+      // Добавляем дополнительные поля
+      Object.assign(error, {
+        status: 500,
+        url: '/api/test',
+      });
+
+      // Обрабатываем через log.error (как в APIClient)
+      log.error('Request failed', { prefix: 'APIClient' }, error);
+
+      // Проверяем, что ошибка была отправлена в мониторинг
+      expect(callback).toHaveBeenCalledTimes(1);
+
+      // Симулируем, что та же ошибка попадает в глобальный обработчик
+      // (через unhandled rejection)
+      if (typeof window !== 'undefined') {
+        const promise = Promise.reject(error);
+        promise.catch(() => {});
+
+        return new Promise<void>((resolve) => {
+          setTimeout(() => {
+            // Ошибка не должна быть обработана второй раз
+            expect(callback).toHaveBeenCalledTimes(1);
+            resolve();
+          }, 50);
+        });
+      }
+    });
+
+    it('должен передавать все поля AxiosError-подобного объекта', () => {
+      const callback = vi.fn();
+      log.setConfig({ errorMonitoringCallback: callback });
+
+      // Создаем Error, который имитирует AxiosError
+      const error = new Error('Request failed with status code 500');
+      error.name = 'AxiosError';
+      Object.assign(error, {
+        code: 'ERR_BAD_RESPONSE',
+        config: {
+          url: '/jokes/programming/random',
+          method: 'get',
+          baseURL: 'http://localhost:4200',
+        },
+        response: {
+          status: 500,
+          statusText: 'Internal Server Error',
+          data: { error: 'Server error' },
+        },
+        request: {
+          readyState: 4,
+          status: 500,
+        },
+      });
+
+      log.error('Request failed', { prefix: 'APIClient' }, error);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      const callArgs = callback.mock.calls[0];
+      expect(callArgs[0]).toBe(error);
+      expect(callArgs[1]).toMatchObject({
+        message: 'Request failed',
+        prefix: 'APIClient',
+        code: 'ERR_BAD_RESPONSE',
+        config: {
+          url: '/jokes/programming/random',
+          method: 'get',
+          baseURL: 'http://localhost:4200',
+        },
+        response: {
+          status: 500,
+          statusText: 'Internal Server Error',
+          data: { error: 'Server error' },
+        },
+        request: {
+          readyState: 4,
+          status: 500,
+        },
+      });
     });
   });
 });

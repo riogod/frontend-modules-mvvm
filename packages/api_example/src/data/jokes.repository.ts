@@ -12,9 +12,16 @@ export class JokesRepository {
   ) {}
 
   async getJoke(): Promise<JokeResponseDTO[]> {
-    return await this.apiClient.request<null, JokeResponseDTO[]>({
+    return await this.apiClient.request<
+      { limit: number; offset: number },
+      JokeResponseDTO[]
+    >({
       route: EAPIExampleEndpoints.JOKES_DATA,
       method: HttpMethod.GET,
+      requestObj: {
+        limit: 10,
+        offset: 0,
+      },
       validationSchema: {
         response: jokesResponseSchema,
       },

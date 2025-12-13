@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { Container, Box, Typography, Paper } from '@platform/ui';
+import { Container, Box, Typography, Paper, Button } from '@platform/ui';
 import { useTranslation } from 'react-i18next';
 
 const HomePage: FC = () => {
@@ -13,6 +13,13 @@ const HomePage: FC = () => {
             {t('title')}
           </Typography>
           <Typography variant="body1">{t('description')}</Typography>
+          <Button
+            onClick={() => {
+              throw new Error('Test error');
+            }}
+          >
+            Test error
+          </Button>
         </Paper>
       </Box>
     </Container>

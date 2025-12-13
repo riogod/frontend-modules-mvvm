@@ -17,14 +17,14 @@ import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
 configure({ enforceActions: 'observed', useProxies: 'always' });
 log.setConfig({
   level: getLogLevelFromEnv(),
-  // errorMonitoringCallback: (error, errorInfo) => {
-  // тут можно поставить обработчик для отправки ошибок в мониторинг
-  // console.warn(
-  //   'Unhandled error captured (monitoring not configured):',
-  //   error,
-  //   errorInfo,
-  // );
-  // },
+  errorMonitoringCallback: (error, errorInfo) => {
+    // тут можно поставить обработчик для отправки ошибок в мониторинг
+    console.warn(
+      'Unhandled error captured (monitoring not configured):',
+      error,
+      errorInfo,
+    );
+  },
 });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)

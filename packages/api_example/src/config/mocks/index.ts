@@ -8,7 +8,7 @@ export const handlers: RequestHandler[] = [
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
     const joke = jokes[Math.floor(Math.random() * jokes.length)];
 
-    await delay(Math.random() * 5000);
+    await delay(Math.random() * 1000);
 
     //random status 200 or 500 , but 500 in 20% of cases
     if (Math.random() > 0.2) {

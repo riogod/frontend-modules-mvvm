@@ -258,7 +258,8 @@ export const log = {
 };
 
 /**
- * Обработка ошибки с логированием и отправкой в мониторинг
+ * Обработка ошибки с отправкой в мониторинг (без вывода в консоль)
+ * Ошибка уже выводится браузером, поэтому не дублируем через console.error
  */
 const handleUnhandledError = (
   error: unknown,
@@ -283,7 +284,6 @@ const handleUnhandledError = (
   }
 
   // Проверяем, не обрабатывали ли мы уже эту ошибку
-  // (но не добавляем в processedErrors здесь, это сделает sendToMonitoring)
   if (processedErrors.has(errorObj)) {
     console.debug(
       '[Logger] Error already processed, skipping duplicate handling',
@@ -291,30 +291,35 @@ const handleUnhandledError = (
     return;
   }
 
-  // Формируем сообщение об ошибке
-  const errorMessage =
-    errorInfo?.message || errorObj.message || 'Unhandled error';
+  // Извлекаем дополнительную информацию из Error объекта (если она была добавлена)
+  const additionalInfo: Record<string, unknown> = {};
+  if (errorObj instanceof Error) {
+    const errorWithExtras = errorObj as Error & Record<string, unknown>;
+    Object.keys(errorWithExtras).forEach((key) => {
+      if (
+        key !== 'name' &&
+        key !== 'message' &&
+        key !== 'stack' &&
+        key !== 'cause'
+      ) {
+        additionalInfo[key] = errorWithExtras[key];
+      }
+    });
+  }
+
+  // Формируем детали ошибки для мониторинга
   const errorDetails = {
     name: errorObj.name,
     message: errorObj.message,
     stack: errorObj.stack || errorInfo?.stack,
     ...errorInfo,
+    ...additionalInfo, // Добавляем дополнительную информацию из Error объекта
+    prefix: 'logger.globalErrorHandler',
   };
 
-  // Логируем ошибку через log.error (это автоматически отправит в мониторинг, если ошибка есть в args)
-  log.error(
-    `Unhandled ${errorInfo?.isUnhandledRejection ? 'promise rejection' : 'error'}: ${errorMessage}`,
-    { prefix: 'logger.globalErrorHandler' },
-    errorObj,
-    errorDetails,
-  );
-
-  // Отправляем в мониторинг (если еще не отправлено через log.error)
-  // sendToMonitoring проверит processedErrors и отправит только если еще не было отправлено
-  sendToMonitoring(errorObj, {
-    ...errorDetails,
-    prefix: 'logger.globalErrorHandler',
-  });
+  // Отправляем только в мониторинг, НЕ выводим в консоль
+  // (ошибка уже выводится браузером автоматически)
+  sendToMonitoring(errorObj, errorDetails);
 };
 
 /**
@@ -574,10 +579,74 @@ const logInternal = (
   if (level === LogLevel.ERROR) {
     const error = extractErrorFromArgs(args, startIndex);
     if (error) {
+      // Извлекаем дополнительную информацию из аргументов
+      // Ищем объект, который содержит Error и дополнительные поля
+      const additionalInfo: Record<string, unknown> = {};
+      for (let i = startIndex; i < args.length; i++) {
+        const arg = args[i];
+        if (typeof arg === 'object' && arg !== null) {
+          // Если это объект с Error и дополнительными полями
+          if (arg instanceof Error) {
+            // Если сам Error имеет дополнительные поля (расширенный объект)
+            const errorObj = arg as Error & Record<string, unknown>;
+            // Копируем все нестандартные поля Error
+            Object.keys(errorObj).forEach((key) => {
+              if (
+                key !== 'name' &&
+                key !== 'message' &&
+                key !== 'stack' &&
+                key !== 'cause'
+              ) {
+                additionalInfo[key] = errorObj[key];
+              }
+            });
+          } else if ('error' in arg && arg.error instanceof Error) {
+            // Если Error вложен в объект, копируем остальные поля
+            Object.keys(arg).forEach((key) => {
+              if (key !== 'error' && key !== 'err') {
+                additionalInfo[key] = (arg as Record<string, unknown>)[key];
+              }
+            });
+          } else if ('err' in arg && arg.err instanceof Error) {
+            // Аналогично для поля 'err'
+            Object.keys(arg).forEach((key) => {
+              if (key !== 'error' && key !== 'err') {
+                additionalInfo[key] = (arg as Record<string, unknown>)[key];
+              }
+            });
+          } else {
+            // Если это объект, который содержит Error как часть расширенного объекта
+            // (например, {...errorObj, status: 500})
+            const hasErrorFields =
+              'name' in arg &&
+              'message' in arg &&
+              (arg.name === 'Error' ||
+                arg.name === 'AxiosError' ||
+                arg.name === 'TypeError' ||
+                arg.name === 'ReferenceError' ||
+                arg.name === 'SyntaxError');
+            if (hasErrorFields) {
+              // Копируем все поля, кроме стандартных полей Error
+              Object.keys(arg).forEach((key) => {
+                if (
+                  key !== 'name' &&
+                  key !== 'message' &&
+                  key !== 'stack' &&
+                  key !== 'cause'
+                ) {
+                  additionalInfo[key] = (arg as Record<string, unknown>)[key];
+                }
+              });
+            }
+          }
+        }
+      }
+
       sendToMonitoring(error, {
         message,
         prefix,
         stack: error.stack,
+        ...additionalInfo,
       });
     } else {
       // Если ошибка не найдена в args, создаем новую на основе сообщения
