@@ -266,14 +266,37 @@ export class RemoteModuleLoader {
       prefix: LOG_PREFIX,
     });
 
-    return Promise.race([
-      this.doLoad(name, remoteEntry),
-      this.createTimeoutPromise(timeout, name),
-    ]);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        log.debug(`Таймаут для модуля: ${name}`, { prefix: LOG_PREFIX });
+        reject(new RemoteModuleTimeoutError(name, timeout));
+      }, timeout);
+    });
+
+    try {
+      const result = await Promise.race([
+        this.doLoad(name, remoteEntry),
+        timeoutPromise,
+      ]);
+      // Если загрузка успешна, очищаем таймер
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+      return result;
+    } catch (error) {
+      // Если произошла ошибка, очищаем таймер
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+      throw error;
+    }
   }
 
   /**
    * Создает Promise, который отклоняется по таймауту.
+   * @deprecated Используйте loadWithTimeout, который правильно очищает таймер
    */
   private createTimeoutPromise(timeout: number, name: string): Promise<never> {
     return new Promise((_, reject) => {

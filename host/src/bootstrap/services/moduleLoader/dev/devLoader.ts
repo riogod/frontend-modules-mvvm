@@ -85,13 +85,7 @@ export async function loadNormalModulesDev(
     prefix: LOG_PREFIX,
   });
 
-  const {
-    registry,
-    statusTracker,
-    lifecycleManager,
-    bootstrap,
-    autoLoadHandler,
-  } = context;
+  const { registry, statusTracker, bootstrap } = context;
 
   // Инициализируем dev-сервисы
   const conditionValidator = new ConditionValidator();
@@ -121,7 +115,8 @@ export async function loadNormalModulesDev(
     (name: string) => statusTracker.isPreloaded(name),
   );
 
-  const { levels, skippedModules } = levelBuilder.buildDependencyLevels(modules);
+  const { levels, skippedModules } =
+    levelBuilder.buildDependencyLevels(modules);
 
   if (skippedModules.length > 0) {
     log.warn(`[DEV] Пропущено модулей: ${skippedModules.length}`, {
@@ -132,7 +127,9 @@ export async function loadNormalModulesDev(
   // Загружаем уровни
   for (let i = 0; i < levels.length; i++) {
     const levelModules = levels[i];
-    log.debug(`[DEV] Уровень ${i + 1}/${levels.length}`, { prefix: LOG_PREFIX });
+    log.debug(`[DEV] Уровень ${i + 1}/${levels.length}`, {
+      prefix: LOG_PREFIX,
+    });
 
     await Promise.all(
       levelModules.map(async (module: Module) => {
@@ -140,7 +137,28 @@ export async function loadNormalModulesDev(
           return;
         }
 
+        // Если модуль предзагружен, проверяем условия перед пометкой как загруженный
         if (statusTracker.isPreloaded(module.name)) {
+          // Проверяем условия загрузки для предзагруженного модуля
+          const canLoad = await conditionValidator.validateLoadConditions(
+            module,
+            bootstrap,
+            (name: string) => statusTracker.isLoaded(name),
+          );
+
+          if (!canLoad) {
+            log.debug(
+              `[DEV] Предзагруженный модуль "${module.name}" не может быть загружен: условия не выполнены`,
+              { prefix: LOG_PREFIX },
+            );
+            statusTracker.markAsFailed(
+              module,
+              new Error(`Условия не выполнены: ${module.name}`),
+            );
+            return;
+          }
+
+          // Условия выполнены, помечаем как загруженный
           statusTracker.markAsLoaded(module);
           return;
         }
@@ -209,5 +227,3 @@ async function loadSingleModuleDev(
     throw error;
   }
 }
-
-

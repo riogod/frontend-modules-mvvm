@@ -5,13 +5,14 @@
  * @module prod/ProdModuleExecutor
  */
 
-import { log } from '@platform/core';
+import { IOC_CORE_TOKENS, log } from '@platform/core';
 import type { Module } from '../../../../modules/interface';
 import type { Bootstrap } from '../../../index';
 import type { ModuleRegistry } from '../core/ModuleRegistry';
 import type { ModuleStatusTracker } from '../core/ModuleStatusTracker';
 import type { LifecycleManager } from '../services/LifecycleManager';
 import { ModuleLoadStatus } from '../types';
+import type { AccessControlModel } from '@platform/common';
 
 const LOG_PREFIX = 'moduleLoader.prod';
 
@@ -34,6 +35,79 @@ interface DependencyCheckResult {
   canLoad: boolean;
   failedDeps: string[];
   notLoadedDeps: string[];
+}
+
+/**
+ * Проверяет условия загрузки модуля (feature flags и permissions).
+ * Используется для проверки предзагруженных модулей перед пометкой как загруженных.
+ *
+ * @param module - Модуль для проверки
+ * @param bootstrap - Инстанс Bootstrap
+ * @returns true, если условия выполнены
+ */
+function checkLoadConditions(
+  module: Module,
+  bootstrap: Bootstrap,
+): boolean {
+  if (!module.loadCondition) {
+    return true;
+  }
+
+  const { featureFlags, accessPermissions } = module.loadCondition;
+
+  try {
+    // Получаем AccessControlModel из DI контейнера
+    const accessControlModel = bootstrap.di.get<AccessControlModel>(
+      IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
+    );
+
+    if (!accessControlModel) {
+      log.warn(
+        `[PROD] AccessControlModel не найден для модуля "${module.name}", пропускаем проверку условий`,
+        { prefix: LOG_PREFIX },
+      );
+      // Если AccessControlModel недоступен, считаем что условия выполнены
+      // (в PROD режиме сервер уже проверил условия)
+      return true;
+    }
+
+    // Проверяем feature flags
+    if (featureFlags && featureFlags.length > 0) {
+      const hasFlags = accessControlModel.includesFeatureFlags(featureFlags);
+      if (!hasFlags) {
+        log.debug(
+          `[PROD] Модуль "${module.name}" не может быть загружен: feature flags не выполнены`,
+          { prefix: LOG_PREFIX },
+        );
+        return false;
+      }
+    }
+
+    // Проверяем permissions
+    if (accessPermissions && accessPermissions.length > 0) {
+      const hasPermissions =
+        accessControlModel.includesPermissions(accessPermissions);
+      if (!hasPermissions) {
+        log.debug(
+          `[PROD] Модуль "${module.name}" не может быть загружен: права доступа не выполнены`,
+          { prefix: LOG_PREFIX },
+        );
+        return false;
+      }
+    }
+
+    return true;
+  } catch (error) {
+    log.error(
+      `[PROD] Ошибка при проверке условий для модуля "${module.name}"`,
+      {
+        prefix: LOG_PREFIX,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    );
+    // В случае ошибки считаем что условия выполнены (fallback)
+    return true;
+  }
 }
 
 /**
@@ -159,7 +233,24 @@ export async function loadNormalModulesProd(
           return;
         }
 
+        // Если модуль предзагружен, проверяем условия перед пометкой как загруженный
         if (statusTracker.isPreloaded(module.name)) {
+          // Проверяем условия загрузки для предзагруженного модуля
+          const canLoad = checkLoadConditions(module, bootstrap);
+
+          if (!canLoad) {
+            log.debug(
+              `[PROD] Предзагруженный модуль "${module.name}" не может быть загружен: условия не выполнены`,
+              { prefix: LOG_PREFIX },
+            );
+            statusTracker.markAsFailed(
+              module,
+              new Error(`Условия не выполнены: ${module.name}`),
+            );
+            return;
+          }
+
+          // Условия выполнены, помечаем как загруженный
           statusTracker.markAsLoaded(module);
           return;
         }
