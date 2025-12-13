@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { APIClient, HttpMethod, IOC_CORE_TOKENS, log } from '@platform/core';
 import { AppStartDTO } from './app.dto';
 import { appStartResponseSchema } from './validation/appStart.response.schema';
-import { ECoreEndpoints } from 'host/src/config/endpoints';
+import { ECoreEndpoints } from '../endpoints';
 
 @injectable()
 export class AppStartRepository {
