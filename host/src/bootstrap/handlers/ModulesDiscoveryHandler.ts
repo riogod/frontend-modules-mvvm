@@ -97,24 +97,58 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     log.debug('ModulesDiscoveryHandler: processing modules', {
       prefix: 'bootstrap.handlers.ModulesDiscoveryHandler.processModules',
     });
-    const modules: Module[] = [];
 
-    for (const entry of manifestEntries) {
-      const module = await this.createModule(entry);
-      log.debug(
-        'ModulesDiscoveryHandler: creating module',
-        {
-          prefix:
-            'bootstrap.handlers.ModulesDiscoveryHandler.processModules.createModule',
-        },
-        {
-          moduleName: entry.name,
-        },
-      );
-      if (module) {
-        modules.push(module);
-      }
-    }
+    // Параллельная обработка всех модулей для ускорения загрузки
+    const modulePromises = manifestEntries.map((entry) =>
+      this.createModule(entry)
+        .then((module) => {
+          if (module) {
+            log.debug(
+              'ModulesDiscoveryHandler: module created',
+              {
+                prefix:
+                  'bootstrap.handlers.ModulesDiscoveryHandler.processModules.createModule',
+              },
+              {
+                moduleName: entry.name,
+              },
+            );
+          }
+          return module;
+        })
+        .catch((error) => {
+          log.warn(
+            `ModulesDiscoveryHandler: failed to create module ${entry.name}`,
+            {
+              prefix:
+                'bootstrap.handlers.ModulesDiscoveryHandler.processModules.createModule',
+            },
+            {
+              error,
+              moduleName: entry.name,
+            },
+          );
+          return null;
+        }),
+    );
+
+    // Ждем завершения всех промисов параллельно
+    // Используем Promise.allSettled вместо Promise.all, чтобы ошибка одного модуля
+    // не блокировала обработку остальных
+    const results = await Promise.allSettled(modulePromises);
+
+    // Обрабатываем результаты: извлекаем value из fulfilled промисов
+    // и игнорируем rejected (они уже обработаны в catch выше)
+    const modules = results
+      .map((result) => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        } else {
+          // rejected промисы уже обработаны в catch выше, возвращаем null
+          return null;
+        }
+      })
+      .filter((m): m is Module => m !== null);
 
     return modules;
   }

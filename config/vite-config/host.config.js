@@ -6,6 +6,7 @@ import federation from '@originjs/vite-plugin-federation';
 import path from 'path';
 import fs from 'fs';
 import process from 'node:process';
+import { removeDevFieldsPlugin } from './plugins/removeDevFields.js';
 
 /**
  * Shared зависимости для Module Federation
@@ -198,7 +199,14 @@ export function createHostConfig(options) {
   const base = createBaseConfig({
     dirname,
     cacheDir: cacheDir || `../../node_modules/.vite/host`,
-    plugins: [react(), svgr(), cleanDistPlugin, federationPlugin, ...plugins],
+    plugins: [
+      react(),
+      svgr(),
+      cleanDistPlugin,
+      federationPlugin,
+      removeDevFieldsPlugin(),
+      ...plugins,
+    ],
     resolve: finalResolve,
     test: {
       globals: true,

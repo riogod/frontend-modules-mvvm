@@ -5,6 +5,7 @@ import federation from '@originjs/vite-plugin-federation';
 import { loadConfigFromFile } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import { removeDevFieldsPlugin } from './plugins/removeDevFields.js';
 
 /**
  * Базовые shared зависимости для всех модулей
@@ -168,6 +169,8 @@ export async function createModuleConfig(options) {
         // Но мы выводим файлы в корень модуля
       }),
     );
+    // Добавляем плагин для удаления dev-полей только в production
+    basePlugins.push(removeDevFieldsPlugin());
   }
 
   const allPlugins = [...basePlugins, ...plugins];
@@ -227,7 +230,6 @@ export async function createModuleConfig(options) {
           entryFileNames: '[name].js',
           chunkFileNames: '[name]-[hash].js',
           assetFileNames: '[name]-[hash][extname]',
-          publicPath: 'auto',
         },
       },
       ...build,
