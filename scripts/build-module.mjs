@@ -14,11 +14,11 @@ const distDir = path.resolve(__dirname, '../dist/modules');
  * Универсальный скрипт для сборки MFE модулей
  *
  * Использование:
- *   npm run build:module -- --name=todo
+ *   npm run build:module -- --name=<module>
  *   npm run build:module -- --all
- *   npm run build:module -- --name=todo --name=api_example --parallel
- *   npm run build:module -- --modules=todo,api_example
- *   MODULES=todo,api_example npm run build:module
+ *   npm run build:module -- --name=<module1> --name=<module2> --parallel
+ *   npm run build:module -- --modules=<module1>,<module2>
+ *   MODULES=<module1>,<module2> npm run build:module
  *
  * Результат сборки:
  *   dist/modules/{module}/latest/   — всегда актуальная версия
@@ -297,14 +297,29 @@ async function main() {
       }
     }
   } else {
+    const availableModules = discoverModules(packagesDir);
+    const exampleModules =
+      availableModules.length > 0
+        ? availableModules.slice(0, 2).join(',')
+        : 'module1,module2';
+    const exampleModule =
+      availableModules.length > 0 ? availableModules[0] : 'module1';
+
     console.log(chalk.yellow('Usage:'));
-    console.log('  npm run build:module -- --name=todo');
+    console.log(`  npm run build:module -- --name=${exampleModule}`);
     console.log('  npm run build:module -- --all');
-    console.log(
-      '  npm run build:module -- --name=todo --name=api_example --parallel',
-    );
-    console.log('  npm run build:module -- --modules=todo,api_example');
-    console.log('  MODULES=todo,api_example npm run build:module');
+    if (availableModules.length > 1) {
+      console.log(
+        `  npm run build:module -- --name=${availableModules[0]} --name=${availableModules[1]} --parallel`,
+      );
+      console.log(`  npm run build:module -- --modules=${exampleModules}`);
+    }
+    console.log(`  MODULES=${exampleModules} npm run build:module`);
+    if (availableModules.length > 0) {
+      console.log(
+        chalk.gray(`\nAvailable modules: ${availableModules.join(', ')}`),
+      );
+    }
     process.exit(1);
   }
 
