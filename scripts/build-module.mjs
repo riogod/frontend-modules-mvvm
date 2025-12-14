@@ -17,6 +17,8 @@ const distDir = path.resolve(__dirname, '../dist/modules');
  *   npm run build:module -- --name=todo
  *   npm run build:module -- --all
  *   npm run build:module -- --name=todo --name=api_example --parallel
+ *   npm run build:module -- --modules=todo,api_example
+ *   MODULES=todo,api_example npm run build:module
  *
  * Результат сборки:
  *   dist/modules/{module}/latest/   — всегда актуальная версия
@@ -137,13 +139,40 @@ function discoverModules(packagesDir) {
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  return {
-    all: args.includes('--all'),
-    names: args
+
+  // Поддержка списка модулей через --modules=module1,module2
+  const modulesArg = args.find((a) => a.startsWith('--modules='));
+  let modulesFromArg = [];
+  if (modulesArg) {
+    modulesFromArg = modulesArg
+      .replace('--modules=', '')
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => m.length > 0);
+  }
+
+  // Поддержка переменной окружения MODULES
+  const modulesFromEnv = process.env.MODULES
+    ? process.env.MODULES.split(',')
+        .map((m) => m.trim())
+        .filter((m) => m.length > 0)
+    : [];
+
+  // Объединяем все источники списка модулей
+  const allModuleNames = [
+    ...args
       .filter((a) => a.startsWith('--name='))
       .map((a) => a.replace('--name=', '')),
+    ...modulesFromArg,
+    ...modulesFromEnv,
+  ];
+
+  return {
+    all: args.includes('--all'),
+    names: allModuleNames,
     parallel: args.includes('--parallel'),
     analyze: args.includes('--analyze'),
+    verbose: args.includes('--verbose') || args.includes('-v'),
   };
 }
 
@@ -205,7 +234,9 @@ async function buildModule(moduleName, options = {}) {
 
           resolve({ name: moduleName, version, latestDir, versionDir });
         } catch (error) {
-          spinner.fail(`Failed to reorganize output for ${chalk.red(moduleName)}`);
+          spinner.fail(
+            `Failed to reorganize output for ${chalk.red(moduleName)}`,
+          );
           reject(error);
         }
       } else {
@@ -272,6 +303,8 @@ async function main() {
     console.log(
       '  npm run build:module -- --name=todo --name=api_example --parallel',
     );
+    console.log('  npm run build:module -- --modules=todo,api_example');
+    console.log('  MODULES=todo,api_example npm run build:module');
     process.exit(1);
   }
 
@@ -280,7 +313,10 @@ async function main() {
     process.exit(0);
   }
 
-  const options = { analyze: args.analyze };
+  const options = {
+    analyze: args.analyze,
+    verbose: args.verbose,
+  };
 
   if (args.parallel) {
     await buildModulesParallel(modulesToBuild, options);
@@ -295,4 +331,3 @@ main().catch((err) => {
   console.error(chalk.red('❌ Build failed:'), err.message);
   process.exit(1);
 });
-
