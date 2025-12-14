@@ -1,18 +1,21 @@
 {
   "compilerOptions": {
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "allowJs": false,
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "types": ["node"],
+    "types": ["node", "vite/client"],
     "declaration": true,
     "declarationMap": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.json"
+    "src/**/*.json",
+    "src/**/*.d.ts",
+    "../../host/src/bootstrap/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts",

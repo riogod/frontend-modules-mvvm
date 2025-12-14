@@ -5,6 +5,7 @@ import federation from '@originjs/vite-plugin-federation';
 import { loadConfigFromFile } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { removeDevFieldsPlugin } from './plugins/removeDevFields.js';
 
 /**
@@ -207,11 +208,37 @@ export async function createModuleConfig(options) {
     },
   });
 
+  // Нормализуем имя модуля для использования в CSS Modules
+  const modulePart = moduleName.replace(/-/g, '_');
+
   return {
     ...base,
     server,
     preview,
     base: './',
+    css: {
+      modules: {
+        // Генерация уникальных имен классов с префиксом модуля
+        // Это обеспечивает изоляцию стилей между разными модулями
+        generateScopedName: (name, filename) => {
+          // В production используем короткий хеш для минимизации размера
+          if (isProduction) {
+            const hash = crypto
+              .createHash('md5')
+              .update(filename + name)
+              .digest('base64')
+              .substring(0, 5)
+              .replace(/[+/=]/g, '_');
+            return `${modulePart}_${name}_${hash}`;
+          }
+          // В dev используем читаемое имя для отладки
+          return `${modulePart}__${name}`;
+        },
+        // Преобразование kebab-case в camelCase для удобства использования
+        // Например: .my-class -> styles.myClass
+        localsConvention: 'camelCase',
+      },
+    },
     build: {
       outDir,
       target: 'esnext',

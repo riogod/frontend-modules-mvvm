@@ -14,7 +14,7 @@
     "build:module": "node scripts/build-module.mjs",
     "build:modules": "node scripts/build-module.mjs --all",
     "build:modules:parallel": "node scripts/build-module.mjs --all --parallel",
-    "build:all": "npm run build:modules && npm run build:host",
+    "build:all": "npm run build:modules:parallel && npm run build:host",
     "preview:host": "vite preview --config host/vite.config.mts",
     "analyze:module": "node scripts/build-module.mjs --analyze",
     "lint:host": "eslint host/src",

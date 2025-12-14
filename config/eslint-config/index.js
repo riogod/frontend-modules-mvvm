@@ -31,13 +31,19 @@ function loadLocalConfig(localConfigPath) {
   }
 }
 
+// Загружаем кастомный плагин platform
+// В старом формате ESLint для локальных плагинов нужно использовать объект
+const platformPlugin = require('./plugins/platform');
+
 /**
  * Базовый конфиг для всех TypeScript проектов
  */
 const baseConfig = {
   root: true,
   ignorePatterns: ['**/*'],
-  plugins: [],
+  plugins: {
+    platform: platformPlugin,
+  },
   overrides: [
     {
       files: '*.json',
@@ -82,6 +88,13 @@ const baseConfig = {
       files: ['*.js', '*.jsx'],
       extends: ['eslint:recommended'],
       rules: {},
+    },
+    {
+      // Правило только для packages/ (MFE модули)
+      files: ['packages/*/src/**/*.{ts,tsx}'],
+      rules: {
+        'platform/no-global-css': 'error',
+      },
     },
   ],
 };
@@ -250,13 +263,13 @@ function createLibConfig(options = {}) {
 
   const tsconfig =
     tsconfigPath || path.join(process.cwd(), 'tsconfig.base.json');
-  
+
   // Определяем путь к tsconfig.spec.json для тестовых файлов
   // Если tsconfigPath указывает на tsconfig.lib.json, используем tsconfig.spec.json из той же директории
   // Используем resolve для получения абсолютного пути
-  const tsconfigSpec = tsconfigPath 
-      ? path.resolve(path.dirname(tsconfigPath), 'tsconfig.spec.json')
-      : path.resolve(process.cwd(), 'tsconfig.spec.json');
+  const tsconfigSpec = tsconfigPath
+    ? path.resolve(path.dirname(tsconfigPath), 'tsconfig.spec.json')
+    : path.resolve(process.cwd(), 'tsconfig.spec.json');
 
   const config = {
     ...baseConfig,

@@ -7,6 +7,7 @@ import TodoItem from './components/TodoItem';
 import TodoListFilter from './components/TodoListFilter';
 import { TODO_DI_TOKENS } from '../config/di.tokens';
 import { ThemeSchema } from '@platform/share';
+import { TestCssModule } from './components/TestCssModule';
 
 const TodoPage: FC = () => {
   const listViewModel = useVM<TodoListViewModel>(
@@ -25,6 +26,7 @@ const TodoPage: FC = () => {
         }}
       >
         <TodoListFilter />
+        <TestCssModule />
         <Observer>
           {() => (
             <Box sx={{ width: 1 }}>

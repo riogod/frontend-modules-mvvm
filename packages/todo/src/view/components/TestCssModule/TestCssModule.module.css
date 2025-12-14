@@ -1,0 +1,55 @@
+/* Тестовый CSS Module для проверки изоляции стилей */
+
+/* CSS переменные из @platform/ui доступны глобально через host/src/main.css */
+
+.container {
+  padding: var(--spacing-md);
+  margin: var(--spacing-md);
+  border: 2px solid var(--mui-palette-primary-main);
+  border-radius: var(--mui-shape-border-radius);
+  background-color: var(--mui-palette-background-paper);
+}
+
+.title {
+  color: var(--mui-palette-primary-main);
+  margin-bottom: var(--spacing-sm);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.text {
+  color: var(--mui-palette-text-secondary);
+  font-size: 14px;
+}
+
+.box {
+  padding: var(--spacing-sm);
+  background-color: var(--mui-palette-primary-light);
+  background-color: rgba(51, 201, 220, 0.1); /* fallback с прозрачностью */
+  border-radius: 4px;
+  border-left: 4px solid var(--mui-palette-primary-main);
+}
+
+.label {
+  color: var(--mui-palette-primary-main);
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.info {
+  margin-top: var(--spacing-xs);
+  color: var(--mui-palette-text-secondary);
+  font-size: 12px;
+}
+
+/* Пример использования media queries */
+@media (max-width: 600px) {
+  .container {
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm);
+  }
+}

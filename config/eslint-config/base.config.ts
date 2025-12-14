@@ -1,12 +1,21 @@
 import type { ESLintConfig } from './types';
+import path from 'path';
+
+// Загружаем кастомный плагин platform
+// В старом формате ESLint для локальных плагинов нужно использовать объект
+const platformPlugin = require('./plugins/platform');
 
 /**
  * Базовый конфиг для всех TypeScript проектов
  */
-export const baseConfig: ESLintConfig = {
+export const baseConfig: ESLintConfig & {
+  plugins?: Record<string, unknown> | string[];
+} = {
   root: true,
   ignorePatterns: ['**/*'],
-  plugins: [],
+  plugins: {
+    platform: platformPlugin,
+  } as unknown as string[],
   overrides: [
     {
       files: '*.json',
@@ -52,6 +61,13 @@ export const baseConfig: ESLintConfig = {
       files: ['*.js', '*.jsx'],
       extends: ['eslint:recommended'],
       rules: {},
+    },
+    {
+      // Правило только для packages/ (MFE модули)
+      files: ['packages/*/src/**/*.{ts,tsx}'],
+      rules: {
+        'platform/no-global-css': 'error',
+      },
     },
   ],
 };
