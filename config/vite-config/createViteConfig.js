@@ -112,6 +112,46 @@ export function createViteConfig(options) {
     return (env) => {
       const config = { ...base };
 
+      // Загружаем переменные окружения с учетом режима (mode)
+      // Это важно для правильного чтения VITE_APP_PREFIX из .env файлов
+      // loadEnv ищет .env файлы в указанной директории (mergedOptions.dirname)
+      const { loadEnv } = require('vite');
+      const loadedEnv = loadEnv(
+        env.mode || 'development',
+        mergedOptions.dirname,
+        '',
+      );
+
+      // Логируем для отладки (можно убрать в production)
+      if (loadedEnv.VITE_APP_PREFIX) {
+        console.log(
+          `[vite-config] Loaded VITE_APP_PREFIX from .env: "${loadedEnv.VITE_APP_PREFIX}"`,
+        );
+      }
+
+      // Нормализуем префикс (должен начинаться с / и заканчиваться /)
+      function normalizeAppPrefix(prefix) {
+        if (!prefix || prefix === '/') {
+          return '/';
+        }
+        let normalized = prefix.trim();
+        if (!normalized.startsWith('/')) {
+          normalized = '/' + normalized;
+        }
+        if (!normalized.endsWith('/')) {
+          normalized = normalized + '/';
+        }
+        return normalized;
+      }
+
+      // Устанавливаем base на основе VITE_APP_PREFIX
+      const appPrefix = normalizeAppPrefix(
+        loadedEnv.VITE_APP_PREFIX || process.env.VITE_APP_PREFIX || '',
+      );
+
+      // Перезаписываем base в конфигурации
+      config.base = appPrefix;
+
       if (env.mode === 'analyze' && config.build?.rollupOptions) {
         const { visualizer } = require('rollup-plugin-visualizer');
         config.build.rollupOptions.plugins = [

@@ -6,6 +6,7 @@ import federation from '@originjs/vite-plugin-federation';
 import path from 'path';
 import fs from 'fs';
 import process from 'node:process';
+import { loadEnv } from 'vite';
 import { removeDevFieldsPlugin } from './plugins/removeDevFields.js';
 
 /**
@@ -146,6 +147,36 @@ function collectLibraryAliases(dirname) {
 }
 
 /**
+ * Нормализует префикс пути приложения
+ * Префикс должен начинаться с / и заканчиваться /
+ * Примеры:
+ * - "aaa/" -> "/aaa/"
+ * - "/aaa" -> "/aaa/"
+ * - "/aaa/" -> "/aaa/"
+ * - "" -> "/"
+ */
+function normalizeAppPrefix(prefix) {
+  if (!prefix || prefix === '/') {
+    return '/';
+  }
+
+  // Убираем пробелы
+  let normalized = prefix.trim();
+
+  // Добавляем начальный / если его нет
+  if (!normalized.startsWith('/')) {
+    normalized = '/' + normalized;
+  }
+
+  // Добавляем конечный / если его нет
+  if (!normalized.endsWith('/')) {
+    normalized = normalized + '/';
+  }
+
+  return normalized;
+}
+
+/**
  * Конфиг для host приложений
  * Включает React, SVGR, сложную конфигурацию сборки
  */
@@ -169,6 +200,14 @@ export function createHostConfig(options) {
     build,
     plugins = [],
   } = options;
+
+  // Читаем VITE_APP_PREFIX из переменных окружения
+  // В конфигурации Vite нужно явно загружать .env файлы через loadEnv
+  // process.env не содержит переменные из .env автоматически
+  const env = loadEnv(process.env.NODE_ENV || 'development', dirname, '');
+  const appPrefix = normalizeAppPrefix(
+    env.VITE_APP_PREFIX || process.env.VITE_APP_PREFIX || '',
+  );
 
   const libraryAliases = collectLibraryAliases(dirname);
   const finalResolve = resolve
@@ -223,6 +262,11 @@ export function createHostConfig(options) {
 
   return {
     ...base,
+    // Устанавливаем base на основе VITE_APP_PREFIX (fallback значение)
+    // Это значение будет перезаписано в createViteConfig.js с правильным значением
+    // из loadEnv, когда функция конфигурации вызывается с правильным режимом
+    // Vite автоматически добавит этот префикс ко всем путям ассетов
+    base: appPrefix,
     server,
     preview,
     define: {
