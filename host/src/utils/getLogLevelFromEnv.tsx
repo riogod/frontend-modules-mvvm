@@ -8,15 +8,28 @@ export const getLogLevelFromEnv = (): LogLevel => {
     import.meta.env.VITE_LOG_LEVEL?.toUpperCase() ||
     import.meta.env.LOG_LEVEL?.toUpperCase();
   // Флаг в localStorage: platform_debug=true/1/on включает DEBUG (удобно в проде)
-  let debugFromStorage = false;
+  // platform_debug=false/0/off отключает все логи кроме ERROR в production
+  let debugFromStorage: boolean | null = null;
   if (typeof window !== 'undefined') {
     const flag = window.localStorage.getItem('platform_debug') || '';
-    debugFromStorage = ['true', '1', 'on', 'yes'].includes(flag.toLowerCase());
+    const flagLower = flag.toLowerCase();
+    if (['true', '1', 'on', 'yes'].includes(flagLower)) {
+      debugFromStorage = true;
+    } else if (['false', '0', 'off', 'no'].includes(flagLower)) {
+      debugFromStorage = false;
+    }
   }
 
-  if (debugFromStorage) {
+  // Если platform_debug явно установлен в true, включаем DEBUG
+  if (debugFromStorage === true) {
     return LogLevel.DEBUG;
   }
+
+  // Если platform_debug явно установлен в false, в production возвращаем только ERROR
+  if (debugFromStorage === false && process.env.NODE_ENV === 'production') {
+    return LogLevel.ERROR;
+  }
+
   if (!logLevelEnv) {
     return LogLevel.INFO; // Значение по умолчанию
   }

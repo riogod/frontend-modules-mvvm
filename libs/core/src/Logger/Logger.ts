@@ -578,12 +578,15 @@ const logInternal = (
   ...args: unknown[]
 ): void => {
   // Fast path: объединенные проверки для раннего выхода
-  // В production пропускаем все логи, кроме ERROR
+  // В production по умолчанию пропускаем все логи, кроме ERROR
+  // Но если уровень логирования установлен явно (через platform_debug), учитываем его
   // ERROR логи всегда проходят через логгер для будущей интеграции с мониторингом
   if (
-    (IS_PRODUCTION && level !== LogLevel.ERROR) ||
     globalConfig.level === LogLevel.NONE ||
-    level > globalConfig.level
+    level > globalConfig.level ||
+    (IS_PRODUCTION &&
+      level !== LogLevel.ERROR &&
+      globalConfig.level <= LogLevel.INFO)
   ) {
     return;
   }
@@ -806,10 +809,14 @@ export const createLogger = (config?: ILoggerConfig) => {
     ...args: unknown[]
   ): void => {
     // Fast path: объединенные проверки для раннего выхода
+    // В production по умолчанию пропускаем все логи, кроме ERROR
+    // Но если уровень логирования установлен явно (через platform_debug), учитываем его
     if (
-      (IS_PRODUCTION && level !== LogLevel.ERROR) ||
       loggerConfig.level === LogLevel.NONE ||
-      level > loggerConfig.level
+      level > loggerConfig.level ||
+      (IS_PRODUCTION &&
+        level !== LogLevel.ERROR &&
+        loggerConfig.level <= LogLevel.INFO)
     ) {
       return;
     }
