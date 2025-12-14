@@ -52,7 +52,7 @@ const HomePage: FC = () => {
           </Box>
           <Divider sx={{ my: 2 }} />
           <Typography variant="h5" gutterBottom>
-            Компонент из модуля api_example
+            Зашаренный компонент из микрофронта api_example
           </Typography>
           <Suspense fallback={<Typography>Загрузка компонента...</Typography>}>
             {SharedComponent ? <SharedComponent /> : null}
