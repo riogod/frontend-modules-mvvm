@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { type FC, Suspense } from 'react';
 import {
   Container,
   Box,
@@ -6,12 +6,14 @@ import {
   Paper,
   Button,
   Divider,
+  useSharedComponent,
 } from '@platform/ui';
 import { useTranslation } from 'react-i18next';
 import { TestCssModule } from '../components/TestCssModule';
 
 const HomePage: FC = () => {
   const { t } = useTranslation('app-test');
+  const SharedComponent = useSharedComponent('ApiCallExample');
 
   return (
     <Container>
@@ -42,6 +44,15 @@ const HomePage: FC = () => {
               Test throw error
             </Button>
           </Box>
+          <Divider sx={{ my: 2 }} />
+          <Typography> Компонент из модуля api_example </Typography>
+          {SharedComponent && (
+            <Suspense
+              fallback={<Typography>Загрузка компонента...</Typography>}
+            >
+              <SharedComponent />
+            </Suspense>
+          )}
         </Paper>
       </Box>
     </Container>

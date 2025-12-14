@@ -7,5 +7,6 @@ export enum API_EXAMPLE_DI_TOKENS {
   MODEL_JOKE = 'JokesModel',
   // ViewModels
   VIEW_MODEL_JOKE = 'JokesViewModel',
+  // Components
+  COMPONENT_API_CALL_EXAMPLE = 'ApiCallExample',
 }
-

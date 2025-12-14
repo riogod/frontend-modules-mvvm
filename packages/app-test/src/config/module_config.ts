@@ -16,7 +16,6 @@ export default {
     i18n.addResourceBundle('en', 'app-test', en_app_test);
     i18n.addResourceBundle('ru', 'app-test', ru_app_test);
   },
-  // Данные для dev/server и манифеста (используются ManifestBuilder и dev-server)
   mockModuleInfo: {
     name: 'app-test',
     loadType: 'normal',
@@ -38,4 +37,3 @@ export default {
     },
   },
 } as ModuleConfig;
-
