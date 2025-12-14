@@ -75,7 +75,7 @@ export class AbortControllerStorage {
    * Полезно для cleanup при размонтировании компонентов.
    */
   abortAll(): void {
-    for (const [id, controller] of this.abortControllerStorage.entries()) {
+    for (const controller of this.abortControllerStorage.values()) {
       if (!controller.signal.aborted) {
         controller.abort();
       }

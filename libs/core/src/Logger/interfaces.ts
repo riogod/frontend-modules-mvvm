@@ -58,7 +58,7 @@ export interface IErrorMonitoringCallback {
    * @param errorInfo - Дополнительная информация об ошибке (стек, источник и т.д.)
    */
   (
-    error: Error | unknown,
+    error: Error,
     errorInfo?: {
       message?: string;
       source?: string;
