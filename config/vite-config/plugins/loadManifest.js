@@ -1,3 +1,4 @@
+/* eslint-env node */
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -94,4 +95,3 @@ function createFallbackManifest(dirname, packagesDir) {
 
   return { modules };
 }
-
