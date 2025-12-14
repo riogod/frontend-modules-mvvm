@@ -3,15 +3,11 @@ export * from './components';
 export { DIContext, setGlobalDIContainer } from './contexts';
 export { DIProvider } from './providers/DIProvider';
 export { useVM } from './hooks/useVM';
-export {
-  useSharedComponent,
-  useThirdPartyComponent,
-} from './hooks/useSharedComponent';
+export { useSharedComponent } from './hooks/useSharedComponent/useSharedComponent';
 export type {
   UseSharedComponentOptions,
   ReactComponentType,
-  UseThirdPartyComponentOptions,
-} from './hooks/useSharedComponent';
+} from './hooks/useSharedComponent/useSharedComponent';
 
 // Theme
 export { themeDark } from './theme/themeDark';

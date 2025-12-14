@@ -13,7 +13,13 @@ import { TestCssModule } from '../components/TestCssModule';
 
 const HomePage: FC = () => {
   const { t } = useTranslation('app-test');
-  const SharedComponent = useSharedComponent('ApiCallExample');
+  const SharedComponent = useSharedComponent('ApiCallExample', {
+    fallback: () => (
+      <Typography color="text.secondary">
+        Компонент из модуля api_example недоступен
+      </Typography>
+    ),
+  });
 
   return (
     <Container>
@@ -45,14 +51,12 @@ const HomePage: FC = () => {
             </Button>
           </Box>
           <Divider sx={{ my: 2 }} />
-          <Typography> Компонент из модуля api_example </Typography>
-          {SharedComponent && (
-            <Suspense
-              fallback={<Typography>Загрузка компонента...</Typography>}
-            >
-              <SharedComponent />
-            </Suspense>
-          )}
+          <Typography variant="h5" gutterBottom>
+            Компонент из модуля api_example
+          </Typography>
+          <Suspense fallback={<Typography>Загрузка компонента...</Typography>}>
+            {SharedComponent ? <SharedComponent /> : null}
+          </Suspense>
         </Paper>
       </Box>
     </Container>
