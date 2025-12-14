@@ -1,3 +1,4 @@
+/* eslint-env node */
 /**
  * Vite плагин для создания /app/start endpoint в dev режиме
  *
@@ -32,8 +33,7 @@ export function createManifestMiddleware(options) {
         // Добавляем user данные для dev режима
         const devManifest = {
           ...manifest,
-          user:
-            manifest.user ||
+          user: manifest.user ||
             defaultUser || {
               permissions: [],
               featureFlags: [],
@@ -51,4 +51,3 @@ export function createManifestMiddleware(options) {
     },
   };
 }
-

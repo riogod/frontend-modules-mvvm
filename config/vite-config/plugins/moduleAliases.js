@@ -1,3 +1,4 @@
+/* eslint-env node */
 import * as path from 'path';
 
 // Используем значения enum напрямую для .js файлов
@@ -35,7 +36,7 @@ export function createModuleAliasesPlugin(options) {
       // В production не создаем алиасы для локальных модулей
       // Они должны загружаться через Module Federation или быть в host/src/modules/
       const isProduction = process.env.NODE_ENV === 'production';
-      
+
       if (isProduction) {
         // В production возвращаем пустую конфигурацию
         // Remote модули должны загружаться через Module Federation
@@ -80,4 +81,3 @@ export function createModuleAliasesPlugin(options) {
     },
   };
 }
-
