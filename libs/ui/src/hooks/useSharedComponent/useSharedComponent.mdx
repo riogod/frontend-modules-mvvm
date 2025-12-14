@@ -68,18 +68,20 @@ const MyComponent = useSharedComponent('ApiCallExample');
 
 - **`validateComponent?: boolean`** - Валидировать ли, что полученный объект является React компонентом. По умолчанию: `true`.
 
-- **`fallback?: ReactComponentType`** - Fallback компонент, который будет возвращен, если компонент не найден в контейнере. **Рекомендуется всегда указывать** для предотвращения прорыва ошибок биндинга.
+- **`fallback?: ReactNode`** - Fallback элемент (JSX), который будет отображен, если компонент не найден в контейнере. **Рекомендуется всегда указывать** для предотвращения прорыва ошибок биндинга.
 
 - **`suppressErrors?: boolean`** - Подавлять ли ошибки и возвращать fallback или null вместо выброса исключения. По умолчанию: `true`. Если `false`, ошибки будут выброшены (полезно для строгой проверки в тестах).
 
 ### Возвращаемое значение
 
-**Тип:** `T | null`
+**Тип:** `ComponentType<TProps> | LazyExoticComponent<ComponentType<TProps>> | null` (для типизированных пропсов)
+или `T | null` (для типизированных компонентов)
 
 - Возвращает React компонент из DI контейнера, если он найден
-- Возвращает fallback компонент, если компонент не найден и `fallback` указан
-- Возвращает `null`, если компонент не найден и `fallback` не указан (при `suppressErrors: true`)
+- Возвращает `null`, если компонент не найден (независимо от наличия `fallback`)
 - Выбрасывает ошибку, если `suppressErrors: false` и компонент не найден
+
+**Важно:** `fallback` не возвращается из хука, а используется только для логирования. Всегда проверяйте результат на `null` перед использованием компонента.
 
 ---
 
@@ -111,14 +113,52 @@ import { Typography } from '@mui/material';
 
 const MyPage = () => {
   const SharedComponent = useSharedComponent('component.key', {
-    fallback: () => (
+    fallback: (
       <Typography color="text.secondary">Компонент недоступен</Typography>
     ),
   });
 
   return (
     <Suspense fallback={<div>Загрузка...</div>}>
-      <SharedComponent />
+      {SharedComponent ? <SharedComponent /> : null}
+    </Suspense>
+  );
+};
+```
+
+### С типизацией пропсов для автодополнения
+
+```tsx
+import { type FC, Suspense } from 'react';
+import { useSharedComponent, Typography } from '@platform/ui';
+import type { SharedJokeMessageProps } from '@platform/module-api-example/view/components/JokeMessage';
+
+// Обертка компонента для обработки пропсов
+const ApiCallExampleComponent: FC<SharedJokeMessageProps> = (props) => {
+  const SharedComponentWithProps = useSharedComponent<SharedJokeMessageProps>(
+    'ApiCallExample',
+    {
+      fallback: (
+        <Typography color="text.secondary">
+          Компонент из модуля api_example недоступен
+        </Typography>
+      ),
+    },
+  );
+
+  return (
+    <>
+      {SharedComponentWithProps ? (
+        <SharedComponentWithProps {...props} />
+      ) : null}
+    </>
+  );
+};
+
+const HomePage: FC = () => {
+  return (
+    <Suspense fallback={<Typography>Загрузка компонента...</Typography>}>
+      <ApiCallExampleComponent title="My Joke" />
     </Suspense>
   );
 };
@@ -129,25 +169,25 @@ const MyPage = () => {
 ```tsx
 const SharedComponent = useSharedComponent('component.key', {
   moduleName: 'api-example',
-  fallback: () => <div>Компонент из api-example недоступен</div>,
+  fallback: <div>Компонент из api-example недоступен</div>,
 });
 ```
 
 ### С lazy компонентом
 
 ```tsx
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useSharedComponent } from '@platform/ui';
 
 const MyPage = () => {
   // Lazy компонент будет автоматически обработан через Suspense
   const LazyComponent = useSharedComponent('lazy.component.key', {
-    fallback: () => <div>Компонент недоступен</div>,
+    fallback: <div>Компонент недоступен</div>,
   });
 
   return (
     <Suspense fallback={<div>Загрузка lazy компонента...</div>}>
-      <LazyComponent />
+      {LazyComponent ? <LazyComponent /> : null}
     </Suspense>
   );
 };
@@ -173,8 +213,15 @@ const SharedComponent = useSharedComponent('component.key', {
 ```tsx
 // ✅ Правильно
 const Component = useSharedComponent('key', {
-  fallback: () => <div>Недоступен</div>,
+  fallback: <div>Недоступен</div>,
 });
+
+// Использование с проверкой на null
+return (
+  <Suspense fallback={<div>Загрузка...</div>}>
+    {Component ? <Component /> : null}
+  </Suspense>
+);
 
 // ❌ Неправильно (может привести к прорыву ошибки)
 const Component = useSharedComponent('key');
@@ -213,7 +260,7 @@ const Component = useSharedComponent('key');
 ```tsx
 const Component = useSharedComponent('key', {
   moduleName: 'my-module', // Поможет в логах идентифицировать источник проблемы
-  fallback: () => <div>Недоступен</div>,
+  fallback: <div>Недоступен</div>,
 });
 ```
 

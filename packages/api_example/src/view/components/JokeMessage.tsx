@@ -8,12 +8,17 @@ import {
   Card,
   CardContent,
   CardActions,
+  CardHeader,
 } from '@platform/ui';
 import type { JokeViewModel } from '../../viewmodels/joke.vm';
 import { useTranslation } from 'react-i18next';
 import { API_EXAMPLE_DI_TOKENS } from '../../config/di.tokens';
 
-const JokeMessage: FC = () => {
+export interface SharedJokeMessageProps {
+  title?: string;
+}
+
+const JokeMessage: FC<SharedJokeMessageProps> = ({ title }) => {
   const { t } = useTranslation('api');
   const jokeMessage = useVM<JokeViewModel>(
     API_EXAMPLE_DI_TOKENS.VIEW_MODEL_JOKE,
@@ -24,17 +29,6 @@ const JokeMessage: FC = () => {
       await jokeMessage.getJoke();
     })();
   };
-
-  if (jokeMessage.loading) {
-    return (
-      <Skeleton
-        animation="wave"
-        variant="rounded"
-        height={300}
-        sx={{ width: 1 }}
-      />
-    );
-  }
 
   const jokeContent = jokeMessage.joke ? (
     <>
@@ -57,15 +51,28 @@ const JokeMessage: FC = () => {
         justifyContent: 'center',
         alignItems: 'center',
       }}
+      elevation={3}
     >
-      <CardContent>
-        <Typography variant="body2">{jokeContent}</Typography>
-      </CardContent>
-      <CardActions>
-        <Button size="small" onClick={getJoke}>
-          {t('api:button.get-joke')}
-        </Button>
-      </CardActions>
+      <CardHeader title={title} />
+      {jokeMessage.loading ? (
+        <Skeleton
+          animation="wave"
+          variant="rounded"
+          height={150}
+          sx={{ width: 1 }}
+        />
+      ) : (
+        <>
+          <CardContent>
+            <Typography variant="body2">{jokeContent}</Typography>
+          </CardContent>
+          <CardActions>
+            <Button size="small" onClick={getJoke}>
+              {t('api:button.get-joke')}
+            </Button>
+          </CardActions>
+        </>
+      )}
     </Card>
   );
 };

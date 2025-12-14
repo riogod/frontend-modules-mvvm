@@ -1,6 +1,6 @@
 import {
+  type ReactNode,
   useContext,
-  useDebugValue,
   useMemo,
   type ComponentType,
   type LazyExoticComponent,
@@ -35,7 +35,7 @@ interface UseSharedComponentOptions {
    * Fallback компонент, который будет возвращен, если компонент не найден в контейнере
    * Используется для предотвращения прорыва ошибок биндинга наружу
    */
-  fallback?: ReactComponentType;
+  fallback?: ReactNode;
   /**
    * Подавлять ли ошибки и возвращать fallback или null вместо выброса исключения
    * По умолчанию: true (ошибки не выбрасываются, возвращается fallback или null)
@@ -48,7 +48,7 @@ interface UseSharedComponentOptions {
  * Хук для получения shared UI-компонентов из DI контейнера
  * Предназначен для работы с компонентами, которые shared между микрофронтовыми модулями
  *
- * @template T - Тип React компонента (ComponentType или LazyExoticComponent)
+ * @template T - Тип React компонента (ComponentType или LazyExoticComponent) или тип пропсов компонента
  * @param containerKey - Ключ контейнера, по которому производится поиск компонента
  * @param options - Опциональные параметры для настройки поведения хука
  * @returns React компонент из DI контейнера
@@ -76,6 +76,21 @@ interface UseSharedComponentOptions {
  * return (
  *   <Suspense fallback={<div>Загрузка...</div>}>
  *     <MyComponent />
+ *   </Suspense>
+ * );
+ *
+ * // С типизацией пропсов для автодополнения
+ * interface MyComponentProps {
+ *   title: string;
+ *   onAction?: () => void;
+ * }
+ * const MyComponent = useSharedComponent<MyComponentProps>('component.key', {
+ *   fallback: <div>Компонент недоступен</div>
+ * });
+ *
+ * return (
+ *   <Suspense fallback={<div>Загрузка...</div>}>
+ *     {MyComponent && <MyComponent title="Hello" onAction={() => {}} />}
  *   </Suspense>
  * );
  *
@@ -114,10 +129,24 @@ interface UseSharedComponentOptions {
  * );
  * ```
  */
+
+// Перегрузка для случая, когда передается тип пропсов (не компонент)
+function useSharedComponent<TProps extends object>(
+  containerKey: ServiceIdentifier<ReactComponentType<TProps>>,
+  options?: UseSharedComponentOptions,
+): ComponentType<TProps> | LazyExoticComponent<ComponentType<TProps>> | null;
+
+// Перегрузка для случая, когда передается тип компонента
 function useSharedComponent<T extends ReactComponentType>(
   containerKey: ServiceIdentifier<T>,
+  options?: UseSharedComponentOptions,
+): T | null;
+
+// Основная реализация
+function useSharedComponent<T>(
+  containerKey: ServiceIdentifier<any>,
   options: UseSharedComponentOptions = {},
-): T | null {
+): any {
   const {
     moduleName,
     validateComponent = true,
@@ -128,15 +157,6 @@ function useSharedComponent<T extends ReactComponentType>(
   // Получаем DI контейнер (аналогично useVM)
   const contextContainer = useContext(DIContext);
   const container = contextContainer || getGlobalDIContainer();
-
-  // Debug информация для разработки
-  useDebugValue(
-    process.env.NODE_ENV !== 'production'
-      ? container
-        ? `Component: ${String(containerKey)}${moduleName ? ` (from ${moduleName})` : ''}`
-        : 'DI Container not available'
-      : undefined,
-  );
 
   // Мемоизация компонента для предотвращения лишних перерендеров
   // ВАЖНО: useMemo вызывается безусловно, все условные возвраты внутри него
@@ -160,7 +180,7 @@ function useSharedComponent<T extends ReactComponentType>(
       }
 
       if (suppressErrors) {
-        return (fallback || null) as T | null;
+        return null;
       }
 
       throw new Error(errorMessage);
@@ -188,9 +208,9 @@ function useSharedComponent<T extends ReactComponentType>(
         }
       }
 
-      // Если указан fallback, возвращаем его (предотвращает прорыв ошибок)
+      // Если указан fallback, возвращаем null (fallback обрабатывается на уровне использования)
       if (fallback !== undefined) {
-        return fallback as T;
+        return null;
       }
 
       // Если suppressErrors = true, возвращаем null
@@ -258,9 +278,9 @@ function useSharedComponent<T extends ReactComponentType>(
         );
       }
 
-      // Если указан fallback, возвращаем его (предотвращает прорыв ошибок)
+      // Если указан fallback, возвращаем null (fallback обрабатывается на уровне использования)
       if (fallback !== undefined) {
-        return fallback as T;
+        return null;
       }
 
       // Если suppressErrors = true, возвращаем null

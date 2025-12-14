@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { lazy, Suspense, type ComponentType } from 'react';
+import React, { lazy, Suspense, type ComponentType } from 'react';
 import { Container } from 'inversify';
 import { Box, Typography, Paper, Divider, Alert } from '@mui/material';
 import { useSharedComponent } from './useSharedComponent';
@@ -22,10 +22,10 @@ const LazyMockComponent = lazy(() =>
   Promise.resolve({ default: MockSharedComponent }),
 );
 
-// Fallback компонент
-const FallbackComponent: ComponentType = () => (
+// Fallback элемент (ReactNode)
+const FallbackElement = (
   <Alert severity="warning" sx={{ mt: 2 }}>
-    Компонент недоступен. Используется fallback компонент.
+    Компонент недоступен. Используется fallback элемент.
   </Alert>
 );
 
@@ -49,7 +49,7 @@ const HookDemo = ({
 }: {
   containerKey: string;
   hasComponent?: boolean;
-  fallback?: ComponentType;
+  fallback?: React.ReactNode;
   moduleName?: string;
   suppressErrors?: boolean;
 }) => {
@@ -78,9 +78,11 @@ const HookDemo = ({
           {SharedComponent ? (
             <SharedComponent />
           ) : (
-            <Alert severity="info">
-              Компонент не найден. Хук вернул <code>null</code>.
-            </Alert>
+            fallback || (
+              <Alert severity="info">
+                Компонент не найден. Хук вернул <code>null</code>.
+              </Alert>
+            )
           )}
         </Suspense>
       </Paper>
@@ -94,7 +96,7 @@ const HookDemoWithoutContainer = ({
   fallback,
 }: {
   containerKey: string;
-  fallback?: ComponentType;
+  fallback?: React.ReactNode;
 }) => {
   const SharedComponent = useSharedComponent(containerKey, { fallback });
 
@@ -111,13 +113,82 @@ const HookDemoWithoutContainer = ({
           {SharedComponent ? (
             <SharedComponent />
           ) : (
-            <Alert severity="info">
-              Хук вернул <code>null</code> (контейнер недоступен)
-            </Alert>
+            fallback || (
+              <Alert severity="info">
+                Хук вернул <code>null</code> (контейнер недоступен)
+              </Alert>
+            )
           )}
         </Suspense>
       </Paper>
     </Box>
+  );
+};
+
+// Пример с типизацией пропсов
+interface ExampleProps {
+  title?: string;
+  message?: string;
+}
+
+const TypedComponent: ComponentType<ExampleProps> = ({ title, message }) => (
+  <Paper sx={{ p: 2, bgcolor: 'info.light' }}>
+    <Typography variant="h6" color="info.dark">
+      {title || 'Типизированный компонент'}
+    </Typography>
+    {message && (
+      <Typography variant="body2" sx={{ mt: 1 }}>
+        {message}
+      </Typography>
+    )}
+  </Paper>
+);
+
+const TypedHookDemo = () => {
+  const container = new Container();
+  container.bind('TypedComponent').toConstantValue(TypedComponent);
+
+  const WrapperComponent: React.FC<ExampleProps> = (props) => {
+    const SharedComponent = useSharedComponent<ExampleProps>('TypedComponent', {
+      fallback: (
+        <Alert severity="warning">
+          Компонент недоступен (fallback с типизацией)
+        </Alert>
+      ),
+    });
+
+    return (
+      <>
+        {SharedComponent ? (
+          <SharedComponent {...props} />
+        ) : (
+          <Alert severity="info">Компонент не найден</Alert>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <DIProvider container={container}>
+      <Box sx={{ p: 3 }}>
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Демонстрация с типизацией пропсов
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Использование <code>useSharedComponent&lt;PropsType&gt;</code> для
+            автодополнения пропсов
+          </Typography>
+          <Divider sx={{ my: 2 }} />
+          <Suspense fallback={<Typography>Загрузка...</Typography>}>
+            <WrapperComponent
+              title="Пример с типизацией"
+              message="Пропсы типизированы и доступны для автодополнения"
+            />
+          </Suspense>
+        </Paper>
+      </Box>
+    </DIProvider>
   );
 };
 
@@ -171,7 +242,7 @@ export const WithFallback: Story = {
         <HookDemo
           containerKey="NonExistentComponent"
           hasComponent={false}
-          fallback={FallbackComponent}
+          fallback={FallbackElement}
           suppressErrors={true}
         />
       </DIProvider>
@@ -209,7 +280,7 @@ export const WithModuleName: Story = {
           containerKey="NonExistentComponent"
           hasComponent={false}
           moduleName="example-module"
-          fallback={FallbackComponent}
+          fallback={FallbackElement}
           suppressErrors={true}
         />
       </DIProvider>
@@ -225,9 +296,27 @@ export const WithoutContainer: Story = {
     return (
       <HookDemoWithoutContainer
         containerKey="TestComponent"
-        fallback={FallbackComponent}
+        fallback={FallbackElement}
       />
     );
+  },
+};
+
+/**
+ * Пример с типизацией пропсов для автодополнения
+ */
+export const WithTypedProps: Story = {
+  render: () => {
+    return <TypedHookDemo />;
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Демонстрация использования хука с типизацией пропсов. ' +
+          'Используйте дженерик `useSharedComponent<PropsType>` для получения автодополнения пропсов.',
+      },
+    },
   },
 };
 

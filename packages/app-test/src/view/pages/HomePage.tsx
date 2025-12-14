@@ -10,16 +10,27 @@ import {
 } from '@platform/ui';
 import { useTranslation } from 'react-i18next';
 import { TestCssModule } from '../components/TestCssModule';
+import type { SharedJokeMessageProps } from '@platform/module-api-example/view/components/JokeMessage';
+
+const ApiCallExampleComponent: FC<SharedJokeMessageProps> = (props) => {
+  const SharedComponentWithProps = useSharedComponent<SharedJokeMessageProps>(
+    'ApiCallExample',
+    {
+      fallback: (
+        <Typography color="text.secondary">
+          Компонент из модуля api_example недоступен
+        </Typography>
+      ),
+    },
+  );
+
+  return SharedComponentWithProps ? (
+    <SharedComponentWithProps {...props} />
+  ) : null;
+};
 
 const HomePage: FC = () => {
   const { t } = useTranslation('app-test');
-  const SharedComponent = useSharedComponent('ApiCallExample', {
-    fallback: () => (
-      <Typography color="text.secondary">
-        Компонент из модуля api_example недоступен
-      </Typography>
-    ),
-  });
 
   return (
     <Container>
@@ -54,9 +65,25 @@ const HomePage: FC = () => {
           <Typography variant="h5" gutterBottom>
             Зашаренный компонент из микрофронта api_example
           </Typography>
-          <Suspense fallback={<Typography>Загрузка компонента...</Typography>}>
-            {SharedComponent ? <SharedComponent /> : null}
-          </Suspense>
+          <Box
+            sx={{
+              w: 1,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                minWidth: 400,
+              }}
+            >
+              <Suspense
+                fallback={<Typography>Загрузка компонента...</Typography>}
+              >
+                <ApiCallExampleComponent title="Шутки за 300!" />
+              </Suspense>
+            </Box>
+          </Box>
         </Paper>
       </Box>
     </Container>
