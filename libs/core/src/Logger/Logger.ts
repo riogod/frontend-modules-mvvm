@@ -373,12 +373,25 @@ const initGlobalErrorHandlers = (): void => {
 
   // Обработчик необработанных промисов
   const handleUnhandledRejection = (event: PromiseRejectionEvent): void => {
-    handleUnhandledError(event.reason, {
-      message:
-        event.reason instanceof Error
-          ? event.reason.message
-          : String(event.reason),
-      stack: event.reason instanceof Error ? event.reason.stack : undefined,
+    const reason = event.reason;
+
+    // Игнорируем отмененные запросы (AbortError, CanceledError, ERR_CANCELED)
+    const isAborted =
+      (reason instanceof Error &&
+        (reason.name === 'AbortError' || reason.name === 'CanceledError')) ||
+      (reason &&
+        typeof reason === 'object' &&
+        'code' in reason &&
+        reason.code === 'ERR_CANCELED');
+
+    if (isAborted) {
+      // Не обрабатываем отмененные запросы
+      return;
+    }
+
+    handleUnhandledError(reason, {
+      message: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
       isUnhandledRejection: true,
     });
   };
