@@ -1,0 +1,7 @@
+{
+  "menu": {
+    "app-test": "App Test"
+  },
+  "title": "App Test",
+  "description": "Microservice for testing different functionality of the platform"
+}

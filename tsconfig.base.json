@@ -45,6 +45,12 @@
       "@platform/module-api-example/*": [
         "packages/api_example/src/*"
       ],
+      "@platform/module-app-test": [
+        "packages/app-test/src"
+      ],
+      "@platform/module-app-test/*": [
+        "packages/app-test/src/*"
+      ],
       "@platform/module-todo": [
         "packages/todo/src"
       ],
