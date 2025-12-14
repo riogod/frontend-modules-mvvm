@@ -25,6 +25,7 @@ export class JokesRepository {
       validationSchema: {
         response: jokesResponseSchema,
       },
+      useAbortController: true,
     });
   }
 }

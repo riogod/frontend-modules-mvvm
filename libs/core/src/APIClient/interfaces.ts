@@ -9,7 +9,14 @@ export interface IRequestOption<T> {
   validationSchema?: {
     request?: ZodType;
     response?: ZodType;
-  }
+  };
+  /**
+   * Включает механизм автоматической отмены неактуальных запросов.
+   * При установке в `true`, новый запрос с тем же нормализованным URL
+   * автоматически отменит предыдущий запрос.
+   * По умолчанию: `false`
+   */
+  useAbortController?: boolean;
 }
 
 export interface ResponseSuccess {
