@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Header } from '../Header';
 import AppSettingsDrawer from '../AppSettingsDrawer';
@@ -10,17 +10,17 @@ const Layout: FC = () => {
   const [open, setOpen] = useState(false);
   const [openAppSettings, setOpenAppSettings] = useState(false);
 
-  const openAppSettingsHandler = () => {
+  const openAppSettingsHandler = useCallback(() => {
     setOpenAppSettings(true);
-  };
+  }, []);
 
-  const closeAppSettingsHandler = () => {
+  const closeAppSettingsHandler = useCallback(() => {
     setOpenAppSettings(false);
-  };
+  }, []);
 
-  const handleDrawerOpen = () => {
+  const handleDrawerOpen = useCallback(() => {
     setOpen(true);
-  };
+  }, []);
 
   return (
     <>

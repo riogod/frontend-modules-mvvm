@@ -1,4 +1,4 @@
-import { type FC, memo, useState, type MouseEvent } from 'react';
+import { type FC, memo, useState, useCallback, type MouseEvent } from 'react';
 import { type IMenuItem } from '@platform/core';
 import {
   MuiIconButton,
@@ -21,18 +21,21 @@ interface IProps {
 const MobileMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 
-  const handleOpenNavMenu = (event: MouseEvent<HTMLElement>) => {
+  const handleOpenNavMenu = useCallback((event: MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
-  };
+  }, []);
 
-  const handleCloseNavMenu = () => {
+  const handleCloseNavMenu = useCallback(() => {
     setAnchorElNav(null);
-  };
+  }, []);
 
-  const onNavigate = (path: string) => () => {
-    handleCloseNavMenu();
-    navigate(path);
-  };
+  const handleNavigate = useCallback(
+    (path: string) => () => {
+      handleCloseNavMenu();
+      navigate(path);
+    },
+    [handleCloseNavMenu, navigate],
+  );
 
   return (
     <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
@@ -65,7 +68,7 @@ const MobileMenuView: FC<IProps> = ({ menuList, navigate, t }) => {
         }}
       >
         {menuList.map((page) => (
-          <MenuItem key={page.id} onClick={onNavigate(page.path)}>
+          <MenuItem key={page.id} onClick={handleNavigate(page.path)}>
             <Typography textAlign="center"> {t(page.text)}</Typography>
           </MenuItem>
         ))}

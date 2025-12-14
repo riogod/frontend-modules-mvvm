@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { type FC, memo } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
   Toolbar,
@@ -40,4 +40,4 @@ const Header: FC<IProps> = ({ open, handleAppSettingsOpen }) => {
   );
 };
 
-export default observer(Header);
+export default memo(observer(Header));
