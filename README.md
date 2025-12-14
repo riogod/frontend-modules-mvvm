@@ -234,3 +234,4 @@ TODO:
 - Подумать над тем что бы прокидывать router через react-router
 - разобраться с legacy-peer-deps
 - сделать PageSelector в react-router
+- к хуку useSharedComponent добавить опции onMount и onUnmount, а так же подумать над тем, что бы при шаринге компонентов была такая возможность.
