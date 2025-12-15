@@ -5,7 +5,7 @@ import { Bootstrap, initBootstrap } from './bootstrap';
 import { appConfig } from './config/app';
 import { app_modules } from './modules/modules';
 import { RouterProvider } from '@riogz/react-router';
-import { DIProvider, setGlobalDIContainer } from '@platform/ui';
+import { DIProvider } from '@platform/ui';
 import { configure } from 'mobx';
 import { ThemeSchema } from '@platform/share';
 import { Layout } from './modules/core.layout/view/Layout';
@@ -29,24 +29,24 @@ log.setConfig({
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
-    setGlobalDIContainer(bootstrap.di);
+    // setGlobalDIContainer(bootstrap.di);
 
     bootstrap.routerService.router.start(() => {
       createRoot(document.getElementById('root')!).render(
-        <ErrorBoundary logPrefix="host.app">
-          <RouterProvider router={bootstrap.routerService.router}>
-            <DIProvider container={bootstrap.di}>
-              <I18nextProvider i18n={bootstrap.i18n}>
-                <ThemeSchema>
-                  <CssBaseline />
+        <RouterProvider router={bootstrap.routerService.router}>
+          <DIProvider container={bootstrap.di}>
+            <I18nextProvider i18n={bootstrap.i18n}>
+              <ThemeSchema>
+                <CssBaseline />
+                <ErrorBoundary logPrefix="host.app">
                   <StrictMode>
                     <Layout />
                   </StrictMode>
-                </ThemeSchema>
-              </I18nextProvider>
-            </DIProvider>
-          </RouterProvider>
-        </ErrorBoundary>,
+                </ErrorBoundary>
+              </ThemeSchema>
+            </I18nextProvider>
+          </DIProvider>
+        </RouterProvider>,
       );
 
       // Загрузка NORMAL модулей после старта приложения
