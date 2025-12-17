@@ -80,7 +80,18 @@ export class ModuleRegistry {
 
     // Для INIT модулей кешируем маршруты сразу
     if (this.getModuleLoadType(module) === ModuleLoadType.INIT) {
-      await this.cacheModuleRoutes(module);
+      try {
+        await this.cacheModuleRoutes(module);
+      } catch (error) {
+        // Продолжаем работу даже если кеширование маршрутов не удалось
+        // Модуль уже добавлен в реестр, но без маршрутов
+        log.warn(
+          `Не удалось закешировать маршруты для модуля "${module.name}": ${
+            error instanceof Error ? error.message : String(error)
+          }. Модуль добавлен в реестр без маршрутов.`,
+          { prefix: LOG_PREFIX },
+        );
+      }
     }
 
     log.debug(`Модуль "${module.name}" добавлен в реестр`, {
@@ -98,11 +109,28 @@ export class ModuleRegistry {
       prefix: LOG_PREFIX,
     });
 
+    let successCount = 0;
+    let errorCount = 0;
+
     for (const module of modules) {
-      await this.addModule(module);
+      try {
+        await this.addModule(module);
+        successCount++;
+      } catch (error) {
+        errorCount++;
+        // Продолжаем регистрацию остальных модулей даже если один не удался
+        log.error(
+          `Не удалось добавить модуль "${module.name}": ${
+            error instanceof Error ? error.message : String(error)
+          }. Продолжаем регистрацию остальных модулей.`,
+          { prefix: LOG_PREFIX },
+        );
+      }
     }
 
-    log.debug(`Добавлено ${modules.length} модулей`, { prefix: LOG_PREFIX });
+    log.debug(`Добавлено ${successCount} модулей, ошибок: ${errorCount}`, {
+      prefix: LOG_PREFIX,
+    });
   }
 
   // ============================================
@@ -197,7 +225,18 @@ export class ModuleRegistry {
    */
   public async getModuleRoutes(module: Module): Promise<IRoutes | undefined> {
     // Загружаем конфигурацию, если она динамическая
-    await this.loadModuleConfig(module);
+    // Обрабатываем ошибки загрузки конфигурации gracefully
+    try {
+      await this.loadModuleConfig(module);
+    } catch (error) {
+      log.warn(
+        `Не удалось загрузить конфигурацию модуля "${module.name}" для получения маршрутов: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        { prefix: LOG_PREFIX },
+      );
+      return undefined;
+    }
 
     const config = module.config;
     if (!config || config instanceof Promise || !config.ROUTES) {

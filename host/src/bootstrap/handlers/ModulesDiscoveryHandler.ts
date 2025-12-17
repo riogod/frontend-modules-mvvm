@@ -381,9 +381,9 @@ export class ModulesDiscoveryHandler extends AbstractInitHandler {
     });
 
     return loadRemoteModule(moduleName, remoteEntry, {
-      retries: 3,
-      timeout: 15000,
-      retryDelay: 2000,
+      retries: 2,
+      timeout: 1500,
+      retryDelay: 1000,
     });
   }
 }

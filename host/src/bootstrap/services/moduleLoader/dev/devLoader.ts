@@ -65,7 +65,12 @@ export async function loadInitModulesDev(
       statusTracker.markAsLoaded(module);
     } catch (error) {
       statusTracker.markAsFailed(module, error);
-      throw error;
+      log.error(`[DEV] Ошибка загрузки модуля ${module.name}`, {
+        prefix: LOG_PREFIX,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // В dev режиме также продолжаем загрузку остальных модулей
+      // для соответствия поведению prod-режима
     }
   }
 
@@ -224,6 +229,11 @@ async function loadSingleModuleDev(
     statusTracker.markAsLoaded(module);
   } catch (error) {
     statusTracker.markAsFailed(module, error);
-    throw error;
+    log.error(`[DEV] Ошибка загрузки модуля ${module.name}`, {
+      prefix: LOG_PREFIX,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // В dev режиме также продолжаем загрузку остальных модулей
+    // для соответствия поведению prod-режима
   }
 }

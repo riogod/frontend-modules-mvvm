@@ -190,6 +190,7 @@ export async function loadInitModulesProd(
 
     try {
       await lifecycleManager.initializeModule(module, bootstrap, false);
+
       await lifecycleManager.registerModuleResources(
         module,
         bootstrap,

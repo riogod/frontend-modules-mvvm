@@ -61,7 +61,18 @@ export class LifecycleManager {
     );
 
     // Загружаем конфигурацию, если она динамическая
-    await this.registry.loadModuleConfig(module);
+    // Обрабатываем ошибки загрузки конфигурации gracefully
+    try {
+      await this.registry.loadModuleConfig(module);
+    } catch (error) {
+      log.warn(
+        `Не удалось загрузить конфигурацию модуля "${module.name}": ${
+          error instanceof Error ? error.message : String(error)
+        }. Пропускаем инициализацию модуля.`,
+        { prefix: LOG_PREFIX },
+      );
+      return;
+    }
 
     const config = module.config;
     if (!config || config instanceof Promise) {
@@ -113,8 +124,27 @@ export class LifecycleManager {
       prefix: LOG_PREFIX,
     });
 
-    await this.registerModuleRoutes(module, bootstrap, autoLoadHandler);
-    await this.registerModuleI18n(module, bootstrap, isModuleLoaded);
+    try {
+      await this.registerModuleRoutes(module, bootstrap, autoLoadHandler);
+    } catch (error) {
+      log.warn(
+        `Не удалось зарегистрировать маршруты модуля "${module.name}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        { prefix: LOG_PREFIX },
+      );
+    }
+
+    try {
+      await this.registerModuleI18n(module, bootstrap, isModuleLoaded);
+    } catch (error) {
+      log.warn(
+        `Не удалось зарегистрировать i18n модуля "${module.name}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        { prefix: LOG_PREFIX },
+      );
+    }
 
     log.debug(`Ресурсы модуля "${module.name}" зарегистрированы`, {
       prefix: LOG_PREFIX,
@@ -187,7 +217,18 @@ export class LifecycleManager {
     });
 
     // Загружаем конфигурацию
-    await this.registry.loadModuleConfig(module);
+    // Обрабатываем ошибки загрузки конфигурации gracefully
+    try {
+      await this.registry.loadModuleConfig(module);
+    } catch (error) {
+      log.warn(
+        `Не удалось загрузить конфигурацию модуля "${module.name}" для регистрации i18n: ${
+          error instanceof Error ? error.message : String(error)
+        }. Пропускаем регистрацию i18n.`,
+        { prefix: LOG_PREFIX },
+      );
+      return;
+    }
 
     const config = module.config;
     if (!config || config instanceof Promise || !config.I18N) {
