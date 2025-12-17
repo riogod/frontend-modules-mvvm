@@ -9,6 +9,10 @@ import {
   AccessControlModel,
   GetFeatureFlagUsecase,
   GetPermissionUsecase,
+  AppParamsModel,
+  GetParamUsecase,
+  GetParamsUsecase,
+  SetParamsUsecase,
 } from '@platform/common';
 ```
 
@@ -97,6 +101,38 @@ const MyComponent: FC = observer(() => {
 });
 ```
 
+### Server Parameters Use Cases
+
+| Use Case              | Описание                             |
+| --------------------- | ------------------------------------ |
+| `GetParamUsecase`     | Получить значение одного параметра   |
+| `GetParamsUsecase`    | Получить значения нескольких параметров |
+| `SetParamsUsecase`    | Установить параметры (замена)        |
+| `UpdateParamsUsecase` | Обновить параметры (слияние)         |
+| `RemoveParamUsecase`  | Удалить параметр                     |
+
+### Использование в модуле
+
+```typescript
+import { inject, injectable } from 'inversify';
+import { IOC_CORE_TOKENS } from '@platform/core';
+import type { GetParamUsecase } from '@platform/common';
+
+@injectable()
+export class MyViewModel {
+  constructor(
+    @inject(IOC_CORE_TOKENS.USECASE_GET_PARAM)
+    private getParamUsecase: GetParamUsecase,
+  ) {}
+
+  get apiUrl(): string {
+    return this.getParamUsecase.execute<string>('api.module.url') || '';
+  }
+}
+```
+
+> **Подробнее:** См. [Server Parameters](../mechanics/server-parameters.md) для детального описания работы с серверными параметрами.
+
 ## Типы
 
 ### AccessControlsType
@@ -110,3 +146,4 @@ type AccessControlsType = Record<string, boolean>;
 - [Core библиотека](./core.md)
 - [Конфигурация модуля](../modules/module-config.md) — настройка featureFlags и permissions
 - [Типы модулей](../modules/module-types.md) — условия загрузки модулей
+- [Server Parameters](../mechanics/server-parameters.md) — работа с серверными параметрами

@@ -314,4 +314,4 @@ dist/
 
 ---
 
-> **См. также:** [Создание модуля](./module-development.md), [Архитектура](./architecture.md)
+> **См. также:** [Создание модуля](./modules/creating-module.md), [Архитектура](./architecture.md)
