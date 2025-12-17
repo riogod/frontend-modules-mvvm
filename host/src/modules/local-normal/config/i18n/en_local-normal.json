@@ -1,0 +1,7 @@
+{
+  "menu": {
+    "local-normal": "Local Normal Module"
+  },
+  "title": "Local Normal Module",
+  "description": "Welcome to Local Normal Module (type: normal), this is a local module that is not loaded from a remote source, but is part of the host application."
+}

@@ -1,0 +1,46 @@
+import { type FC, useState, useCallback } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Header } from '../Header';
+import AppSettingsDrawer from '../AppSettingsDrawer';
+import ContentContainer from '../ContentContainer';
+import { Container, Toolbar } from '@platform/ui';
+import { Notifier } from '../Notifier';
+
+const Layout: FC = () => {
+  const [open, setOpen] = useState(false);
+  const [openAppSettings, setOpenAppSettings] = useState(false);
+
+  const openAppSettingsHandler = useCallback(() => {
+    setOpenAppSettings(true);
+  }, []);
+
+  const closeAppSettingsHandler = useCallback(() => {
+    setOpenAppSettings(false);
+  }, []);
+
+  const handleDrawerOpen = useCallback(() => {
+    setOpen(true);
+  }, []);
+
+  return (
+    <>
+      <Header
+        open={open}
+        handleDrawerOpen={handleDrawerOpen}
+        handleAppSettingsOpen={openAppSettingsHandler}
+      />
+      <Container maxWidth="xl" sx={{ height: 'calc(100% - 64px)' }}>
+        <Toolbar disableGutters />
+        <ContentContainer />
+      </Container>
+      <AppSettingsDrawer
+        drawerWidth={360}
+        open={openAppSettings}
+        closeHandler={closeAppSettingsHandler}
+      />
+      <Notifier />
+    </>
+  );
+};
+
+export default observer(Layout);

@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../dist/out-tsc",
+    "types": ["node"],
+    "composite": true,
+    "resolveJsonModule": true
+  },
+  "files": ["src/main.tsx"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.json",
+    "../libs/*/src/**/*.ts",
+    "../libs/*/src/**/*.tsx",
+    "../packages/*/src/**/*.ts",
+    "../packages/*/src/**/*.tsx",
+    "../packages/*/src/**/*.json",
+    "../config/vite-config/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.tsx",
+    "jest.config.ts"
+  ]
+}

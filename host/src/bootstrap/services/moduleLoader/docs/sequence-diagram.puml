@@ -1,0 +1,234 @@
+@startuml Sequence Diagram - Module Loading Flow
+
+!theme plain
+autonumber
+
+actor User
+participant "Bootstrap" as Bootstrap
+participant "ModulesHandler" as Handler
+participant "ModuleLoader" as Loader
+participant "ModuleRegistry" as Registry
+participant "InitLoadStrategy" as InitStrategy
+participant "NormalLoadStrategy" as NormalStrategy
+participant "ModuleStatusTracker" as Tracker
+participant "LifecycleManager" as Lifecycle
+participant "ConditionValidator" as Validator
+participant "DependencyResolver" as Resolver
+participant "DependencyLevelBuilder" as LevelBuilder
+participant "RemoteModuleLoader" as RemoteLoader
+
+== Инициализация ==
+
+Bootstrap -> Handler: handle(bootstrap)
+activate Handler
+
+Handler -> Bootstrap: initModuleLoader()
+activate Bootstrap
+Bootstrap -> Loader: init(bootstrap)
+activate Loader
+Loader -> Registry: new ModuleRegistry()
+Loader -> Tracker: new ModuleStatusTracker()
+Loader -> Validator: new ConditionValidator()
+Loader -> Resolver: new DependencyResolver(registry)
+Loader -> Lifecycle: new LifecycleManager(registry)
+deactivate Loader
+deactivate Bootstrap
+
+Handler -> Loader: addModules(allModules)
+activate Loader
+loop Для каждого модуля
+    Loader -> Registry: addModule(module)
+    activate Registry
+    Registry -> Registry: validateCanAddModule()
+    Registry -> Registry: modulesByName.set(name, module)
+    alt INIT модуль
+        Registry -> Registry: cacheModuleRoutes(module)
+    end
+    deactivate Registry
+end
+deactivate Loader
+
+== Загрузка INIT модулей ==
+
+Handler -> Loader: initInitModules()
+activate Loader
+
+Loader -> Loader: getModulesByType(INIT)
+Loader -> InitStrategy: new InitLoadStrategy(...)
+activate InitStrategy
+
+Loader -> InitStrategy: loadModules(initModules, bootstrap)
+activate InitStrategy
+
+InitStrategy -> Registry: sortModulesByPriority(modules)
+
+loop Для каждого INIT модуля
+    InitStrategy -> Tracker: markAsLoading(module)
+    activate Tracker
+    Tracker -> Tracker: setStatus(module, LOADING)
+    deactivate Tracker
+    
+    InitStrategy -> Lifecycle: initializeModule(module, bootstrap, false)
+    activate Lifecycle
+    Lifecycle -> Registry: loadModuleConfig(module)
+    activate Registry
+    alt Динамический конфиг
+        Registry -> RemoteLoader: loadRemoteModule(name, remoteEntry)
+        activate RemoteLoader
+        RemoteLoader -> RemoteLoader: Проверка кеша
+        RemoteLoader -> RemoteLoader: Загрузка через Module Federation
+        RemoteLoader --> Registry: ModuleConfig
+        deactivate RemoteLoader
+    end
+    deactivate Registry
+    Lifecycle -> Lifecycle: config.onModuleInit(bootstrap)
+    deactivate Lifecycle
+    
+    InitStrategy -> Lifecycle: registerModuleResources(module, bootstrap)
+    activate Lifecycle
+    Lifecycle -> Lifecycle: registerModuleRoutes(module, bootstrap)
+    Lifecycle -> Lifecycle: registerModuleI18n(module, bootstrap)
+    deactivate Lifecycle
+    
+    InitStrategy -> Tracker: markAsLoaded(module)
+    activate Tracker
+    Tracker -> Tracker: setStatus(module, LOADED)
+    Tracker -> Tracker: notifyStatusChangeHandlers()
+    deactivate Tracker
+end
+
+deactivate InitStrategy
+deactivate InitStrategy
+Loader -> Loader: initModulesLoadedFlag = true
+deactivate Loader
+
+== Предзагрузка маршрутов ==
+
+Handler -> Loader: preloadRoutes()
+activate Loader
+
+Loader -> Loader: Разделение INIT и NORMAL модулей
+
+== INIT модули (синхронно) ==
+
+loop Для каждого INIT модуля
+    Loader -> Loader: shouldSkipModuleInPreload(module)
+    alt Не пропускать
+        Loader -> Tracker: isPreloadedOrLoaded(module.name)
+        activate Tracker
+        Tracker --> Loader: false
+        deactivate Tracker
+        
+        Loader -> Lifecycle: registerModuleRoutes(module, bootstrap)
+        activate Lifecycle
+        Lifecycle -> Registry: getModuleRoutes(module)
+        activate Registry
+        Registry --> Lifecycle: routes
+        deactivate Registry
+        Lifecycle -> Bootstrap: router.addRoutes(routes)
+        deactivate Lifecycle
+        
+        Loader -> Tracker: markAsPreloaded(module)
+    end
+end
+
+== NORMAL модули (синхронно - только маршруты) ==
+
+Loader -> Loader: preloadNormalModuleRoutesOnly(normalModules)
+activate Loader
+
+loop Для каждого NORMAL модуля
+    Loader -> Validator: shouldSkipInPreload(module, bootstrap)
+    activate Validator
+    Validator --> Loader: false
+    deactivate Validator
+    
+    alt Динамический конфиг
+        Loader -> Registry: loadModuleConfig(module)
+        activate Registry
+        Registry -> RemoteLoader: loadRemoteModule(name, remoteEntry)
+        activate RemoteLoader
+        RemoteLoader --> Registry: ModuleConfig
+        deactivate RemoteLoader
+        deactivate Registry
+    end
+    
+    Loader -> Lifecycle: registerModuleRoutes(module, bootstrap)
+    activate Lifecycle
+    Lifecycle -> Bootstrap: router.addRoutes(routes)
+    deactivate Lifecycle
+    
+    Loader -> Tracker: markAsPreloaded(module)
+end
+
+Loader -> Loader: preloadNormalModulesFullAsync(normalModules)
+note right: Асинхронно после рендера
+
+deactivate Loader
+
+== Загрузка NORMAL модулей ==
+
+User -> Bootstrap: router.start()
+Bootstrap -> Loader: loadNormalModules()
+activate Loader
+
+Loader -> Loader: getModulesByType(NORMAL)
+Loader -> NormalStrategy: new NormalLoadStrategy(...)
+activate NormalStrategy
+
+Loader -> NormalStrategy: loadModules(normalModules, bootstrap)
+activate NormalStrategy
+
+NormalStrategy -> Registry: sortModulesByPriority(modules)
+
+NormalStrategy -> Resolver: Проверка циклических зависимостей
+activate Resolver
+loop Для каждого модуля с зависимостями
+    Resolver -> Resolver: hasCircularDependencies(module)
+    Resolver -> Resolver: Проверка кеша
+end
+deactivate Resolver
+
+NormalStrategy -> LevelBuilder: buildDependencyLevels(modules)
+activate LevelBuilder
+LevelBuilder -> LevelBuilder: Оптимизация: все без зависимостей?
+alt Все без зависимостей
+    LevelBuilder --> NormalStrategy: Один уровень со всеми модулями
+else Есть зависимости
+    LevelBuilder -> LevelBuilder: Построение графа зависимостей
+    LevelBuilder -> LevelBuilder: Группировка по уровням
+    LevelBuilder --> NormalStrategy: Уровни зависимостей
+end
+deactivate LevelBuilder
+
+loop Для каждого уровня
+    loop Параллельно для каждого модуля в уровне
+        NormalStrategy -> Validator: validateLoadConditions(module, bootstrap)
+        activate Validator
+        Validator -> Validator: validateFeatureFlags()
+        Validator -> Validator: validatePermissions()
+        Validator --> NormalStrategy: true
+        deactivate Validator
+        
+        NormalStrategy -> Resolver: loadDependencies(module, bootstrap, loadFn)
+        activate Resolver
+        loop Для каждой зависимости
+            Resolver -> NormalStrategy: loadSingleModule(dependency, bootstrap)
+        end
+        deactivate Resolver
+        
+        NormalStrategy -> Tracker: markAsLoading(module)
+        NormalStrategy -> Lifecycle: initializeModule(module, bootstrap, false)
+        NormalStrategy -> Lifecycle: registerModuleResources(module, bootstrap)
+        NormalStrategy -> Tracker: markAsLoaded(module)
+    end
+end
+
+deactivate NormalStrategy
+deactivate NormalStrategy
+deactivate Loader
+
+deactivate Handler
+
+@enduml
+

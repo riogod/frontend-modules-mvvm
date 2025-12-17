@@ -2,6 +2,7 @@
 
 # compiled output
 dist
+build
 tmp
 /out-tsc
 
@@ -43,3 +44,14 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 .cursor
 .vscode
+*storybook.log
+storybook-static
+
+# Bundle analysis files
+stats.html
+dist/app/stats.html
+
+# Launcher configuration (local)
+.launcher/
+
+storybook-static

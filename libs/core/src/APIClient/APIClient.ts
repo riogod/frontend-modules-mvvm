@@ -1,7 +1,9 @@
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import { log } from '../Logger';
 import type { IRequestOption } from './interfaces';
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import { AbortControllerStorage } from './AbortControllerStorage';
+import { UrlNormalizer } from './UrlNormalizer';
 
 /**
  * Класс для работы с вызовом API.
@@ -10,13 +12,20 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 export class APIClient {
   api: AxiosInstance;
   errorCb = new Map<string, (error: AxiosError) => void>();
+  private abortControllerStorage: AbortControllerStorage;
+  private urlNormalizer: UrlNormalizer;
 
-  constructor(private baseURL: string) {
+  constructor(
+    private baseURL: string,
+    withCredentials: boolean = false,
+  ) {
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,
-      withCredentials: true,
+      withCredentials: withCredentials,
     });
+    this.abortControllerStorage = new AbortControllerStorage();
+    this.urlNormalizer = new UrlNormalizer();
   }
 
   /**
@@ -31,17 +40,6 @@ export class APIClient {
   }
 
   /**
-   * Генерирует уникальный идентификатор устройства
-   *
-   * @return {Promise<string>} Уникальный идентификатор
-   */
-  public async genearateDeviceId(): Promise<string> {
-    const fp = await FingerprintJS.load();
-    const result = await fp.get();
-    return result.visitorId;
-  }
-
-  /**
    * Отправляет запрос к серверу и возвращает ответ.
    * Метод принимает дженерик с типами Req и Resp, где Req - тип запроса и Resp - тип ответа.
    *
@@ -52,13 +50,11 @@ export class APIClient {
    * @returns {Promise<Resp>} Ответ от сервера
    */
   public async request<Req, Resp>(option: IRequestOption<Req>): Promise<Resp> {
-    const DeviceUUID = localStorage.getItem('D_UUID');
     const requestConfig: AxiosRequestConfig<Req> = {
       responseType: 'json',
       method: option.method,
       url: option.route,
       headers: {
-        'Device-Id': DeviceUUID,
         ...option.headers,
       },
     };
@@ -67,11 +63,113 @@ export class APIClient {
       requestConfig.data = option.requestObj;
     }
 
+    if (option.validationSchema && option.validationSchema.request) {
+      const result = option.validationSchema.request.safeParse(
+        requestConfig.data,
+      );
+      if (!result.success) {
+        return Promise.reject<Resp>(result.error);
+      }
+    }
+
+    // Обработка механизма отмены запросов
+    let normalizedId: string | undefined;
+    let controller: AbortController | undefined;
+    let controllerRemoved = false; // Флаг для отслеживания, был ли контроллер уже удален
+
+    if (option.useAbortController) {
+      normalizedId = this.urlNormalizer.normalize(option.route, option.method);
+      controller = this.abortControllerStorage.set(normalizedId);
+      requestConfig.signal = controller.signal;
+    }
+
     try {
       const response = await this.api.request<Resp>(requestConfig);
 
+      if (option.validationSchema && option.validationSchema.response) {
+        const result = option.validationSchema.response.safeParse(
+          response.data,
+        );
+
+        if (!result.success) {
+          return Promise.reject<Resp>(result.error);
+        }
+      }
+
       return response.data;
     } catch (error: unknown) {
+      // Проверяем, является ли ошибка отменой запроса
+      const isAborted =
+        (error instanceof Error &&
+          (error.name === 'AbortError' || error.name === 'CanceledError')) ||
+        (axios.isAxiosError(error) && error.code === 'ERR_CANCELED');
+
+      // Если запрос был отменен, не логируем и не вызываем errorCb
+      if (isAborted) {
+        // Удаляем контроллер из хранилища при отмене
+        // Но только если это все еще наш контроллер (не был заменен новым запросом)
+        if (
+          normalizedId &&
+          controller &&
+          this.abortControllerStorage.get(normalizedId) === controller
+        ) {
+          this.abortControllerStorage.remove(normalizedId);
+          controllerRemoved = true;
+        }
+        // Пробрасываем ошибку дальше, но не логируем
+        return Promise.reject<Resp>(error);
+      }
+
+      // Используем оригинальный Error объект (особенно важно для AxiosError)
+      // чтобы сохранить всю информацию и предотвратить дублирование
+      // Если это не Error, создаем новый, но для AxiosError используем оригинал
+      let errorObj: Error;
+      if (error instanceof Error) {
+        errorObj = error;
+      } else {
+        errorObj = new Error(String(error));
+      }
+
+      // Логируем ошибку через log.error (это автоматически отправит в мониторинг)
+      // Это гарантирует, что все ошибки из APIClient попадут в мониторинг,
+      // даже если они обрабатываются через errorCb или catch
+      const errorMessage = axios.isAxiosError(error)
+        ? `Request failed: ${error.message} (${error.response?.status || 'no status'})`
+        : errorObj.message;
+
+      // Добавляем дополнительную информацию об ошибке напрямую к Error объекту
+      // Это гарантирует, что информация попадет в мониторинг через extractErrorFromArgs
+      if (axios.isAxiosError(error)) {
+        Object.assign(errorObj, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          url: error.config?.url,
+          method: error.config?.method?.toUpperCase(),
+          baseURL: error.config?.baseURL,
+          request: {
+            url: error.config?.url,
+            method: error.config?.method?.toUpperCase(),
+            baseURL: error.config?.baseURL,
+            timeout: error.config?.timeout,
+            headers: error.config?.headers,
+            data: error.config?.data,
+            params: error.config?.params,
+          },
+          response: error.response
+            ? {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                headers: error.response.headers,
+                data: error.response.data,
+              }
+            : undefined,
+          code: error.code,
+        });
+      }
+
+      log.error(errorMessage, { prefix: 'APIClient' }, errorObj);
+
+      // Вызываем errorCb, если он установлен для данного статуса
       if (
         axios.isAxiosError(error) &&
         error.response &&
@@ -84,7 +182,40 @@ export class APIClient {
         }
       }
 
-      return Promise.reject<Resp>(error);
+      return Promise.reject<Resp>(errorObj);
+    } finally {
+      // Удаляем контроллер из хранилища после завершения запроса (успешного или с ошибкой)
+      // Но только если:
+      // 1. Контроллер не был уже удален (controllerRemoved)
+      // 2. Контроллер в хранилище все еще тот же самый (не был заменен новым запросом)
+      if (
+        normalizedId &&
+        controller &&
+        !controllerRemoved &&
+        !controller.signal.aborted &&
+        this.abortControllerStorage.get(normalizedId) === controller
+      ) {
+        this.abortControllerStorage.remove(normalizedId);
+      }
     }
+  }
+
+  /**
+   * Явно отменяет запрос по URL и методу.
+   *
+   * @param url - URL запроса для отмены
+   * @param method - HTTP метод запроса (опционально)
+   */
+  public abortRequest(url: string, method?: string): void {
+    const normalizedId = this.urlNormalizer.normalize(url, method);
+    this.abortControllerStorage.abort(normalizedId);
+  }
+
+  /**
+   * Отменяет все активные запросы с включенным механизмом отмены.
+   * Полезно для cleanup при размонтировании компонентов.
+   */
+  public abortAllRequests(): void {
+    this.abortControllerStorage.abortAll();
   }
 }

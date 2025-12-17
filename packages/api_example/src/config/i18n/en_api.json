@@ -1,0 +1,8 @@
+{
+  "menu": {
+    "api": "API example"
+  },
+  "button": {
+    "get-joke": "Get Joke Again"
+  }
+}

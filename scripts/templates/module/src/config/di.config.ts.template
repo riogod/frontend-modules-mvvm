@@ -1,0 +1,14 @@
+import type { Container } from 'inversify';
+import { {{MODULE_NAME_UPPER}}_DI_TOKENS } from './di.tokens';
+
+// Re-export for backward compatibility
+export { {{MODULE_NAME_UPPER}}_DI_TOKENS };
+
+export const DI_CONFIG = (container: Container) => {
+  // Регистрация зависимостей модуля
+  // Пример:
+  // container.bind({{MODULE_NAME_UPPER}}_DI_TOKENS.SomeService).to(SomeService);
+
+  return container;
+};
+

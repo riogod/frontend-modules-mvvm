@@ -1,0 +1,8 @@
+{
+  "menu": {
+    "{{MODULE_NAME}}": "{{MODULE_TITLE_RU}}"
+  },
+  "title": "{{MODULE_TITLE_RU}}",
+  "description": "Добро пожаловать в модуль {{MODULE_NAME}}"
+}
+

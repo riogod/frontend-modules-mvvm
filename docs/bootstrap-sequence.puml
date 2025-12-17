@@ -1,0 +1,139 @@
+@startuml
+title Frontend Bootstrap & ModuleLoader (DEV/PROD) Sequence
+actor Browser
+participant "main.tsx" as Main
+participant "Bootstrap\n(instance)" as BS
+participant "initBootstrap()\nhandler chain" as Chain
+participant "RouterService" as Router
+participant "ModuleLoader\n(facade)" as ML
+participant "ModuleRegistry" as REG
+participant "ModuleStatusTracker" as ST
+participant "LifecycleManager" as LM
+participant "InitLoadStrategy" as InitS
+participant "NormalLoadStrategy" as NormS
+
+== App entry ==
+Browser -> Main: загрузка bundle
+Main -> Main: configure(mobx/log)
+Main -> Chain: initBootstrap(new Bootstrap(modules), appConfig)
+Chain -> BS: вернуть инстанс (после цепочки)
+
+== Handler chain (strict order) ==
+activate Chain
+Chain -> "APIClientHandler": create APIClient(baseURL)\nBS.initAPIClient()
+Chain -> "FederationSharedHandler": init shared scope для Vite Federation
+Chain -> "ModulesDiscoveryHandler": fetch .launcher manifest\nBS.setDiscoveredModules()
+Chain -> "RouterHandler": init RouterService\n(маршруты/DI hooks)
+Chain -> "DIHandler": BS.initDI() (bind APIClient)
+Chain -> "InitI18nHandler": prepare i18n instance
+Chain -> "OnAppStartHandler": fetch app start manifest\nBS.setAppStartManifest()/setUserData()
+Chain -> "ModulesHandler":
+  note right
+  - BS.initModuleLoader()
+  - REG.addModules(local INIT/NORMAL + discovered w/o duplicates)
+  - ML.initInitModules()
+  end note
+Chain -> "RouterPostHandler":
+  note right
+  ML.preloadRoutes()
+  - INIT: регистрируются маршруты/i18n если не были
+  - NORMAL: регистрируются только маршруты синхронно,\n    полная загрузка ассинхронно
+  - RouterService.routerPostInit, build menu, set deps
+  end note
+Chain -> "HTTPErrorHandler": attach global HTTP error handling
+deactivate Chain
+
+== ModuleLoader.init ==
+BS -> ML: init(bootstrap)
+ML -> REG: ctor()
+ML -> ST: ctor()
+ML -> LM: ctor(registry)
+
+== INIT modules load (ModulesHandler) ==
+BS -> ML: initInitModules()
+activate ML
+ML -> REG: getModulesByType(INIT)
+ML -> InitS: loadModules(initModules, BS)
+loop per INIT module (priority order)
+  InitS -> ST: markAsLoading
+  InitS -> LM: initializeModule(module, BS, isPreload=false)\n(onModuleInit, DI, feature flags)
+  InitS -> LM: registerModuleResources(routes/i18n/etc.)
+  InitS -> ST: markAsLoaded
+end
+ML -> ST: set initModulesLoadedFlag=true
+deactivate ML
+
+== Routes preload (RouterPostHandler) ==
+BS -> ML: preloadRoutes()
+activate ML
+ML -> REG: getModules()
+ML -> ML: split INIT vs NORMAL
+note over ML
+INIT: пропущены (уже загружены)\nно могут зарегистрировать маршруты если нужно
+NORMAL: маршруты регистрируются синхронно,\nполная загрузка ассинхронно
+end note
+ML -> ML: preloadNormalModuleRoutesOnly()
+loop NORMAL modules (routes-only)
+  ML -> ST: isPreloadedOrLoaded?
+  ML -> LM: registerModuleRoutes(module, BS, autoLoad hook)
+  ML -> ST: markAsPreloaded(routes ready)
+end
+ML -> ML: preloadNormalModulesFullAsync() (fire & forget)
+par async full preload
+  loop per dependency level (DEV builds levels, PROD flat)
+    ML -> LM: registerModuleI18n()
+    ML -> LM: initializeModule(module, BS, isPreload=false)
+    ML -> ST: markAsLoaded
+  end
+end
+deactivate ML
+
+== App start & render ==
+Chain --> Main: возвращён проинициализированный BS
+Main -> Router: router.start(callback)
+Router --> Main: ready
+Main -> Browser: render React tree
+
+== NORMAL modules load after render ==
+Main -> ML: loadNormalModules()
+activate ML
+ML -> REG: getModulesByType(NORMAL)
+ML -> NormS: loadModules(normalModules, BS, autoLoadByRoute)
+group dependency-aware batches
+  NormS -> ML: build dependency levels\n(DEV uses DependencyResolver + ConditionValidator,\nPROD skips heavy checks)
+  loop per level
+    par modules within level
+      ML -> ML: loadSingleModuleWithTimeout()
+      alt already preloaded
+        ML -> ST: markAsLoaded
+      else
+        ML -> ML: canLoadModule? (DEV validator)\n+ dependency load if needed
+        ML -> ST: markAsLoading
+        ML -> LM: initializeModule()
+        ML -> LM: registerModuleResources(routes/i18n, autoLoadByRoute)
+        ML -> ST: markAsLoaded or markAsFailed(error/timeout)
+      end
+    end
+  end
+end
+deactivate ML
+
+== Auto-load by route (during navigation) ==
+Router -> ML: autoLoadModuleByRoute(routeName)
+ML -> REG: getModuleByRouteName()
+alt module found & NORMAL & not loaded
+  ML -> ML: loadModuleByName() // checks cycles (DEV), deps, timeout
+else
+  ML -> Router: ignore (INIT or not found)
+end
+
+== Remote modules (federation) ==
+participant "RemoteModuleLoader\n(singleton)" as RML
+Main -> RML: loadRemoteModule(name, remoteEntry, opts)
+RML -> Browser: inject remoteEntry script\n+ timeout/retry
+RML -> BS: return ModuleConfig\n(используется ModulesDiscoveryHandler\nили динамическая загрузка через Registry)
+
+note over ML, ST
+ST отслеживает pending/loading/preloaded/loaded/failed\nдля прогресс-индикаторов и повторных вызовов\ngetOrCreatePreloadingPromise устраняет race conditions
+end note
+@enduml

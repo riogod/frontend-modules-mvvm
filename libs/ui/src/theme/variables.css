@@ -1,0 +1,46 @@
+/**
+ * CSS переменные для темы приложения
+ * Эти переменные доступны во всех модулях через импорт из @platform/ui
+ * 
+ * Переменные автоматически синхронизируются с темой MUI через компонент CssVariablesSync.
+ * Базовые значения ниже используются как fallback до инициализации темы.
+ * 
+ * Использование в CSS Modules:
+ * CSS переменные доступны глобально, просто используйте var(--mui-palette-primary-main) и т.д.
+ */
+
+:root {
+  /* Цвета из темы MUI (синхронизируются автоматически через CssVariablesSync) */
+  --mui-palette-primary-main: #00bcd4;
+  --mui-palette-primary-light: #33c9dc;
+  --mui-palette-primary-dark: #008394;
+  --mui-palette-primary-contrast-text: #fff;
+
+  --mui-palette-secondary-main: #ff3d00;
+  --mui-palette-secondary-light: #ff6333;
+  --mui-palette-secondary-dark: #b22a00;
+  --mui-palette-secondary-contrast-text: #000;
+
+  /* Фоновые цвета (синхронизируются автоматически) */
+  --mui-palette-background-default: #fff;
+  --mui-palette-background-paper: #fff;
+
+  /* Текст (синхронизируется автоматически) */
+  --mui-palette-text-primary: rgba(0, 0, 0, 0.87);
+  --mui-palette-text-secondary: rgba(0, 0, 0, 0.6);
+  --mui-palette-text-disabled: rgba(0, 0, 0, 0.38);
+
+  /* Границы (синхронизируется автоматически) */
+  --mui-palette-divider: rgba(0, 0, 0, 0.12);
+
+  /* Скругления (синхронизируется автоматически) */
+  --mui-shape-border-radius: 8px;
+
+  /* Отступы и размеры (статические, не зависят от темы) */
+  --spacing-unit: 8px;
+  --spacing-xs: calc(var(--spacing-unit) * 0.5); /* 4px */
+  --spacing-sm: calc(var(--spacing-unit) * 1); /* 8px */
+  --spacing-md: calc(var(--spacing-unit) * 2); /* 16px */
+  --spacing-lg: calc(var(--spacing-unit) * 3); /* 24px */
+  --spacing-xl: calc(var(--spacing-unit) * 4); /* 32px */
+}

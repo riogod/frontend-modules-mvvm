@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "node"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true,
+    "composite": true,
+    "outDir": "../../dist/out-tsc"
+  },
+  "include": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [],
+  "references": [
+    {
+      "path": "../core/tsconfig.json"
+    }
+  ]
+}

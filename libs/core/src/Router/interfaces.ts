@@ -1,16 +1,14 @@
 import type { Route } from "@riogz/router";
 import type { Router } from "@riogz/router";
-import type { IOnEnterMiddlewareConfig } from "./middlewares/onEnter";
-import type { IOnPathMiddlewareConfig } from "./middlewares/onPath";
-import type { IOnSyncPathMiddlewareConfig } from "./middlewares/onSyncPath";
-import type { ITitleMiddlewareConfig } from "./middlewares/title";
 import type { FunctionComponent, ReactNode } from "react";
-import type { IOnExitSearchUtilConfig } from "./middlewares/onExitSearch";
+import { type Container } from "inversify";
 
-export type RouterDependencies = Record<string, any>;
-export interface IUtilsConfig extends IOnExitSearchUtilConfig {}
+export interface RouterDependencies {
+  di: Container;
+  menu: IMenuItem[];
+}
 
-export interface IRoute extends Route, IMiddlewareConfig, IUtilsConfig {
+export interface IRoute extends Route<RouterDependencies> {
   /**
    * Переопределение интерфейса дочерних роутов
    */
@@ -24,12 +22,6 @@ export interface IRoute extends Route, IMiddlewareConfig, IUtilsConfig {
    */
   pageComponent?: FunctionComponent;
 }
-
-export interface IMiddlewareConfig
-  extends IOnEnterMiddlewareConfig,
-    IOnPathMiddlewareConfig,
-    IOnSyncPathMiddlewareConfig,
-    ITitleMiddlewareConfig {}
 
 export interface IMenuItemNavigate {
   id?: string;

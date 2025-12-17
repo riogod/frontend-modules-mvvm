@@ -2,7 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { APIClient } from '../index';
 import { HttpMethod } from '../enums';
 import MockAdapter from 'axios-mock-adapter';
-import { AxiosError } from 'axios';
+import { type AxiosError } from 'axios';
+import { z } from 'zod';
 
 interface RequestDTO {
   foo: string;
@@ -26,20 +27,6 @@ describe('APIClient', () => {
 
   afterEach(() => {
     mock.reset();
-  });
-
-  describe('genearateDeviceId function', () => {
-    it('should generate a device ID', async () => {
-      // Testing the successful generation of a device ID
-      const deviceId = await apiClient.genearateDeviceId();
-      expect(deviceId).toBeTruthy();
-      expect(typeof deviceId).toBe('string');
-    });
-
-    it('should not throw any errors', async () => {
-      // Testing that the function does not throw any errors
-      await expect(apiClient.genearateDeviceId()).resolves.not.toThrow();
-    });
   });
 
   describe('addErrorCb', () => {
@@ -76,6 +63,109 @@ describe('APIClient', () => {
       ).rejects.toThrowError();
 
       expect(cbMock).toHaveBeenCalled();
+    });
+
+    describe('validation schema', () => {
+      const requestSchema = z.object({
+        foo: z.string(),
+      });
+
+      const responseSchema = z.object({
+        data: z.string(),
+      });
+
+      it('should validate request schema successfully', async () => {
+        const validRequest = { foo: 'bar' };
+        const responseData = { data: 'example response' };
+        mock.onPost('/example').reply(200, responseData);
+
+        const response = await apiClient.request<RequestDTO, ResponseDTO>({
+          method: HttpMethod.POST,
+          route: '/example',
+          requestObj: validRequest,
+          validationSchema: {
+            request: requestSchema,
+          },
+        });
+
+        expect(response).toEqual(responseData);
+      });
+
+      it('should reject request with invalid request schema', async () => {
+        const invalidRequest = { foo: 123 }; // should be string
+        mock.onPost('/example').reply(200, { data: 'example response' });
+
+        await expect(
+          apiClient.request<RequestDTO, ResponseDTO>({
+            method: HttpMethod.POST,
+            route: '/example',
+            requestObj: invalidRequest as unknown as RequestDTO,
+            validationSchema: {
+              request: requestSchema,
+            },
+          }),
+        ).rejects.toBeInstanceOf(z.ZodError);
+      });
+
+      it('should validate response schema successfully', async () => {
+        const validResponse = { data: 'example response' };
+        mock.onGet('/example').reply(200, validResponse);
+
+        const response = await apiClient.request<RequestDTO, ResponseDTO>({
+          method: HttpMethod.GET,
+          route: '/example',
+          validationSchema: {
+            response: responseSchema,
+          },
+        });
+
+        expect(response).toEqual(validResponse);
+      });
+
+      it('should reject response with invalid response schema', async () => {
+        const invalidResponse = { data: 123 }; // should be string
+        mock.onGet('/example').reply(200, invalidResponse);
+
+        await expect(
+          apiClient.request<RequestDTO, ResponseDTO>({
+            method: HttpMethod.GET,
+            route: '/example',
+            validationSchema: {
+              response: responseSchema,
+            },
+          }),
+        ).rejects.toBeInstanceOf(z.ZodError);
+      });
+
+      it('should validate both request and response schemas', async () => {
+        const validRequest = { foo: 'bar' };
+        const validResponse = { data: 'example response' };
+        mock.onPost('/example').reply(200, validResponse);
+
+        const response = await apiClient.request<RequestDTO, ResponseDTO>({
+          method: HttpMethod.POST,
+          route: '/example',
+          requestObj: validRequest,
+          validationSchema: {
+            request: requestSchema,
+            response: responseSchema,
+          },
+        });
+
+        expect(response).toEqual(validResponse);
+      });
+
+      it('should work without validation schema', async () => {
+        const responseData = { data: 'example response' };
+        mock.onGet('/example').reply(200, responseData);
+
+        const response = await apiClient.request<RequestDTO, ResponseDTO>({
+          method: HttpMethod.GET,
+          route: '/example',
+        });
+
+        expect(response).toEqual(responseData);
+      });
     });
   });
 });

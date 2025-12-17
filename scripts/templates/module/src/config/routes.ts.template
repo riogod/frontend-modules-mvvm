@@ -1,0 +1,19 @@
+import { type IRoutes } from '@platform/core';
+import { lazy } from 'react';
+
+export const {{MODULE_NAME_UPPER}}_ROUTES = {
+  HOME: '{{MODULE_NAME}}',
+};
+
+export const routes: IRoutes = [
+  {
+    name: '{{MODULE_NAME}}',
+    path: '/{{MODULE_NAME}}',
+    menu: {
+      text: '{{MODULE_NAME}}:menu.{{MODULE_NAME}}',
+    },
+    browserTitle: '{{MODULE_TITLE}}',
+    pageComponent: lazy(() => import('../view/pages/HomePage')),
+  },
+];
+

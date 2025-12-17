@@ -1,0 +1,78 @@
+@startuml State Diagram - Module Lifecycle
+
+!theme plain
+
+state Module {
+  [*] --> PENDING : Модуль добавлен в реестр
+  
+  PENDING : Статус: PENDING
+  PENDING : Описание: Модуль зарегистрирован,\nно еще не начал загрузку
+  
+  PENDING --> LOADING : Начало загрузки\n(initInitModules / loadNormalModules)
+  
+  LOADING : Статус: LOADING
+  LOADING : Описание: Модуль в процессе загрузки\n- Загрузка конфигурации\n- Вызов onModuleInit\n- Регистрация ресурсов
+  
+  LOADING --> PRELOADED : Предзагрузка маршрутов\n(preloadRoutes)
+  note right
+    Только для NORMAL модулей
+    Загружаются только маршруты
+    Без onModuleInit и i18n
+  end note
+  
+  PRELOADED : Статус: PRELOADED
+  PRELOADED : Описание: Маршруты зарегистрированы,\nно модуль не полностью загружен
+  PRELOADED : Ресурсы: Маршруты ✓\nI18n ✗\nonModuleInit ✗
+  
+  PRELOADED --> LOADING : Продолжение загрузки\n(loadNormalModules)
+  
+  LOADING --> LOADED : Успешная загрузка
+  note right
+    Все ресурсы зарегистрированы:
+    - Маршруты ✓
+    - I18n ✓
+    - onModuleInit вызван ✓
+  end note
+  
+  LOADED : Статус: LOADED
+  LOADED : Описание: Модуль полностью загружен\nи готов к использованию
+  LOADED : Ресурсы: Маршруты ✓\nI18n ✓\nonModuleInit ✓
+  
+  LOADING --> FAILED : Ошибка загрузки
+  note right
+    Возможные причины:
+    - Ошибка загрузки конфигурации
+    - Ошибка в onModuleInit
+    - Ошибка регистрации ресурсов
+    - Не выполнены условия загрузки
+  end note
+  
+  FAILED : Статус: FAILED
+  FAILED : Описание: Ошибка при загрузке модуля
+  FAILED : Ресурсы: Не загружены
+  
+  FAILED --> LOADING : Повторная попытка\n(loadModuleByName)
+  
+  LOADED --> [*] : Модуль удален из реестра
+  FAILED --> [*] : Модуль удален из реестра
+}
+
+' Специальные переходы для INIT модулей
+state "INIT Module Flow" as InitFlow {
+  PENDING --> LOADING : initInitModules()
+  LOADING --> LOADED : Последовательная загрузка\n(без PRELOADED)
+  note right
+    INIT модули не проходят
+    через статус PRELOADED
+  end note
+}
+
+' Специальные переходы для NORMAL модулей
+state "NORMAL Module Flow" as NormalFlow {
+  PENDING --> PRELOADED : preloadRoutes()\n(только маршруты)
+  PRELOADED --> LOADING : loadNormalModules()
+  LOADING --> LOADED : Параллельная загрузка\nпо уровням зависимостей
+}
+
+@enduml
+

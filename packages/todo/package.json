@@ -1,0 +1,17 @@
+{
+  "name": "@platform/module-todo",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/config/module_config.ts",
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "@platform/core": "*",
+    "@platform/ui": "*"
+  },
+  "devDependencies": {
+    "@platform/vite-config": "*",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.1"
+  }
+}
+

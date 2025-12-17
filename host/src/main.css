@@ -1,0 +1,18 @@
+/* Импортируем CSS переменные из @platform/ui */
+@import '@platform/ui/theme/variables.css';
+
+html,
+body,
+#root {
+  height: 100vh;
+  width: 100vw;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  /* transition: background-color 9999s ease-in-out 0s; */
+  background-color: rgb(0, 255, 255);
+  color: antiquewhite;
+}

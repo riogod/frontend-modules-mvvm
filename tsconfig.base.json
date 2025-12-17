@@ -4,7 +4,7 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "outDir": "build",
     "esModuleInterop": true,
@@ -13,14 +13,60 @@
     "forceConsistentCasingInFileNames": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": [
+      "es2020",
+      "dom"
+    ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@todo/core": ["libs/core/src/index.ts"],
-      "@todo/ui": ["libs/ui/src/index.ts"]
+      "@host/bootstrap/*": [
+        "host/src/bootstrap/*"
+      ],
+      "@host/bootstrap/interface": [
+        "host/src/bootstrap/interface.ts"
+      ],
+      "@host/modules/core/*": [
+        "host/src/modules/core/*"
+      ],
+      "@platform/vite-config/*": [
+        "config/vite-config/*"
+      ],
+      "@platform/common": [
+        "libs/common/src/index.ts"
+      ],
+      "@platform/core": [
+        "libs/core/src/index.ts"
+      ],
+      "@platform/module-api-example": [
+        "packages/api_example/src"
+      ],
+      "@platform/module-api-example/*": [
+        "packages/api_example/src/*"
+      ],
+      "@platform/module-app-test": [
+        "packages/app-test/src"
+      ],
+      "@platform/module-app-test/*": [
+        "packages/app-test/src/*"
+      ],
+      "@platform/module-todo": [
+        "packages/todo/src"
+      ],
+      "@platform/module-todo/*": [
+        "packages/todo/src/*"
+      ],
+      "@platform/share": [
+        "libs/share/src/index.ts"
+      ],
+      "@platform/ui": [
+        "libs/ui/src/index.ts"
+      ]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
 }

@@ -1,15 +1,26 @@
+import remarkGfm from 'remark-gfm';
+
 const config = {
-  stories: ['../src/**/*.stories.@(js|jsx|ts|tsx|mdx)'],
-  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions'],
-  core: {
-    builder: '@storybook/builder-vite',
-    options: {},
-  },
+  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx|mdx)'],
+  addons: [
+    {
+      name: '@storybook/addon-docs',
+      options: {
+        mdxPluginOptions: {
+          mdxCompileOptions: {
+            remarkPlugins: [remarkGfm],
+          },
+        },
+      },
+    },
+    '@storybook/addon-a11y',
+  ],
   framework: {
     name: '@storybook/react-vite',
-    options: {
-      viteConfigPath: './vite.config.ts',
-    },
+    options: {},
+  },
+  docs: {
+    autodocs: 'tag',
   },
 };
 
