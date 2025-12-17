@@ -1,14 +1,20 @@
 import {
   AccessControlModel,
+  AppParamsModel,
   GetFeatureFlagsUsecase,
   GetFeatureFlagUsecase,
   GetPermissionsUsecase,
   GetPermissionUsecase,
+  GetParamUsecase,
+  GetParamsUsecase,
   RemoveFeatureFlagsUsecase,
+  RemoveParamUsecase,
   RemovePermissionsUsecase,
   SetFeatureFlagsUsecase,
+  SetParamsUsecase,
   SetPermissionsUsecase,
   UpdateFeatureFlagsUsecase,
+  UpdateParamsUsecase,
   UpdatePermissionsUsecase,
 } from '@platform/common';
 import { type Bootstrap } from '..';
@@ -33,6 +39,9 @@ export class OnAppStartHandler extends AbstractInitHandler {
     bootstrap.di
       .bind<AccessControlModel>(IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL)
       .to(AccessControlModel);
+    bootstrap.di
+      .bind<AppParamsModel>(IOC_CORE_TOKENS.MODEL_APP_PARAMS)
+      .to(AppParamsModel);
 
     // Binding Usecases to DI container
     bootstrap.di
@@ -74,9 +83,27 @@ export class OnAppStartHandler extends AbstractInitHandler {
         IOC_CORE_TOKENS.USECASE_UPDATE_PERMISSIONS,
       )
       .to(UpdatePermissionsUsecase);
+    bootstrap.di
+      .bind<GetParamUsecase>(IOC_CORE_TOKENS.USECASE_GET_PARAM)
+      .to(GetParamUsecase);
+    bootstrap.di
+      .bind<GetParamsUsecase>(IOC_CORE_TOKENS.USECASE_GET_PARAMS)
+      .to(GetParamsUsecase);
+    bootstrap.di
+      .bind<SetParamsUsecase>(IOC_CORE_TOKENS.USECASE_SET_PARAMS)
+      .to(SetParamsUsecase);
+    bootstrap.di
+      .bind<UpdateParamsUsecase>(IOC_CORE_TOKENS.USECASE_UPDATE_PARAMS)
+      .to(UpdateParamsUsecase);
+    bootstrap.di
+      .bind<RemoveParamUsecase>(IOC_CORE_TOKENS.USECASE_REMOVE_PARAM)
+      .to(RemoveParamUsecase);
 
     const accessControlModel = bootstrap.di.get<AccessControlModel>(
       IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
+    );
+    const appParamsModel = bootstrap.di.get<AppParamsModel>(
+      IOC_CORE_TOKENS.MODEL_APP_PARAMS,
     );
 
     // Используем user данные из манифеста, если они есть
@@ -88,7 +115,8 @@ export class OnAppStartHandler extends AbstractInitHandler {
       // Используем данные из сохраненного манифеста
       accessControlModel.setFeatureFlags(manifest.data.features || {});
       accessControlModel.setPermissions(manifest.data.permissions || {});
-      log.debug('AccessControlHandler: using data from cached manifest', {
+      appParamsModel.setParams(manifest.data.params);
+      log.debug('OnAppStartHandler: using data from cached manifest', {
         prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
     } else if (userData) {
@@ -106,7 +134,10 @@ export class OnAppStartHandler extends AbstractInitHandler {
 
       accessControlModel.setPermissions(permissions);
       accessControlModel.setFeatureFlags(featureFlags);
-      log.debug('AccessControlHandler: using user data from manifest', {
+      // userData не содержит params, устанавливаем пустой объект
+
+      appParamsModel.setParams({});
+      log.debug('OnAppStartHandler: using user data from manifest', {
         prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
     } else {
@@ -118,7 +149,8 @@ export class OnAppStartHandler extends AbstractInitHandler {
 
       accessControlModel.setFeatureFlags(appStart.data.features);
       accessControlModel.setPermissions(appStart.data.permissions);
-      log.debug('AccessControlHandler: using user data from API (fallback)', {
+      appParamsModel.setParams(appStart.data.params);
+      log.debug('OnAppStartHandler: using user data from API (fallback)', {
         prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
     }

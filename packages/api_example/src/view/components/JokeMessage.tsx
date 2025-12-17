@@ -54,6 +54,7 @@ const JokeMessage: FC<SharedJokeMessageProps> = ({ title }) => {
       elevation={3}
     >
       <CardHeader title={title} />
+      Параметр от сервера: {jokeMessage.paramValue}
       {jokeMessage.loading ? (
         <Skeleton
           animation="wave"

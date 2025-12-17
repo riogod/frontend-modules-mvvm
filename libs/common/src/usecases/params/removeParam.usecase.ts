@@ -1,18 +1,18 @@
 import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
-import { AccessControlModel } from '../../models';
+import { AppParamsModel } from '../../models';
 import { IOC_CORE_TOKENS } from '@platform/core';
 
 @injectable()
-export class RemoveFeatureFlagsUsecase {
+export class RemoveParamUsecase {
   constructor(
     @inject(IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL)
-    private accessControlModel: AccessControlModel,
+    private appParamsModel: AppParamsModel,
   ) {
     makeAutoObservable(this);
   }
 
   execute(key: string): void {
-    this.accessControlModel.removeFeatureFlag(key);
+    this.appParamsModel.removeParam(key);
   }
 }

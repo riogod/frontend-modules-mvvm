@@ -9,5 +9,6 @@ export default defineConfig(
     libName: 'common',
     // Опционально: путь к локальному конфигу для расширения
     localConfigPath: './vite.config.local.mts',
+    external: ['@platform/core'],
   }),
 );

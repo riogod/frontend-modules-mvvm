@@ -38,7 +38,7 @@ export default {
       'api.module.request.permission': true,
     },
     params: {
-      'api.module.load.param': 'SomeValue',
+      'api.module.load.param': 'My super param from app/start',
       'api.module.request.param': 'SomeValue',
     },
   },

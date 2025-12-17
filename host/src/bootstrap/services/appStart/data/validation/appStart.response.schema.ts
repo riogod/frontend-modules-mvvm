@@ -23,7 +23,7 @@ const appStartResponseSchema = z.object({
   data: z.object({
     features: z.record(z.string(), z.boolean()),
     permissions: z.record(z.string(), z.boolean()),
-    params: z.record(z.string(), z.unknown()).optional(),
+    params: z.record(z.string(), z.unknown()).default({}),
     modules: z.array(moduleManifestEntrySchema).optional(),
   }),
 });

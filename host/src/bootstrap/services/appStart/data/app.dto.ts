@@ -5,7 +5,7 @@ export interface AppStartDTO {
   data: {
     features: Record<string, boolean>;
     permissions: Record<string, boolean>;
-    params: Record<string, undefined>;
+    params: Record<string, unknown>;
     modules: ModuleManifestEntry[];
   };
 }

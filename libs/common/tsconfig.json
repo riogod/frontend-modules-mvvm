@@ -6,11 +6,11 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["node"],
-    "composite": true,
+
     "declaration": true,
     "declarationMap": true,
     "outDir": "../../dist/out-tsc",
-    "baseUrl": "."
+    "baseUrl": "../.."
   },
   "files": ["src/index.ts"],
   "include": ["src/**/*.ts", "src/**/*.tsx"],
