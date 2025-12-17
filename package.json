@@ -114,13 +114,26 @@
     "vitest": "^4.0.7",
     "vitest-canvas-mock": "0.3.3"
   },
-  "msw": {
-    "workerDirectory": [
-      "host/public"
-    ]
-  },
   "overrides": {
-    "@rolldown/pluginutils": "1.0.0-beta.44"
+    "@rolldown/pluginutils": "1.0.0-beta.44",
+    "@storybook/addon-a11y": {
+      "storybook": "$storybook"
+    },
+    "@storybook/addon-docs": {
+      "storybook": "$storybook"
+    },
+    "@storybook/addon-onboarding": {
+      "storybook": "$storybook"
+    },
+    "@storybook/builder-vite": {
+      "storybook": "$storybook"
+    },
+    "@storybook/react-vite": {
+      "storybook": "$storybook"
+    },
+    "eslint-plugin-storybook": {
+      "storybook": "$storybook"
+    }
   },
   "workspaces": [
     "host",
