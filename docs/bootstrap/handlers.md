@@ -224,27 +224,35 @@ class InitI18nHandler extends AbstractInitHandler {
 
 ### OnAppStartHandler
 
-Регистрирует базовые модели и usecases в DI-контейнере, загружает permissions и feature flags.
+Регистрирует базовые модели и usecases в DI-контейнере, загружает permissions, feature flags и server parameters.
 
 ```typescript
 class OnAppStartHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
-    // Регистрация в DI
+    // Регистрация Models в DI
     bootstrap.di
       .bind<AccessControlModel>(IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL)
       .to(AccessControlModel);
+    bootstrap.di
+      .bind<AppParamsModel>(IOC_CORE_TOKENS.MODEL_APP_PARAMS)
+      .to(AppParamsModel);
 
-    // ... регистрация usecases
+    // Регистрация Usecases в DI
+    // ... (feature flags, permissions, server parameters usecases)
 
-    // Загрузка permissions и feature flags из манифеста
+    // Загрузка данных из манифеста
     const manifest = bootstrap.getAppStartManifest();
     const accessControlModel = bootstrap.di.get<AccessControlModel>(
       IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
+    );
+    const appParamsModel = bootstrap.di.get<AppParamsModel>(
+      IOC_CORE_TOKENS.MODEL_APP_PARAMS,
     );
 
     if (manifest?.data) {
       accessControlModel.setFeatureFlags(manifest.data.features || {});
       accessControlModel.setPermissions(manifest.data.permissions || {});
+      appParamsModel.setParams(manifest.data.params || {});
     }
 
     return await super.handle(bootstrap);
@@ -255,7 +263,16 @@ class OnAppStartHandler extends AbstractInitHandler {
 **Регистрируемые сервисы:**
 
 - `AccessControlModel` — управление feature flags и permissions
-- Use cases для работы с флагами и разрешениями
+- `AppParamsModel` — управление серверными параметрами
+- Use cases для работы с флагами, разрешениями и серверными параметрами
+
+**Загружаемые данные из манифеста:**
+
+- `features` — feature flags (через `accessControlModel.setFeatureFlags()`)
+- `permissions` — разрешения (через `accessControlModel.setPermissions()`)
+- `params` — серверные параметры (через `appParamsModel.setParams()`)
+
+> **Подробнее:** См. [Server Parameters](../mechanics/server-parameters.md) для работы с серверными параметрами.
 
 ---
 
