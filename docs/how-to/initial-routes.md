@@ -58,40 +58,39 @@ navigateToCurrentRoute(): void {
 
 ```typescript
 // host/src/main.tsx
-initBootstrap(new Bootstrap(app_modules), appConfig)
-  .then(async (bootstrap) => {
-    bootstrap.setIsBootstrapped();
+initBootstrap(new Bootstrap(app_modules), appConfig).then(async (bootstrap) => {
+  bootstrap.setIsBootstrapped();
 
-    // Старт роутера с локальными модулями
-    bootstrap.routerService.router.start(() => {
-      // Рендер React приложения
-      createRoot(document.getElementById('root')!).render(/* ... */);
-    });
-
-    // Загрузка манифеста после рендера
-    const manifestLoader = new ManifestLoader(
-      bootstrap.getAPIClient,
-      bootstrap.moduleLoader,
-      bootstrap,
-    );
-
-    const manifest = await manifestLoader.loadManifest();
-    if (manifest) {
-      await manifestLoader.processManifestModules(manifest);
-    }
-
-    // Загрузка NORMAL модулей (локальные + из манифеста)
-    bootstrap.moduleLoader
-      .loadNormalModules()
-      .then(() => {
-        bootstrap.setIsAppStarted();
-        // ✅ Вызов navigateToCurrentRoute после загрузки модулей
-        bootstrap.routerService.navigateToCurrentRoute();
-      })
-      .catch((error: unknown) => {
-        log.error('Error loading normal modules', { prefix: 'bootstrap' }, error);
-      });
+  // Старт роутера с локальными модулями
+  bootstrap.routerService.router.start(() => {
+    // Рендер React приложения
+    createRoot(document.getElementById('root')!).render(/* ... */);
   });
+
+  // Загрузка манифеста после рендера
+  const manifestLoader = new ManifestLoader(
+    bootstrap.getAPIClient,
+    bootstrap.moduleLoader,
+    bootstrap,
+  );
+
+  const manifest = await manifestLoader.loadManifest();
+  if (manifest) {
+    await manifestLoader.processManifestModules(manifest);
+  }
+
+  // Загрузка NORMAL модулей (локальные + из манифеста)
+  bootstrap.moduleLoader
+    .loadNormalModules()
+    .then(() => {
+      bootstrap.setIsAppStarted();
+      // ✅ Вызов navigateToCurrentRoute после загрузки модулей
+      bootstrap.routerService.navigateToCurrentRoute();
+    })
+    .catch((error: unknown) => {
+      log.error('Error loading normal modules', { prefix: 'bootstrap' }, error);
+    });
+});
 ```
 
 ## Зачем нужен
@@ -108,12 +107,14 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
 Метод выполняет следующие шаги:
 
 1. **Получает текущий путь из URL:**
+
    ```typescript
    const current_route = this.router.getState();
    const fullPath = current_route.path; // Например: '/todo/list?id=123'
    ```
 
 2. **Парсит путь для извлечения имени роута и параметров:**
+
    ```typescript
    const match = this.router.matchPath(fullPath);
    // match = { name: 'todo.list', params: { id: '123' } }
@@ -126,8 +127,8 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
 4. **Выполняет навигацию с перезагрузкой:**
    ```typescript
    this.router.navigate(match.name, match.params, {
-     replace: true,  // Заменяет текущую запись в истории
-     reload: true,   // Перезагружает маршрут (выполняет onEnterNode)
+     replace: true, // Заменяет текущую запись в истории
+     reload: true, // Перезагружает маршрут (выполняет onEnterNode)
    });
    ```
 
