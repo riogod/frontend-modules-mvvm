@@ -48,9 +48,9 @@ export class BootstrapRouterService {
       prefix: 'bootstrap.routerService.initRouter',
     });
     this.router = createRouter<RouterDependencies>(this.routes, {
-      allowNotFound: false,
+      allowNotFound: true,
       autoCleanUp: false,
-      defaultRoute: '404',
+      queryParamsMode: 'loose',
     });
     log.debug('Router instance created', {
       prefix: 'bootstrap.routerService.initRouter',
@@ -267,5 +267,50 @@ export class BootstrapRouterService {
       { prefix: 'bootstrap.routerService.buildRoutesMenu' },
     );
     return menuConfig;
+  }
+
+  navigateToCurrentRoute(): void {
+    const current_route = this.router.getState();
+
+    // Используем полный путь из current_route, который уже содержит query-параметры в URL
+    // matchPath парсит URL и извлекает как path-параметры, так и query-параметры`
+    const fullPath = current_route.path;
+    const match = this.router.matchPath(fullPath);
+
+    if (fullPath === '/') {
+      this.router.navigate(
+        'todo',
+        {},
+        {
+          replace: true,
+          reload: true,
+        },
+      );
+      return;
+    }
+
+    if (!match) {
+      log.warn(
+        'No route match found for path',
+        {
+          prefix: 'bootstrap.routerService.navigateToCurrentRoute',
+        },
+        { path: fullPath },
+      );
+      return;
+    }
+
+    log.debug(
+      'Navigating to current route',
+      {
+        prefix: 'bootstrap.routerService.navigateToCurrentRoute',
+      },
+      { routeName: match.name, params: match.params, currentPath: fullPath },
+    );
+
+    this.router.navigate(match.name, match.params, {
+      replace: true,
+      reload: true,
+    });
   }
 }

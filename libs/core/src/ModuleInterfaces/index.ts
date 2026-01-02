@@ -96,9 +96,10 @@ export interface ModuleConfig<TBootstrap extends IBootstrap = IBootstrap> {
     params?: Record<string, unknown>;
   };
   /**
-   * Информация о модуле для манифеста
+   * Информация о модуле для манифеста.
+   * Обязательна для MFE модулей, не требуется для Local модулей.
    */
-  mockModuleInfo: ModuleManifestEntry;
+  mockModuleInfo?: ModuleManifestEntry;
 }
 
 // Реэкспорт интерфейса Bootstrap

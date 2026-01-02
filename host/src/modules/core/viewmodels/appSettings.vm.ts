@@ -8,6 +8,15 @@ export class AppSettingsViewModel {
   get notification() {
     return this.appModel.notification;
   }
+
+  get isAppStarted() {
+    return this.appModel.isAppStarted;
+  }
+
+  get isBootstrapped() {
+    return this.appModel.isBootstrapped;
+  }
+
   constructor(
     @inject(IOC_CORE_TOKENS.MODEL_APP)
     private appModel: AppModel,

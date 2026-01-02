@@ -20,6 +20,7 @@ import { type Module } from '../modules/interface';
 import type { AppStartDTO } from './services/appStart/data/app.dto';
 import { OnAppStartHandler } from './handlers/OnAppStartHandler';
 import { FederationSharedHandler } from './handlers/FederationSharedHandler';
+import type { AppModel } from '@host/modules/core/models/app.model';
 
 /**
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
@@ -220,6 +221,22 @@ export class Bootstrap implements IBootstrap {
       prefix: 'bootstrap.setAppStartManifest',
     });
     this.appStartManifest = manifest;
+  }
+
+  setIsAppStarted(): void {
+    log.debug('Setting is app started', {
+      prefix: 'bootstrap.setIsAppStarted',
+    });
+    const appModel = this.di.get<AppModel>(IOC_CORE_TOKENS.MODEL_APP);
+    appModel.isAppStarted = true;
+  }
+
+  setIsBootstrapped(): void {
+    log.debug('Setting is bootstrapped', {
+      prefix: 'bootstrap.setIsBootstrapped',
+    });
+    const appModel = this.di.get<AppModel>(IOC_CORE_TOKENS.MODEL_APP);
+    appModel.isBootstrapped = true;
   }
 
   /**

@@ -9,7 +9,6 @@ export const routes: IRoutes = [
   {
     name: CORE_ROUTES.HOME,
     path: '/',
-    forwardTo: 'todo',
   },
   {
     name: CORE_ROUTES[404],

@@ -1,10 +1,13 @@
-import { type AxiosError, IOC_CORE_TOKENS } from '@platform/core';
-import { type Bootstrap } from '../../../bootstrap/index';
+import {
+  type AxiosError,
+  IOC_CORE_TOKENS,
+  type IBootstrap,
+} from '@platform/core';
 import type { AppModel } from '../models/app.model';
 
 type TCallbacks = (error: AxiosError) => void;
 
-export const HttpErrorHandler = (bootstrap: Bootstrap) => {
+export const HttpErrorHandler = (bootstrap: IBootstrap) => {
   const appModel = bootstrap.di.get<AppModel>(IOC_CORE_TOKENS.MODEL_APP);
 
   const errorMap: Record<string, TCallbacks> = {

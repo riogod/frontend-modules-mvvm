@@ -15,6 +15,24 @@ export class AppModel {
   private _colorMode: Omit<ThemeMode, 'system'>;
   private _colorModeSettings: ThemeMode;
   private _notification: string = '';
+  private _isAppStarted: boolean = false;
+  private _isBootstrapped: boolean = false;
+
+  get isAppStarted(): boolean {
+    return this._isAppStarted;
+  }
+
+  set isAppStarted(isAppStarted: boolean) {
+    this._isAppStarted = isAppStarted;
+  }
+
+  get isBootstrapped(): boolean {
+    return this._isBootstrapped;
+  }
+
+  set isBootstrapped(isBootstrapped: boolean) {
+    this._isBootstrapped = isBootstrapped;
+  }
 
   get colorModeSettings(): ThemeMode {
     return this._colorModeSettings;
