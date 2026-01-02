@@ -13,6 +13,7 @@ import { I18nextProvider } from 'react-i18next';
 import { StrictMode } from 'react';
 import { log } from '@platform/core';
 import { getLogLevelFromEnv } from './utils/getLogLevelFromEnv';
+import { ManifestLoader } from './bootstrap/services/manifestLoader';
 
 configure({ enforceActions: 'observed', useProxies: 'always' });
 log.setConfig({
@@ -28,9 +29,10 @@ log.setConfig({
 });
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
-  .then((bootstrap) => {
+  .then(async (bootstrap) => {
     // setGlobalDIContainer(bootstrap.di);
 
+    // Старт роутера с локальными модулями
     bootstrap.routerService.router.start(() => {
       createRoot(document.getElementById('root')!).render(
         <RouterProvider router={bootstrap.routerService.router}>
@@ -48,15 +50,26 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
           </DIProvider>
         </RouterProvider>,
       );
+    });
 
-      // Загрузка NORMAL модулей после старта приложения
-      bootstrap.moduleLoader.loadNormalModules().catch((error: unknown) => {
-        log.error(
-          'Error loading normal modules',
-          { prefix: 'bootstrap' },
-          error,
-        );
-      });
+    // Загрузка манифеста после рендера (может быть после авторизации)
+    const manifestLoader = new ManifestLoader(
+      bootstrap.getAPIClient,
+      bootstrap.moduleLoader,
+      bootstrap,
+    );
+
+    // Загружаем манифест
+    const manifest = await manifestLoader.loadManifest();
+
+    if (manifest) {
+      // Обрабатываем модули из манифеста
+      await manifestLoader.processManifestModules(manifest);
+    }
+
+    // Загрузка NORMAL модулей (локальные + из манифеста)
+    bootstrap.moduleLoader.loadNormalModules().catch((error: unknown) => {
+      log.error('Error loading normal modules', { prefix: 'bootstrap' }, error);
     });
   })
   .catch((error: Error) => {

@@ -332,6 +332,88 @@ export class ModuleRegistry {
   }
 
   // ============================================
+  // Публичные методы: Добавление модулей после INIT
+  // ============================================
+
+  /**
+   * Добавляет NORMAL модуль после загрузки INIT модулей.
+   *
+   * Используется для добавления NORMAL модулей (локальных и MFE) из манифеста.
+   * INIT модули не могут быть добавлены после bootstrap.
+   *
+   * @param module - NORMAL модуль для добавления
+   * @throws {ModuleRegistryError} Если модуль INIT или уже существует
+   */
+  public addNormalModuleAfterInit(module: Module): void {
+    const loadType = this.getModuleLoadType(module);
+
+    // Защита: только NORMAL модули
+    if (loadType === ModuleLoadType.INIT) {
+      throw new ModuleRegistryError(
+        'INIT модули не могут быть добавлены после bootstrap. ' +
+          'Используйте addModule() до загрузки INIT модулей.',
+      );
+    }
+
+    // Обход проверки initModulesLoadedFlag для NORMAL модулей
+    if (this.modulesByName.has(module.name)) {
+      throw new ModuleRegistryError(
+        `Модуль с именем "${module.name}" уже существует`,
+      );
+    }
+
+    log.debug(`Добавление NORMAL модуля после INIT: ${module.name}`, {
+      prefix: LOG_PREFIX,
+    });
+
+    this.modulesByName.set(module.name, module);
+
+    // NORMAL модули не кешируют маршруты при добавлении
+    // (они кешируются при предзагрузке или загрузке)
+
+    log.debug(`NORMAL модуль "${module.name}" добавлен в реестр`, {
+      prefix: LOG_PREFIX,
+    });
+  }
+
+  /**
+   * Добавляет несколько NORMAL модулей после INIT.
+   *
+   * @param modules - Массив NORMAL модулей для добавления
+   */
+  public addNormalModulesAfterInit(modules: Module[]): void {
+    log.debug(`Добавление ${modules.length} NORMAL модулей после INIT`, {
+      prefix: LOG_PREFIX,
+    });
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const module of modules) {
+      try {
+        this.addNormalModuleAfterInit(module);
+        successCount++;
+      } catch (error) {
+        errorCount++;
+        // Продолжаем регистрацию остальных модулей даже если один не удался
+        log.error(
+          `Не удалось добавить NORMAL модуль "${module.name}": ${
+            error instanceof Error ? error.message : String(error)
+          }. Продолжаем регистрацию остальных модулей.`,
+          { prefix: LOG_PREFIX },
+        );
+      }
+    }
+
+    log.debug(
+      `Добавлено ${successCount} NORMAL модулей после INIT, ошибок: ${errorCount}`,
+      {
+        prefix: LOG_PREFIX,
+      },
+    );
+  }
+
+  // ============================================
   // Публичные методы: Управление состоянием
   // ============================================
 

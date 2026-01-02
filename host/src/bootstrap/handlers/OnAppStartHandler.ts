@@ -115,7 +115,7 @@ export class OnAppStartHandler extends AbstractInitHandler {
       // Используем данные из сохраненного манифеста
       accessControlModel.setFeatureFlags(manifest.data.features || {});
       accessControlModel.setPermissions(manifest.data.permissions || {});
-      appParamsModel.setParams(manifest.data.params);
+      appParamsModel.setParams(manifest.data.params || {});
       log.debug('OnAppStartHandler: using data from cached manifest', {
         prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
@@ -135,24 +135,22 @@ export class OnAppStartHandler extends AbstractInitHandler {
       accessControlModel.setPermissions(permissions);
       accessControlModel.setFeatureFlags(featureFlags);
       // userData не содержит params, устанавливаем пустой объект
-
       appParamsModel.setParams({});
       log.debug('OnAppStartHandler: using user data from manifest', {
         prefix: 'bootstrap.handlers.OnAppStartHandler',
       });
     } else {
-      // Последний fallback: загружаем из API только если нет данных в манифесте
-      const appStartRepository = bootstrap.di.get<AppStartRepository>(
-        IOC_CORE_TOKENS.REPOSITORY_APP_START,
+      // Fallback: пустые данные для работы без манифеста
+      // Манифест будет загружен позже через ManifestLoader
+      accessControlModel.setFeatureFlags({});
+      accessControlModel.setPermissions({});
+      appParamsModel.setParams({});
+      log.debug(
+        'OnAppStartHandler: using fallback empty data (manifest will be loaded later)',
+        {
+          prefix: 'bootstrap.handlers.OnAppStartHandler',
+        },
       );
-      const appStart = await appStartRepository.getAppStart();
-
-      accessControlModel.setFeatureFlags(appStart.data.features);
-      accessControlModel.setPermissions(appStart.data.permissions);
-      appParamsModel.setParams(appStart.data.params);
-      log.debug('OnAppStartHandler: using user data from API (fallback)', {
-        prefix: 'bootstrap.handlers.OnAppStartHandler',
-      });
     }
 
     log.debug('OnAppStartHandler: completed', {

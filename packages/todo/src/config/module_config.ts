@@ -18,7 +18,7 @@ export default {
   },
   mockModuleInfo: {
     name: 'todo',
-    loadType: 'init',
+    loadType: 'normal',
     loadPriority: 1,
     remoteEntry: '',
     dependencies: [],

@@ -1,13 +1,13 @@
 import { type Bootstrap } from '..';
 import { AbstractInitHandler } from './AbstractInitHandler';
 import { log } from '@platform/core';
-import { type Module, ModuleLoadType } from '../../modules/interface';
+import { ModuleLoadType } from '../../modules/interface';
 import { app_modules } from '../../modules/modules';
 
 /**
  * Обработчик инициализации модулей приложения.
- * Инициализирует ModuleLoader и загружает INIT модули.
- * Использует discovered modules из манифеста (INIT и NORMAL модули) и локальные INIT модули из modules.ts.
+ * Инициализирует ModuleLoader и загружает только локальные INIT модули.
+ * NORMAL модули регистрируются после загрузки манифеста через ManifestLoader.
  */
 export class ModulesHandler extends AbstractInitHandler {
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
@@ -15,74 +15,30 @@ export class ModulesHandler extends AbstractInitHandler {
       prefix: 'bootstrap.handlers.ModulesHandler',
     });
 
-    // Получаем discovered modules из манифеста (могут быть как INIT, так и NORMAL)
-    const discoveredModules = bootstrap.getDiscoveredModules();
-    
-    // Разделяем discovered modules на INIT и NORMAL
-    const discoveredInitModules = discoveredModules.filter(
-      (m) => m.loadType === ModuleLoadType.INIT,
-    );
-    const discoveredNormalModules = discoveredModules.filter(
-      (m) => m.loadType !== ModuleLoadType.INIT,
-    );
-    
-    log.debug(
-      `ModulesHandler: discovered modules = ${discoveredModules.length} (INIT=${discoveredInitModules.length}, NORMAL=${discoveredNormalModules.length})`,
-      { prefix: 'bootstrap.handlers.ModulesHandler' },
-    );
-
-    // Загружаем INIT модули (из локальных modules.ts + из манифеста)
+    // Только локальные INIT модули
     const localInitModules = app_modules.filter(
       (m) => m.loadType === ModuleLoadType.INIT,
     );
 
-    // Загружаем NORMAL модули из локальных modules.ts
-    const localNormalModules = app_modules.filter(
-      (m) => m.loadType !== ModuleLoadType.INIT,
-    );
-    
-    // Объединяем INIT модули: локальные + из манифеста
-    // Убираем дубликаты по имени (приоритет у локальных)
-    const allInitModules: Module[] = [
-      ...localInitModules,
-      ...discoveredInitModules.filter(
-        (discovered) =>
-          !localInitModules.some((local) => local.name === discovered.name),
-      ),
-    ];
-
-    // Объединяем NORMAL модули: локальные + из манифеста
-    // Убираем дубликаты по имени (приоритет у локальных)
-    const allNormalModules: Module[] = [
-      ...localNormalModules,
-      ...discoveredNormalModules.filter(
-        (discovered) =>
-          !localNormalModules.some((local) => local.name === discovered.name),
-      ),
-    ];
-
-    // Объединяем: INIT модули + NORMAL модули
-    const allModules: Module[] = [...allInitModules, ...allNormalModules];
     log.debug(
-      `ModulesHandler: total modules to register = ${allModules.length} (INIT=${allInitModules.length}, NORMAL=${allNormalModules.length})`,
+      `ModulesHandler: local INIT modules = ${localInitModules.length}`,
       { prefix: 'bootstrap.handlers.ModulesHandler' },
     );
 
-    // Инициализируем ModuleLoader с зависимостями
-    // Должен быть вызван после инициализации router и DI
+    // Инициализируем ModuleLoader
     bootstrap.initModuleLoader();
 
-    // Регистрируем все модули (INIT + discovered NORMAL)
-    await bootstrap.moduleLoader.addModules(allModules);
+    // Регистрируем только локальные INIT модули
+    // NORMAL модули не регистрируем, так как они могут зависеть от
+    // permissions и feature flags, которые загружаются из манифеста
+    await bootstrap.moduleLoader.addModules(localInitModules);
 
-    // Загружаем INIT модули перед preloadRoutes() (который вызывается в RouterPostHandler),
-    // чтобы они могли установить feature flags и permissions, которые нужны для проверки
-    // условий загрузки других модулей
-    log.debug('ModulesHandler: loading INIT modules', {
+    // Загружаем только локальные INIT модули
+    log.debug('ModulesHandler: loading local INIT modules', {
       prefix: 'bootstrap.handlers.ModulesHandler',
     });
     await bootstrap.moduleLoader.initInitModules();
-    log.debug('ModulesHandler: INIT modules loaded', {
+    log.debug('ModulesHandler: local INIT modules loaded', {
       prefix: 'bootstrap.handlers.ModulesHandler',
     });
 

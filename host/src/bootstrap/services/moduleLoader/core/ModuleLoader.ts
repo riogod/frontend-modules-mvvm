@@ -181,6 +181,39 @@ export class ModuleLoader {
   }
 
   /**
+   * Добавляет NORMAL модули из манифеста.
+   *
+   * Используется для регистрации NORMAL модулей (локальных и MFE)
+   * после загрузки манифеста, когда доступны permissions и feature flags.
+   *
+   * @param modules - NORMAL модули для добавления
+   */
+  public addNormalModulesFromManifest(modules: Module[]): void {
+    const normalModules = modules.filter(
+      (m) => (m.loadType ?? ModuleLoadType.NORMAL) === ModuleLoadType.NORMAL,
+    );
+
+    if (normalModules.length === 0) {
+      log.debug('Нет NORMAL модулей для добавления из манифеста', {
+        prefix: LOG_PREFIX,
+      });
+      return;
+    }
+
+    log.debug(
+      `Добавление ${normalModules.length} NORMAL модулей из манифеста`,
+      { prefix: LOG_PREFIX },
+    );
+
+    // Добавляем через addNormalModulesAfterInit (обход защиты)
+    this.registry.addNormalModulesAfterInit(normalModules);
+
+    log.debug(`Добавлено ${normalModules.length} NORMAL модулей из манифеста`, {
+      prefix: LOG_PREFIX,
+    });
+  }
+
+  /**
    * Возвращает модуль по имени.
    *
    * @param name - Имя модуля

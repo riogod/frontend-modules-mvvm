@@ -19,7 +19,6 @@ import { type IAppConfig } from '../config/app';
 import { type Module } from '../modules/interface';
 import type { AppStartDTO } from './services/appStart/data/app.dto';
 import { OnAppStartHandler } from './handlers/OnAppStartHandler';
-import { ModulesDiscoveryHandler } from './handlers/ModulesDiscoveryHandler';
 import { FederationSharedHandler } from './handlers/FederationSharedHandler';
 
 /**
@@ -41,7 +40,6 @@ export const initBootstrap = async (
   const handler = new APIClientHandler(config);
   handler
     .setNext(new FederationSharedHandler(config)) // Инициализация shared scope для Vite Federation (должно быть ДО загрузки remote модулей)
-    .setNext(new ModulesDiscoveryHandler(config)) // Загрузка манифеста
     .setNext(new RouterHandler(config))
     .setNext(new DIHandler(config))
     .setNext(new InitI18nHandler(config))
