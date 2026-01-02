@@ -94,6 +94,10 @@ moduleLoader.init(bootstrap);
 
 // Добавление модулей
 await moduleLoader.addModules(allModules);
+
+// Добавление NORMAL модулей из манифеста (после загрузки манифеста)
+// Используется ManifestLoader для регистрации модулей после загрузки манифеста
+moduleLoader.addNormalModulesFromManifest(normalModules);
 ```
 
 ### Загрузка модулей

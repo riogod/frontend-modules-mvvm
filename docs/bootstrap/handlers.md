@@ -122,37 +122,7 @@ class FederationSharedHandler extends AbstractInitHandler {
 
 ---
 
-### ModulesDiscoveryHandler
-
-Загружает манифест приложения с сервера и создает объекты модулей.
-
-```typescript
-class ModulesDiscoveryHandler extends AbstractInitHandler {
-  private readonly apiEndpoint = '/app/start';
-
-  async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
-    try {
-      const manifest = await this.loadManifest(bootstrap);
-      const modules = await this.processModules(manifest.data.modules);
-      bootstrap.setDiscoveredModules(modules);
-    } catch (error) {
-      log.error('Failed to load manifest', error);
-      bootstrap.setDiscoveredModules([]);
-    }
-
-    return super.handle(bootstrap);
-  }
-}
-```
-
-**Задачи:**
-
-1. Запрос манифеста с `/app/start`
-2. Обработка списка модулей (LOCAL и REMOTE)
-3. Создание объектов `Module` с конфигурациями
-4. Сохранение в `bootstrap.setDiscoveredModules()`
-
-При ошибке загрузки манифеста — продолжает работу с пустым списком модулей.
+> **Примечание:** Загрузка манифеста теперь происходит после рендера UI через `ManifestLoader`. См. [Процесс Bootstrap](./bootstrap-process.md#фаза-3-загрузка-манифеста-после-рендера).
 
 ---
 
@@ -224,7 +194,7 @@ class InitI18nHandler extends AbstractInitHandler {
 
 ### OnAppStartHandler
 
-Регистрирует базовые модели и usecases в DI-контейнере, загружает permissions, feature flags и server parameters.
+Регистрирует базовые модели и usecases в DI-контейнере, устанавливает пустые данные для permissions, feature flags и server parameters.
 
 ```typescript
 class OnAppStartHandler extends AbstractInitHandler {
@@ -240,8 +210,7 @@ class OnAppStartHandler extends AbstractInitHandler {
     // Регистрация Usecases в DI
     // ... (feature flags, permissions, server parameters usecases)
 
-    // Загрузка данных из манифеста
-    const manifest = bootstrap.getAppStartManifest();
+    // Установка пустых данных (манифест будет загружен позже через ManifestLoader)
     const accessControlModel = bootstrap.di.get<AccessControlModel>(
       IOC_CORE_TOKENS.MODEL_ACCESS_CONTROL,
     );
@@ -249,11 +218,9 @@ class OnAppStartHandler extends AbstractInitHandler {
       IOC_CORE_TOKENS.MODEL_APP_PARAMS,
     );
 
-    if (manifest?.data) {
-      accessControlModel.setFeatureFlags(manifest.data.features || {});
-      accessControlModel.setPermissions(manifest.data.permissions || {});
-      appParamsModel.setParams(manifest.data.params || {});
-    }
+    accessControlModel.setFeatureFlags({});
+    accessControlModel.setPermissions({});
+    appParamsModel.setParams({});
 
     return await super.handle(bootstrap);
   }
@@ -266,13 +233,12 @@ class OnAppStartHandler extends AbstractInitHandler {
 - `AppParamsModel` — управление серверными параметрами
 - Use cases для работы с флагами, разрешениями и серверными параметрами
 
-**Загружаемые данные из манифеста:**
+**Устанавливаемые данные:**
 
-- `features` — feature flags (через `accessControlModel.setFeatureFlags()`)
-- `permissions` — разрешения (через `accessControlModel.setPermissions()`)
-- `params` — серверные параметры (через `appParamsModel.setParams()`)
+- Пустые объекты для `features`, `permissions` и `params`
+- Реальные данные будут загружены позже через `ManifestLoader` после рендера UI
 
-> **Подробнее:** См. [Server Parameters](../mechanics/server-parameters.md) для работы с серверными параметрами.
+> **Подробнее:** См. [Server Parameters](../mechanics/server-parameters.md) для работы с серверными параметрами. См. [Процесс Bootstrap](./bootstrap-process.md#фаза-3-загрузка-манифеста-после-рендера) для информации о загрузке манифеста.
 
 ---
 
@@ -404,7 +370,6 @@ export const initBootstrap = async (
   const handler = new APIClientHandler(config);
   handler
     .setNext(new FederationSharedHandler(config))
-    .setNext(new ModulesDiscoveryHandler(config))
     .setNext(new RouterHandler(config))
     .setNext(new DIHandler(config))
     .setNext(new MyCustomHandler(config)) // Ваш обработчик

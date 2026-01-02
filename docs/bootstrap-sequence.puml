@@ -11,6 +11,7 @@ participant "ModuleStatusTracker" as ST
 participant "LifecycleManager" as LM
 participant "InitLoadStrategy" as InitS
 participant "NormalLoadStrategy" as NormS
+participant "ManifestLoader" as ManifestL
 
 == App entry ==
 Browser -> Main: загрузка bundle
@@ -22,15 +23,14 @@ Chain -> BS: вернуть инстанс (после цепочки)
 activate Chain
 Chain -> "APIClientHandler": create APIClient(baseURL)\nBS.initAPIClient()
 Chain -> "FederationSharedHandler": init shared scope для Vite Federation
-Chain -> "ModulesDiscoveryHandler": fetch .launcher manifest\nBS.setDiscoveredModules()
 Chain -> "RouterHandler": init RouterService\n(маршруты/DI hooks)
 Chain -> "DIHandler": BS.initDI() (bind APIClient)
 Chain -> "InitI18nHandler": prepare i18n instance
-Chain -> "OnAppStartHandler": fetch app start manifest\nBS.setAppStartManifest()/setUserData()
+Chain -> "OnAppStartHandler": register models/usecases\nset empty data (features/permissions/params)
 Chain -> "ModulesHandler":
   note right
   - BS.initModuleLoader()
-  - REG.addModules(local INIT/NORMAL + discovered w/o duplicates)
+  - REG.addModules(local INIT/NORMAL modules)
   - ML.initInitModules()
   end note
 Chain -> "RouterPostHandler":
@@ -90,11 +90,33 @@ deactivate ML
 
 == App start & render ==
 Chain --> Main: возвращён проинициализированный BS
+Main -> BS: setIsBootstrapped()
 Main -> Router: router.start(callback)
 Router --> Main: ready
 Main -> Browser: render React tree
 
-== NORMAL modules load after render ==
+== Manifest loading (after render) ==
+Main -> ManifestL: new ManifestLoader(apiClient, moduleLoader, bootstrap)
+Main -> ManifestL: loadManifest()
+ManifestL -> "APIClient": GET /app/start
+ManifestL -> BS: setAppStartManifest(manifest)
+ManifestL -> "AccessControlModel": setFeatureFlags()\nsetPermissions()
+ManifestL -> "AppParamsModel": setParams()
+Main -> ManifestL: processManifestModules(manifest)
+ManifestL -> ManifestL: createModulesFromManifest()
+loop per manifest entry
+  alt LOCAL module
+    ManifestL -> ManifestL: loadLocalConfig(moduleName)
+  else REMOTE module
+    ManifestL -> "RemoteModuleLoader": loadRemoteModule(name, remoteEntry)
+  end
+end
+ManifestL -> ManifestL: merge local + manifest NORMAL modules
+ManifestL -> ML: addNormalModulesFromManifest(allNormalModules)
+ManifestL -> ML: preloadRoutes()
+ManifestL -> Router: update menu with new routes
+
+== NORMAL modules load after manifest ==
 Main -> ML: loadNormalModules()
 activate ML
 ML -> REG: getModulesByType(NORMAL)
@@ -123,15 +145,17 @@ Router -> ML: autoLoadModuleByRoute(routeName)
 ML -> REG: getModuleByRouteName()
 alt module found & NORMAL & not loaded
   ML -> ML: loadModuleByName() // checks cycles (DEV), deps, timeout
+  ML -> Main: setIsAppStarted()
+  ML -> Router: navigateToCurrentRoute()
 else
   ML -> Router: ignore (INIT or not found)
 end
 
 == Remote modules (federation) ==
 participant "RemoteModuleLoader\n(singleton)" as RML
-Main -> RML: loadRemoteModule(name, remoteEntry, opts)
+ManifestL -> RML: loadRemoteModule(name, remoteEntry, opts)
 RML -> Browser: inject remoteEntry script\n+ timeout/retry
-RML -> BS: return ModuleConfig\n(используется ModulesDiscoveryHandler\nили динамическая загрузка через Registry)
+RML -> ManifestL: return ModuleConfig\n(используется ManifestLoader\nдля создания модулей из манифеста)
 
 note over ML, ST
 ST отслеживает pending/loading/preloaded/loaded/failed\nдля прогресс-индикаторов и повторных вызовов\ngetOrCreatePreloadingPromise устраняет race conditions
