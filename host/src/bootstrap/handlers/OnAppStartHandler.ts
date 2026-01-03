@@ -142,17 +142,37 @@ export class OnAppStartHandler extends AbstractInitHandler {
       });
     } else {
       // Последний fallback: загружаем из API только если нет данных в манифесте
-      const appStartRepository = bootstrap.di.get<AppStartRepository>(
-        IOC_CORE_TOKENS.REPOSITORY_APP_START,
-      );
-      const appStart = await appStartRepository.getAppStart();
+      try {
+        const appStartRepository = bootstrap.di.get<AppStartRepository>(
+          IOC_CORE_TOKENS.REPOSITORY_APP_START,
+        );
+        const appStart = await appStartRepository.getAppStart();
 
-      accessControlModel.setFeatureFlags(appStart.data.features);
-      accessControlModel.setPermissions(appStart.data.permissions);
-      appParamsModel.setParams(appStart.data.params);
-      log.debug('OnAppStartHandler: using user data from API (fallback)', {
-        prefix: 'bootstrap.handlers.OnAppStartHandler',
-      });
+        accessControlModel.setFeatureFlags(appStart.data.features);
+        accessControlModel.setPermissions(appStart.data.permissions);
+        appParamsModel.setParams(appStart.data.params);
+        log.debug('OnAppStartHandler: using user data from API (fallback)', {
+          prefix: 'bootstrap.handlers.OnAppStartHandler',
+        });
+      } catch (error) {
+        // Если API недоступен, используем пустые значения
+        // Это позволяет приложению продолжить работу даже при недоступности эндпоинта
+        log.warn(
+          'OnAppStartHandler: failed to load app start data from API, using empty defaults',
+          {
+            prefix: 'bootstrap.handlers.OnAppStartHandler',
+          },
+          {
+            error,
+          },
+        );
+        accessControlModel.setFeatureFlags({});
+        accessControlModel.setPermissions({});
+        appParamsModel.setParams({});
+        log.debug('OnAppStartHandler: using empty defaults due to API error', {
+          prefix: 'bootstrap.handlers.OnAppStartHandler',
+        });
+      }
     }
 
     log.debug('OnAppStartHandler: completed', {

@@ -21,6 +21,8 @@ import type { AppStartDTO } from './services/appStart/data/app.dto';
 import { OnAppStartHandler } from './handlers/OnAppStartHandler';
 import { ModulesDiscoveryHandler } from './handlers/ModulesDiscoveryHandler';
 import { FederationSharedHandler } from './handlers/FederationSharedHandler';
+import { type LoadingPhase } from '@host/modules/core/models/app.interface';
+import type { AppModel } from '@host/modules/core/models/app.model';
 
 /**
  * Запускает процесс старта приложения и определяет последовательность выполнения обработчиков.
@@ -222,6 +224,13 @@ export class Bootstrap implements IBootstrap {
       prefix: 'bootstrap.setAppStartManifest',
     });
     this.appStartManifest = manifest;
+  }
+
+  setLoadingPhase(phase: LoadingPhase): void {
+    log.debug(`Setting loading phase: ${phase}`, {
+      prefix: 'bootstrap.setLoadingPhase',
+    });
+    this.di.get<AppModel>(IOC_CORE_TOKENS.MODEL_APP).loadingPhase = phase;
   }
 
   /**

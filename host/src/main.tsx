@@ -30,7 +30,7 @@ log.setConfig({
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
     // setGlobalDIContainer(bootstrap.di);
-
+    bootstrap.setLoadingPhase('bootstraped');
     bootstrap.routerService.router.start(() => {
       createRoot(document.getElementById('root')!).render(
         <RouterProvider router={bootstrap.routerService.router}>
@@ -50,13 +50,19 @@ initBootstrap(new Bootstrap(app_modules), appConfig)
       );
 
       // Загрузка NORMAL модулей после старта приложения
-      bootstrap.moduleLoader.loadNormalModules().catch((error: unknown) => {
-        log.error(
-          'Error loading normal modules',
-          { prefix: 'bootstrap' },
-          error,
-        );
-      });
+      bootstrap.moduleLoader
+        .loadNormalModules()
+        .then(() => {
+          bootstrap.setLoadingPhase('finalized');
+        })
+        .catch((error: unknown) => {
+          bootstrap.setLoadingPhase('error');
+          log.error(
+            'Error loading normal modules',
+            { prefix: 'bootstrap' },
+            error,
+          );
+        });
     });
   })
   .catch((error: Error) => {

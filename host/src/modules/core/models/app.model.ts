@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { inject, injectable } from 'inversify';
 
 import { LocalStorageRepository } from '../data/localStorage.repository';
-import { ThemeMode } from './app.interface';
+import { type LoadingPhase, type ThemeMode } from './app.interface';
 import { IOC_CORE_TOKENS } from '@platform/core';
 
 @injectable()
@@ -15,6 +15,15 @@ export class AppModel {
   private _colorMode: Omit<ThemeMode, 'system'>;
   private _colorModeSettings: ThemeMode;
   private _notification: string = '';
+  private _loadingPhase: LoadingPhase = 'init';
+
+  get loadingPhase(): LoadingPhase {
+    return this._loadingPhase;
+  }
+
+  set loadingPhase(phase: LoadingPhase) {
+    this._loadingPhase = phase;
+  }
 
   get colorModeSettings(): ThemeMode {
     return this._colorModeSettings;
