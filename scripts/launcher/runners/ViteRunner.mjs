@@ -90,10 +90,18 @@ export class ViteRunner {
       VITE_APP_START_ENDPOINT: appStartEndpoint, // Эндпоинт для стартового манифеста
     };
 
-    // 5. Запустить dev-server параллельно
+    // 5. Передать appStartEndpoint в dev-server через переменную окружения
+    // Dev-server использует это значение для обработки эндпоинта
+    // и моки могут прочитать его через process.env
+    if (appStartEndpoint) {
+      process.env.APP_START_ENDPOINT = appStartEndpoint;
+      process.env.VITE_APP_START_ENDPOINT = appStartEndpoint;
+    }
+
+    // 6. Запустить dev-server параллельно
     const devProcess = await this.devServerRunner.start();
 
-    // 6. Запустить Vite
+    // 7. Запустить Vite
     const viteProcess = spawn('vite', ['--config', 'host/vite.config.mts'], {
       cwd: rootDir,
       env,
