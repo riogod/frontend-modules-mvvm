@@ -70,6 +70,14 @@ export class ViteRunner {
           ? configSettings.useLocalMocks
           : true;
 
+    // Получаем appStartEndpoint из глобальных настроек
+    const appStartEndpoint =
+      process.env.VITE_APP_START_ENDPOINT ||
+      process.env.APP_START_ENDPOINT ||
+      (configRepository
+        ? configRepository.getAppStartEndpoint()
+        : '/app/start');
+
     // В dev режиме всегда используем пустой API URL, чтобы запросы шли через Vite proxy на dev-server
     const env = {
       ...process.env,
@@ -79,6 +87,7 @@ export class ViteRunner {
       VITE_USE_LOCAL_MOCKS: String(useLocalMocks),
       VITE_API_URL: '',
       VITE_USE_PROXY_SERVER: 'true',
+      VITE_APP_START_ENDPOINT: appStartEndpoint, // Эндпоинт для стартового манифеста
     };
 
     // 5. Запустить dev-server параллельно

@@ -1,3 +1,4 @@
+/// <reference path="../vite-env.d.ts" />
 import axios from 'axios';
 import type { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { log } from '../Logger';
@@ -50,10 +51,24 @@ export class APIClient {
    * @returns {Promise<Resp>} Ответ от сервера
    */
   public async request<Req, Resp>(option: IRequestOption<Req>): Promise<Resp> {
+    // В dev режиме через лаунчер добавляем префикс /dev-api/ для проксирования через Vite на dev-server
+    // Dev-server сам решает, использовать моки или проксировать на реальный API
+    // Проверяем: dev режим + используется proxy server + baseURL пустой (запросы идут через proxy)
+    const shouldUseDevApiPrefix =
+      import.meta.env.DEV &&
+      import.meta.env.VITE_USE_PROXY_SERVER === 'true' &&
+      !this.baseURL;
+
+    // Добавляем префикс /dev-api/ к маршруту, если нужно
+    // Гарантируем, что route всегда начинается с /, а префикс добавляется корректно
+    const route = shouldUseDevApiPrefix
+      ? `/dev-api${option.route.startsWith('/') ? option.route : `/${option.route}`}`
+      : option.route;
+
     const requestConfig: AxiosRequestConfig<Req> = {
       responseType: 'json',
       method: option.method,
-      url: option.route,
+      url: route,
       headers: {
         ...option.headers,
       },
@@ -78,6 +93,8 @@ export class APIClient {
     let controllerRemoved = false; // Флаг для отслеживания, был ли контроллер уже удален
 
     if (option.useAbortController) {
+      // Используем оригинальный route для нормализации (без префикса /dev-api/)
+      // чтобы отмена работала корректно независимо от префикса
       normalizedId = this.urlNormalizer.normalize(option.route, option.method);
       controller = this.abortControllerStorage.set(normalizedId);
       requestConfig.signal = controller.signal;

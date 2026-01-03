@@ -128,7 +128,10 @@ class FederationSharedHandler extends AbstractInitHandler {
 
 ```typescript
 class ModulesDiscoveryHandler extends AbstractInitHandler {
-  private readonly apiEndpoint = '/app/start';
+  private readonly apiEndpoint =
+    import.meta.env.VITE_APP_START_ENDPOINT ||
+    import.meta.env.APP_START_ENDPOINT ||
+    '/app/start';
 
   async handle(bootstrap: Bootstrap): Promise<Bootstrap> {
     try {

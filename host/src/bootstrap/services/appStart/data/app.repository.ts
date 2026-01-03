@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { APIClient, HttpMethod, IOC_CORE_TOKENS, log } from '@platform/core';
 import { AppStartDTO } from './app.dto';
 import { appStartResponseSchema } from './validation/appStart.response.schema';
-import { ECoreEndpoints } from '../endpoints';
+import { getAppStartEndpoint } from '../endpoints';
 
 @injectable()
 export class AppStartRepository {
@@ -20,7 +20,7 @@ export class AppStartRepository {
       prefix: 'bootstrap.services.appStart.repository.getAppStart',
     });
     log.debug(
-      `AppStartRepository: endpoint=${ECoreEndpoints.APP_START_ENDPOINT}, method=${HttpMethod.GET}`,
+      `AppStartRepository: endpoint=${getAppStartEndpoint()}, method=${HttpMethod.GET}`,
       {
         prefix: 'bootstrap.services.appStart.repository.getAppStart',
       },
@@ -28,7 +28,7 @@ export class AppStartRepository {
 
     try {
       const response = await this.apiClient.request<null, AppStartDTO>({
-        route: ECoreEndpoints.APP_START_ENDPOINT,
+        route: getAppStartEndpoint(),
         method: HttpMethod.GET,
         validationSchema: {
           response: appStartResponseSchema,

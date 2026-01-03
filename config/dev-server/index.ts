@@ -41,6 +41,7 @@ interface Config {
   apiUrl?: string;
   useLocalMocks?: boolean;
   logLevel?: string;
+  appStartEndpoint?: string;
   configurations: Record<
     string,
     {
@@ -172,7 +173,7 @@ function getModuleByPath(urlPath: string): string | null {
 }
 
 /**
- * Обогащает ответ /app/start данными из манифеста.
+ * Обогащает ответ эндпоинта стартового манифеста данными из манифеста.
  * Приводит remoteEntry к абсолютному URL с учетом remoteServerUrl.
  */
 function enrichAppStartResponse(
@@ -308,9 +309,10 @@ async function createDevServer() {
   const hostUseLocalMocks = activeConfig.settings?.useLocalMocks !== false;
   const hostApiUrl = activeConfig.settings?.apiUrl || config.apiUrl || '';
   const remoteServerUrl = config.remoteServerUrl || '';
+  const appStartEndpoint = config.appStartEndpoint || '/app/start';
 
   console.log(
-    `[DevServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'}`,
+    `[DevServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'} | App Start: ${appStartEndpoint}`,
   );
 
   // Загружаем handlers для host, если моки включены
@@ -346,8 +348,8 @@ async function createDevServer() {
     }
   }
 
-  // Обработка /app/start
-  app.all('/app/start', async (req: Request, res: Response) => {
+  // Обработка эндпоинта стартового манифеста (настраиваемый)
+  app.all(appStartEndpoint, async (req: Request, res: Response) => {
     try {
       if (hostUseLocalMocks && hostHandlers.length > 0) {
         // Используем данные напрямую из appStartData.json
@@ -371,7 +373,7 @@ async function createDevServer() {
 
       // Если моки выключены, проксируем на реальный сервер
       if (hostApiUrl) {
-        const targetUrl = `${hostApiUrl.replace(/\/$/, '')}/app/start`;
+        const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${appStartEndpoint}`;
 
         // Для OPTIONS запросов (preflight)
         if (req.method === 'OPTIONS') {
@@ -488,7 +490,7 @@ async function createDevServer() {
       }
 
       // Компактный вывод ошибки
-      const errorUrl = error.config?.url || hostApiUrl || '/app/start';
+      const errorUrl = error.config?.url || hostApiUrl || appStartEndpoint;
       const errorCode = error.code || 'UNKNOWN';
 
       // Для ECONNREFUSED выводим более компактное сообщение
@@ -498,7 +500,7 @@ async function createDevServer() {
         );
       } else {
         console.error(
-          `[DevServer] Error handling /app/start: ${errorCode} - ${error.message || 'Unknown error'}`,
+          `[DevServer] Error handling ${appStartEndpoint}: ${errorCode} - ${error.message || 'Unknown error'}`,
         );
       }
 

@@ -83,6 +83,7 @@ export class ConfigRepository {
       logLevel: 'INFO',
       useLocalMocks: true,
       apiUrl: '',
+      appStartEndpoint: '/app/start',
       configurations: {},
     };
   }
@@ -343,6 +344,28 @@ export class ConfigRepository {
    */
   setGlobalApiUrl(url) {
     this._config.apiUrl = url.trim();
+    this.save();
+  }
+
+  /**
+   * Получить эндпоинт стартового манифеста
+   * @returns {string}
+   */
+  getAppStartEndpoint() {
+    return this._config.appStartEndpoint || '/app/start';
+  }
+
+  /**
+   * Установить эндпоинт стартового манифеста
+   * @param {string} endpoint
+   */
+  setAppStartEndpoint(endpoint) {
+    // Валидация: эндпоинт должен начинаться с /
+    const normalizedEndpoint = endpoint.trim();
+    if (!normalizedEndpoint.startsWith('/')) {
+      throw new Error('Эндпоинт должен начинаться с /');
+    }
+    this._config.appStartEndpoint = normalizedEndpoint;
     this.save();
   }
 }

@@ -19,7 +19,10 @@ import { loadRemoteModule } from '../services/moduleLoader';
  * 4. Сохранение user данных в Bootstrap для AccessControl
  */
 export class ModulesDiscoveryHandler extends AbstractInitHandler {
-  private readonly apiEndpoint = '/app/start';
+  private readonly apiEndpoint =
+    import.meta.env.VITE_APP_START_ENDPOINT ||
+    import.meta.env.APP_START_ENDPOINT ||
+    '/app/start';
 
   // Предзагружаем все модули из packages/ для динамической загрузки
   // Используем import.meta.glob для статического анализа всех модулей

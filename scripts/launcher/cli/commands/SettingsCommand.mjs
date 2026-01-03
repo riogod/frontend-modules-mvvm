@@ -28,6 +28,7 @@ export class SettingsCommand extends BaseCommand {
 
       const isRemoteAvailable = configRepository.isRemoteAvailable();
       const globalApiUrl = configRepository.getGlobalApiUrl();
+      const appStartEndpoint = configRepository.getAppStartEndpoint();
 
       console.log(chalk.cyan.bold('\n⚙️ Глобальные настройки\n'));
 
@@ -55,6 +56,14 @@ export class SettingsCommand extends BaseCommand {
         console.log(chalk.yellow('  ⚠️ Не настроен\n'));
       }
 
+      console.log(chalk.yellow('App Start Endpoint:'));
+      console.log(
+        chalk.gray(
+          '  💡 Эндпоинт для загрузки стартового манифеста модулей',
+        ),
+      );
+      console.log(chalk.green(`  ${appStartEndpoint}\n`));
+
       const choices = [
         {
           title: isRemoteAvailable
@@ -67,6 +76,10 @@ export class SettingsCommand extends BaseCommand {
             ? '→ Изменить глобальный API URL'
             : '→ Настроить глобальный API URL',
           value: 'set-api-url',
+        },
+        {
+          title: `→ Изменить App Start Endpoint (текущий: ${appStartEndpoint})`,
+          value: 'set-app-start-endpoint',
         },
       ];
 
@@ -153,6 +166,33 @@ export class SettingsCommand extends BaseCommand {
       } else if (action === 'clear-api-url') {
         configRepository.setGlobalApiUrl('');
         console.log(chalk.yellow('\nГлобальный API URL очищен.\n'));
+      } else if (action === 'set-app-start-endpoint') {
+        const { endpoint } = await prompts({
+          type: 'text',
+          name: 'endpoint',
+          message: 'Введите App Start Endpoint:',
+          initial: appStartEndpoint,
+          validate: (value) => {
+            if (!value || value.trim() === '') {
+              return 'Эндпоинт не может быть пустым';
+            }
+            if (!value.trim().startsWith('/')) {
+              return 'Эндпоинт должен начинаться с /';
+            }
+            return true;
+          },
+        });
+
+        if (endpoint) {
+          try {
+            configRepository.setAppStartEndpoint(endpoint.trim());
+            console.log(
+              chalk.green(`\n✅ App Start Endpoint сохранен: ${endpoint}\n`),
+            );
+          } catch (error) {
+            console.log(chalk.red(`\n❌ Ошибка: ${error.message}\n`));
+          }
+        }
       }
 
       await new Promise((resolve) => setTimeout(resolve, 500));
