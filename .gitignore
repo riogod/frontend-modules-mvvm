@@ -55,3 +55,6 @@ dist/app/stats.html
 .launcher/
 
 storybook-static
+
+.claude
+CLAUDE.md

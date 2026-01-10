@@ -15,6 +15,66 @@ const ROOT_DIR = path.resolve(__dirname, '../..');
 const MANIFEST_PATH = path.resolve(ROOT_DIR, '.launcher/current-manifest.json');
 const CONFIGS_PATH = path.resolve(ROOT_DIR, '.launcher/configs.json');
 
+/**
+ * Фильтрует заголовки запроса для проксирования
+ * Удаляет заголовки, которые могут конфликтовать или мешать установке cookies
+ */
+function filterHeadersForProxy(headers: any): Record<string, any> {
+  const filtered = { ...headers };
+  delete filtered.host; // axios сам установит правильный host
+  delete filtered['content-length']; // axios сам пересчитает
+
+  // КРИТИЧНО: Удаляем Accept: application/json, чтобы бэкенд считал клиента браузером
+  // Иначе бэкенд не устанавливает cookies (см. utils.IsBrowserClient в Go коде)
+  delete filtered.accept;
+
+  return filtered;
+}
+
+/**
+ * Копирует заголовки ответа от бэкенда к клиенту
+ * Пропускает заголовки, которые могут конфликтовать с Express
+ */
+function copyResponseHeaders(backendHeaders: any, res: Response): void {
+  Object.entries(backendHeaders).forEach(([key, value]) => {
+    if (value) {
+      // Пропускаем заголовки, которые могут конфликтовать с Express
+      // content-encoding нужно пропустить, т.к. axios автоматически декодирует gzip/deflate
+      const skipHeaders = [
+        'transfer-encoding',
+        'connection',
+        'content-length',
+        'content-encoding',
+        'etag', // Express генерирует свой etag
+        'content-type', // Express установит правильный content-type через .json()
+      ];
+      if (skipHeaders.includes(key.toLowerCase())) {
+        return;
+      }
+
+      // Пропускаем Vary: Accept-Encoding, т.к. мы не передаем content-encoding
+      if (
+        key.toLowerCase() === 'vary' &&
+        String(value).includes('Accept-Encoding')
+      ) {
+        return;
+      }
+
+      // Set-Cookie может быть массивом
+      if (key.toLowerCase() === 'set-cookie' && Array.isArray(value)) {
+        value.forEach((cookie) => {
+          // Модифицируем cookie для работы с прокси
+          // Убираем Secure flag если есть, т.к. прокси работает по http
+          const modifiedCookie = cookie.replace(/;\s*Secure/gi, '');
+          res.append('Set-Cookie', modifiedCookie);
+        });
+      } else {
+        res.setHeader(key, String(value));
+      }
+    }
+  });
+}
+
 interface Manifest {
   modules: Array<{
     name: string;
@@ -74,13 +134,11 @@ interface Config {
 function loadManifest(): Manifest | null {
   try {
     if (!fs.existsSync(MANIFEST_PATH)) {
-      console.warn(`[DevServer] Manifest not found: ${MANIFEST_PATH}`);
       return null;
     }
     const content = fs.readFileSync(MANIFEST_PATH, 'utf-8');
     return JSON.parse(content) as Manifest;
   } catch (error) {
-    console.error(`[DevServer] Failed to load manifest:`, error);
     return null;
   }
 }
@@ -91,13 +149,11 @@ function loadManifest(): Manifest | null {
 function loadConfig(): Config | null {
   try {
     if (!fs.existsSync(CONFIGS_PATH)) {
-      console.warn(`[DevServer] Config not found: ${CONFIGS_PATH}`);
       return null;
     }
     const content = fs.readFileSync(CONFIGS_PATH, 'utf-8');
     return JSON.parse(content) as Config;
   } catch (error) {
-    console.error(`[DevServer] Failed to load config:`, error);
     return null;
   }
 }
@@ -115,12 +171,38 @@ function getActiveConfig(): Config['configurations'][string] | null {
 
 /**
  * Загружает handlers модуля напрямую из mocks/index.ts
+ * Поддерживает как локальные модули (host/src/modules), так и MFE модули (packages)
  * Это позволяет избежать проблем с декораторами в module_config.ts
  */
 async function loadModuleHandlers(
   moduleName: string,
 ): Promise<RequestHandler[] | null> {
-  const mocksPath = path.resolve(
+  // Сначала пробуем загрузить из локального модуля (host/src/modules)
+  const localMocksPath = path.resolve(
+    ROOT_DIR,
+    'host',
+    'src',
+    'modules',
+    moduleName,
+    'config',
+    'mocks',
+    'index.ts',
+  );
+
+  if (fs.existsSync(localMocksPath)) {
+    try {
+      const moduleUrl = `file://${localMocksPath}?${Date.now()}`;
+      const module = await import(moduleUrl);
+      if (module.handlers && Array.isArray(module.handlers)) {
+        return module.handlers;
+      }
+    } catch (error) {
+      // Игнорируем ошибки и пробуем MFE модуль
+    }
+  }
+
+  // Если не найдено в локальных модулях, пробуем MFE модуль (packages)
+  const mfeMocksPath = path.resolve(
     ROOT_DIR,
     'packages',
     moduleName,
@@ -130,42 +212,59 @@ async function loadModuleHandlers(
     'index.ts',
   );
 
-  if (!fs.existsSync(mocksPath)) {
+  if (!fs.existsSync(mfeMocksPath)) {
     return null;
   }
 
   try {
     // Импортируем handlers напрямую из mocks/index.ts
     // Это проще, чем импортировать весь module_config.ts
-    const moduleUrl = `file://${mocksPath}?${Date.now()}`;
+    const moduleUrl = `file://${mfeMocksPath}?${Date.now()}`;
     const module = await import(moduleUrl);
     if (module.handlers && Array.isArray(module.handlers)) {
       return module.handlers;
     }
     return null;
   } catch (error) {
-    console.error(
-      `[DevServer] Failed to load handlers for ${moduleName}:`,
-      error,
-    );
     return null;
   }
 }
 
 /**
  * Определяет модуль по пути запроса
- * Пока используем простую логику: проверяем известные эндпоинты модулей
+ * Автоматически извлекает эндпоинты из загруженных handlers
+ * Поддерживает MSW v2 структуру handlers
  */
-function getModuleByPath(urlPath: string): string | null {
-  // Известные эндпоинты модулей
-  const moduleEndpoints: Record<string, string[]> = {
-    api_example: ['/jokes'],
-    // Добавить другие модули по мере необходимости
-  };
+function getModuleByPath(
+  urlPath: string,
+  moduleHandlers: Map<string, RequestHandler[]>,
+): string | null {
+  // Проходим по всем модулям с handlers
+  for (const [moduleName, handlers] of moduleHandlers.entries()) {
+    // Проверяем каждый handler
+    for (const handler of handlers) {
+      const handlerAny = handler as any;
+      const handlerInfo = handlerAny.info || {};
 
-  for (const [moduleName, endpoints] of Object.entries(moduleEndpoints)) {
-    if (endpoints.some((endpoint) => urlPath.startsWith(endpoint))) {
-      return moduleName;
+      // В MSW v2 path может быть строкой или объектом PathPattern
+      let handlerPath = '';
+      if (typeof handlerInfo.path === 'string') {
+        handlerPath = handlerInfo.path;
+      } else if (handlerInfo.path && typeof handlerInfo.path === 'object') {
+        // PathPattern объект - пробуем извлечь строку разными способами
+        if (handlerInfo.path.pathname) {
+          handlerPath = handlerInfo.path.pathname; // MSW v2 PathPattern
+        } else if (handlerInfo.path.pattern) {
+          handlerPath = handlerInfo.path.pattern; // Альтернативное свойство
+        } else {
+          handlerPath = String(handlerInfo.path); // Fallback
+        }
+      }
+
+      // Проверяем, совпадает ли путь запроса с путем handler
+      if (handlerPath && urlPath.startsWith(handlerPath)) {
+        return moduleName;
+      }
     }
   }
 
@@ -300,7 +399,6 @@ async function createDevServer() {
   const manifest = loadManifest();
 
   if (!config || !activeConfig) {
-    console.error('[DevServer] Failed to load configuration');
     process.exit(1);
   }
 
@@ -311,10 +409,6 @@ async function createDevServer() {
   const remoteServerUrl = config.remoteServerUrl || '';
   const appStartEndpoint = config.appStartEndpoint || '/app/start';
 
-  console.log(
-    `[DevServer] Config: ${activeConfig.name} | Mocks: ${hostUseLocalMocks ? 'ON' : 'OFF'} | API: ${hostApiUrl || 'not set'} | App Start: ${appStartEndpoint}`,
-  );
-
   // Загружаем handlers для host, если моки включены
   let hostHandlers: RequestHandler[] = [];
   if (hostUseLocalMocks) {
@@ -323,26 +417,73 @@ async function createDevServer() {
       const hostMocks = await import(hostMocksUrl);
       if (hostMocks.handlers && Array.isArray(hostMocks.handlers)) {
         hostHandlers = hostMocks.handlers;
-        console.log(
-          `[DevServer] Host mocks: ${hostMocks.handlers.length} handlers`,
-        );
       }
     } catch (error) {
-      console.warn(`[DevServer] Failed to load host mocks:`, error);
+      // Игнорируем ошибки загрузки моков
     }
   }
 
   // Загружаем handlers для модулей
+
+  // 1. Собираем список модулей из конфигурации (MFE модули из packages/)
+  const configuredModules = Object.entries(activeConfig.modules || {});
+
+  // 2. Собираем список локальных модулей из host/src/modules/
+  const localModulesPath = path.resolve(ROOT_DIR, 'host/src/modules');
+  let localModules: string[] = [];
+  try {
+    if (fs.existsSync(localModulesPath)) {
+      const entries = fs.readdirSync(localModulesPath, { withFileTypes: true });
+      localModules = entries
+        .filter(
+          (entry) =>
+            entry.isDirectory() &&
+            !entry.name.startsWith('.') &&
+            entry.name !== 'node_modules',
+        )
+        .map((entry) => entry.name);
+      console.log(
+        `[DevServer] Found ${localModules.length} local module(s): ${localModules.join(', ')}`,
+      );
+    }
+  } catch (error) {
+    console.error('[DevServer] Error scanning local modules:', error);
+  }
+
   const moduleHandlers = new Map<string, RequestHandler[]>();
-  for (const [moduleName, moduleConfig] of Object.entries(
-    activeConfig.modules || {},
-  )) {
+
+  // 3. Загружаем handlers для модулей из конфигурации (MFE)
+  for (const [moduleName, moduleConfig] of configuredModules) {
     if (moduleConfig.useLocalMocks !== false) {
       const handlers = await loadModuleHandlers(moduleName);
       if (handlers && handlers.length > 0) {
         moduleHandlers.set(moduleName, handlers);
         console.log(
-          `[DevServer] Module ${moduleName}: ${handlers.length} handlers`,
+          `[DevServer] Loaded ${handlers.length} mock handler(s) for MFE module: ${moduleName}`,
+        );
+      } else {
+        console.log(
+          `[DevServer] No mock handlers found for MFE module: ${moduleName}`,
+        );
+      }
+    } else {
+      console.log(`[DevServer] Mocks disabled for MFE module: ${moduleName}`);
+    }
+  }
+
+  // 4. Загружаем handlers для локальных модулей (если моки включены глобально)
+  if (hostUseLocalMocks) {
+    for (const moduleName of localModules) {
+      // Пропускаем модули, которые уже загружены из конфигурации
+      if (moduleHandlers.has(moduleName)) {
+        continue;
+      }
+
+      const handlers = await loadModuleHandlers(moduleName);
+      if (handlers && handlers.length > 0) {
+        moduleHandlers.set(moduleName, handlers);
+        console.log(
+          `[DevServer] Loaded ${handlers.length} mock handler(s) for local module: ${moduleName}`,
         );
       }
     }
@@ -364,16 +505,20 @@ async function createDevServer() {
           );
           const data = JSON.parse(appStartDataContent);
           const enriched = enrichAppStartResponse(data, remoteServerUrl);
+          console.log(
+            `[DevServer] ${req.method} ${appStartEndpoint} → MOCK (host) [200]`,
+          );
           res.status(200).json(enriched);
           return;
         } catch (error) {
-          console.error(`[DevServer] Failed to load appStartData:`, error);
+          // Игнорируем ошибки загрузки appStartData
         }
       }
 
       // Если моки выключены, проксируем на реальный сервер
       if (hostApiUrl) {
         const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${appStartEndpoint}`;
+        const filteredHeaders = filterHeadersForProxy(req.headers);
 
         // Для OPTIONS запросов (preflight)
         if (req.method === 'OPTIONS') {
@@ -381,12 +526,10 @@ async function createDevServer() {
             const response = await axios({
               method: 'OPTIONS',
               url: targetUrl,
-              headers: req.headers,
+              headers: filteredHeaders,
               params: req.query,
             });
-            Object.entries(response.headers).forEach(([key, value]) => {
-              if (value) res.setHeader(key, String(value));
-            });
+            copyResponseHeaders(response.headers, res);
             res.status(response.status).send();
             return;
           } catch (error: any) {
@@ -400,7 +543,7 @@ async function createDevServer() {
         const response = await axios({
           method: req.method as any,
           url: targetUrl,
-          headers: req.headers,
+          headers: filteredHeaders,
           data: ['POST', 'PUT', 'PATCH'].includes(req.method.toUpperCase())
             ? req.body
             : undefined,
@@ -411,10 +554,12 @@ async function createDevServer() {
           },
         });
 
+        console.log(
+          `[DevServer] ${req.method} ${appStartEndpoint} → PROXY (host) ${targetUrl} [${response.status}]`,
+        );
+
         // Копируем заголовки из ответа
-        Object.entries(response.headers).forEach(([key, value]) => {
-          if (value) res.setHeader(key, String(value));
-        });
+        copyResponseHeaders(response.headers, res);
 
         // Для 304 (Not Modified) обогащаем базовым ответом
         if (response.status === 304) {
@@ -457,9 +602,7 @@ async function createDevServer() {
       if (error.response) {
         const status = error.response.status;
         // Копируем заголовки из ответа
-        Object.entries(error.response.headers).forEach(([key, value]) => {
-          if (value) res.setHeader(key, String(value));
-        });
+        copyResponseHeaders(error.response.headers, res);
 
         // Для 304 (Not Modified) обогащаем базовым ответом
         if (status === 304) {
@@ -489,21 +632,6 @@ async function createDevServer() {
         return;
       }
 
-      // Компактный вывод ошибки
-      const errorUrl = error.config?.url || hostApiUrl || appStartEndpoint;
-      const errorCode = error.code || 'UNKNOWN';
-
-      // Для ECONNREFUSED выводим более компактное сообщение
-      if (errorCode === 'ECONNREFUSED') {
-        console.error(
-          `[DevServer] Backend server unavailable: ${errorUrl} (${errorCode})`,
-        );
-      } else {
-        console.error(
-          `[DevServer] Error handling ${appStartEndpoint}: ${errorCode} - ${error.message || 'Unknown error'}`,
-        );
-      }
-
       res.status(500).json({
         error: 'Internal server error',
         message: error.message,
@@ -515,28 +643,52 @@ async function createDevServer() {
   app.all('*', async (req: Request, res: Response) => {
     const urlPath = req.path;
 
-    // Определяем модуль по пути
-    const moduleName = getModuleByPath(urlPath);
+    // Определяем модуль по пути, используя загруженные handlers
+    const moduleName = getModuleByPath(urlPath, moduleHandlers);
+
     // Если модуль не распознан — пробуем просто проксировать на backend
     if (!moduleName) {
       if (hostApiUrl) {
         try {
           const targetUrl = `${hostApiUrl.replace(/\/$/, '')}${urlPath}`;
+          const filteredHeaders = filterHeadersForProxy(req.headers);
           const response = await axios({
             method: req.method as any,
             url: targetUrl,
-            headers: req.headers,
+            headers: filteredHeaders,
             data: ['POST', 'PUT', 'PATCH'].includes(req.method.toUpperCase())
               ? req.body
               : undefined,
             params: req.query,
+            validateStatus: () => true, // Принимаем любой статус
+            withCredentials: true, // Важно для cookies
+            maxRedirects: 0, // Не следуем редиректам автоматически
           });
 
-          Object.entries(response.headers).forEach(([key, value]) => {
-            if (value) res.setHeader(key, String(value));
-          });
+          console.log(
+            `[DevServer] ${req.method} ${urlPath} → PROXY (no module) ${targetUrl} [${response.status}]`,
+          );
 
-          res.status(response.status).send(response.data);
+          // Копируем заголовки от бэкенда к клиенту
+          copyResponseHeaders(response.headers, res);
+
+          // Определяем Content-Type и отправляем данные соответственно
+          const contentType = response.headers['content-type'] || '';
+
+          // Убедимся что отправляем объект для JSON
+          if (contentType.includes('application/json')) {
+            // Если data строка, пытаемся распарсить
+            const jsonData =
+              typeof response.data === 'string'
+                ? JSON.parse(response.data)
+                : response.data;
+
+            res.status(response.status).json(jsonData);
+          } else if (contentType.includes('text/')) {
+            res.status(response.status).send(response.data);
+          } else {
+            res.status(response.status).send(response.data);
+          }
         } catch (error: any) {
           const status = error.response?.status || 500;
           res
@@ -550,7 +702,12 @@ async function createDevServer() {
     }
 
     const moduleConfig = activeConfig.modules[moduleName];
-    if (!moduleConfig) {
+
+    // Проверяем, является ли это локальным модулем с handlers
+    const isLocalModuleWithHandlers =
+      moduleHandlers.has(moduleName) && !moduleConfig;
+
+    if (!moduleConfig && !isLocalModuleWithHandlers) {
       // Если модуль отсутствует в конфиге, но backend задан — проксируем
       if (hostApiUrl) {
         try {
@@ -563,11 +720,21 @@ async function createDevServer() {
               ? req.body
               : undefined,
             params: req.query,
+            validateStatus: () => true,
           });
-          Object.entries(response.headers).forEach(([key, value]) => {
-            if (value) res.setHeader(key, String(value));
-          });
-          res.status(response.status).send(response.data);
+
+          console.log(
+            `[DevServer] ${req.method} ${urlPath} → PROXY  ${targetUrl} [${response.status}]`,
+          );
+
+          // Копируем все заголовки включая Set-Cookie
+          copyResponseHeaders(response.headers, res);
+          const contentType = response.headers['content-type'] || '';
+          if (contentType.includes('application/json')) {
+            res.status(response.status).json(response.data);
+          } else {
+            res.status(response.status).send(response.data);
+          }
         } catch (error: any) {
           const status = error.response?.status || 500;
           res
@@ -581,7 +748,11 @@ async function createDevServer() {
       return;
     }
 
-    const useLocalMocks = moduleConfig.useLocalMocks !== false;
+    // Для локальных модулей с handlers используем моки, если глобально включены
+    // Для модулей из конфигурации проверяем useLocalMocks
+    const useLocalMocks = isLocalModuleWithHandlers
+      ? hostUseLocalMocks
+      : moduleConfig.useLocalMocks !== false;
 
     try {
       if (useLocalMocks) {
@@ -624,12 +795,30 @@ async function createDevServer() {
               // Проверяем совпадение метода и пути
               // MSW handler.info содержит header (method) и path
               const handlerAny = handler as any;
+              const handlerInfo = handlerAny.info || {};
               const handlerMethod = (
-                handlerAny.info?.method ||
-                handlerAny.info?.header ||
+                handlerInfo.method ||
+                handlerInfo.header ||
                 'GET'
               ).toUpperCase();
-              const handlerPath = handlerAny.info?.path || '';
+
+              // В MSW v2 path может быть строкой или объектом PathPattern
+              let handlerPath = '';
+              if (typeof handlerInfo.path === 'string') {
+                handlerPath = handlerInfo.path;
+              } else if (
+                handlerInfo.path &&
+                typeof handlerInfo.path === 'object'
+              ) {
+                // PathPattern объект - пробуем извлечь строку разными способами
+                if (handlerInfo.path.pathname) {
+                  handlerPath = handlerInfo.path.pathname; // MSW v2 PathPattern
+                } else if (handlerInfo.path.pattern) {
+                  handlerPath = handlerInfo.path.pattern; // Альтернативное свойство
+                } else {
+                  handlerPath = String(handlerInfo.path); // Fallback
+                }
+              }
 
               // Проверяем метод
               if (
@@ -675,6 +864,10 @@ async function createDevServer() {
               });
 
               const status = matchedResponse.status;
+              console.log(
+                `[DevServer] ${req.method} ${urlPath} → MOCK (${moduleName}) [${status}]`,
+              );
+
               if (contentType.includes('application/json')) {
                 res.status(status).json(data);
               } else if (contentType.includes('text/')) {
@@ -685,10 +878,7 @@ async function createDevServer() {
               return;
             }
           } catch (error) {
-            console.error(
-              `[DevServer] Handler failed for ${moduleName}:`,
-              error,
-            );
+            // Игнорируем ошибки обработчиков
           }
           // Если мока нет — пробуем проксировать на backend
           if (hostApiUrl) {
@@ -704,13 +894,23 @@ async function createDevServer() {
                   ? req.body
                   : undefined,
                 params: req.query,
+                validateStatus: () => true,
               });
 
-              Object.entries(response.headers).forEach(([key, value]) => {
-                if (value) res.setHeader(key, String(value));
-              });
+              const proxyTargetUrl = `${hostApiUrl.replace(/\/$/, '')}${urlPath}`;
+              console.log(
+                `[DevServer] ${req.method} ${urlPath} → PROXY ${proxyTargetUrl} [${response.status}]`,
+              );
 
-              res.status(response.status).send(response.data);
+              // Копируем все заголовки включая Set-Cookie
+              copyResponseHeaders(response.headers, res);
+
+              const contentType = response.headers['content-type'] || '';
+              if (contentType.includes('application/json')) {
+                res.status(response.status).json(response.data);
+              } else {
+                res.status(response.status).send(response.data);
+              }
               return;
             } catch (error: any) {
               const status = error.response?.status || 500;
@@ -737,13 +937,22 @@ async function createDevServer() {
                   ? req.body
                   : undefined,
                 params: req.query,
+                validateStatus: () => true,
               });
 
-              Object.entries(response.headers).forEach(([key, value]) => {
-                if (value) res.setHeader(key, String(value));
-              });
+              console.log(
+                `[DevServer] ${req.method} ${urlPath} → PROXY ${targetUrl} [${response.status}]`,
+              );
 
-              res.status(response.status).send(response.data);
+              // Копируем все заголовки включая Set-Cookie
+              copyResponseHeaders(response.headers, res);
+
+              const contentType = response.headers['content-type'] || '';
+              if (contentType.includes('application/json')) {
+                res.status(response.status).json(response.data);
+              } else {
+                res.status(response.status).send(response.data);
+              }
               return;
             } catch (error: any) {
               const status = error.response?.status || 500;
@@ -758,6 +967,14 @@ async function createDevServer() {
         }
       } else {
         // Проксируем на удаленный сервер
+        // Для локальных модулей без конфигурации просто возвращаем 404
+        if (isLocalModuleWithHandlers) {
+          res.status(404).json({
+            error: `Mocks disabled for local module ${moduleName} and no backend configured`,
+          });
+          return;
+        }
+
         // Поддерживаем все HTTP методы: GET, POST, PUT, DELETE, PATCH, OPTIONS
         // Приоритет: apiUrl модуля > customUrl модуля > settings.apiUrl > глобальный apiUrl
         // url модуля может указывать на remoteEntry.js, поэтому явно исключаем такие ссылки
@@ -789,12 +1006,16 @@ async function createDevServer() {
               headers: req.headers,
               params: req.query,
             });
-            Object.entries(response.headers).forEach(([key, value]) => {
-              if (value) res.setHeader(key, String(value));
-            });
+            console.log(
+              `[DevServer] ${req.method} ${urlPath} → PROXY ${targetUrl} [${response.status}]`,
+            );
+            copyResponseHeaders(response.headers, res);
             res.status(response.status).send();
             return;
           } catch (error: any) {
+            console.log(
+              `[DevServer] ${req.method} ${urlPath} → PROXY ${targetUrl} [204]`,
+            );
             res.status(204).send();
             return;
           }
@@ -817,10 +1038,12 @@ async function createDevServer() {
           },
         });
 
+        console.log(
+          `[DevServer] ${req.method} ${urlPath} → PROXY ${targetUrl} [${response.status}]`,
+        );
+
         // Копируем заголовки из ответа
-        Object.entries(response.headers).forEach(([key, value]) => {
-          if (value) res.setHeader(key, String(value));
-        });
+        copyResponseHeaders(response.headers, res);
 
         // Для 304 (Not Modified) не нужно тело ответа
         if (response.status === 304) {
@@ -844,9 +1067,7 @@ async function createDevServer() {
       if (error.response) {
         const status = error.response.status;
         // Копируем заголовки из ответа
-        Object.entries(error.response.headers).forEach(([key, value]) => {
-          if (value) res.setHeader(key, String(value));
-        });
+        copyResponseHeaders(error.response.headers, res);
 
         // Для 304 (Not Modified) не нужно тело ответа
         if (status === 304) {
@@ -859,7 +1080,6 @@ async function createDevServer() {
         return;
       }
 
-      console.error(`[DevServer] Error handling ${urlPath}:`, error);
       res.status(500).json({
         error: 'Internal server error',
         message: error.message,
@@ -867,31 +1087,25 @@ async function createDevServer() {
     }
   });
 
-  const server = app.listen(DEV_SERVER_PORT, () => {
-    console.log(`[DevServer] Running on port ${DEV_SERVER_PORT}`);
-  });
+  const server = app.listen(DEV_SERVER_PORT);
 
   // Обработка сигналов для корректного завершения
-  const gracefulShutdown = (signal: string) => {
-    console.log(`\n[DevServer] Получен ${signal}, завершаем работу...`);
+  const gracefulShutdown = () => {
     server.close(() => {
-      console.log('[DevServer] Сервер остановлен');
       process.exit(0);
     });
 
     // Принудительное завершение через 5 секунд
     setTimeout(() => {
-      console.error('[DevServer] Принудительное завершение');
       process.exit(1);
     }, 5000);
   };
 
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown());
+  process.on('SIGTERM', () => gracefulShutdown());
 }
 
 // Запускаем сервер
-createDevServer().catch((error) => {
-  console.error('[DevServer] Failed to start server:', error);
+createDevServer().catch(() => {
   process.exit(1);
 });
