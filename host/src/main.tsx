@@ -29,7 +29,6 @@ log.setConfig({
 
 initBootstrap(new Bootstrap(app_modules), appConfig)
   .then((bootstrap) => {
-    // setGlobalDIContainer(bootstrap.di);
     bootstrap.setLoadingPhase('bootstraped');
     bootstrap.routerService.router.start(() => {
       createRoot(document.getElementById('root')!).render(

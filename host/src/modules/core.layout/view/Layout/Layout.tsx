@@ -3,8 +3,9 @@ import { observer } from 'mobx-react-lite';
 import { Header } from '../Header';
 import AppSettingsDrawer from '../AppSettingsDrawer';
 import ContentContainer from '../ContentContainer';
-import { Container, Toolbar } from '@platform/ui';
-import { Notifier } from '../Notifier';
+import Sidebar from '../Sidebar';
+import { Box } from '@platform/ui';
+import Notifier from '../Notifier/Notifier';
 
 const Layout: FC = () => {
   const [open, setOpen] = useState(false);
@@ -22,24 +23,59 @@ const Layout: FC = () => {
     setOpen(true);
   }, []);
 
+  const handleDrawerClose = useCallback(() => {
+    setOpen(false);
+  }, []);
+
   return (
-    <>
-      <Header
-        open={open}
-        handleDrawerOpen={handleDrawerOpen}
-        handleAppSettingsOpen={openAppSettingsHandler}
-      />
-      <Container maxWidth="xl" sx={{ height: 'calc(100% - 64px)' }}>
-        <Toolbar disableGutters />
-        <ContentContainer />
-      </Container>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        background: (theme) => theme.palette.background.appBackground,
+      }}
+    >
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <Sidebar open={open} onClose={handleDrawerClose} />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            display: 'flex',
+            overflow: 'auto',
+            position: 'relative',
+            flexDirection: 'column',
+          }}
+        >
+          <Header
+            open={open}
+            handleDrawerOpen={handleDrawerOpen}
+            handleAppSettingsOpen={openAppSettingsHandler}
+          />
+          <Box
+            sx={{
+              pt: (theme) => ({
+                xs: theme.spacing(2),
+                md: theme.spacing(2),
+              }),
+              pb: (theme) => ({
+                xs: theme.spacing(2),
+                md: theme.spacing(2),
+              }),
+            }}
+          >
+            <ContentContainer />
+          </Box>
+        </Box>
+      </Box>
       <AppSettingsDrawer
         drawerWidth={360}
         open={openAppSettings}
         closeHandler={closeAppSettingsHandler}
       />
       <Notifier />
-    </>
+    </Box>
   );
 };
 

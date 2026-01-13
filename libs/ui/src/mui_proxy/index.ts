@@ -83,8 +83,11 @@ export { default as Table } from '@mui/material/Table';
 export { default as TableBody } from '@mui/material/TableBody';
 export { default as TableCell } from '@mui/material/TableCell';
 export { default as TableContainer } from '@mui/material/TableContainer';
+export { default as TableFooter } from '@mui/material/TableFooter';
 export { default as TableHead } from '@mui/material/TableHead';
+export { default as TablePagination } from '@mui/material/TablePagination';
 export { default as TableRow } from '@mui/material/TableRow';
+export { default as TableSortLabel } from '@mui/material/TableSortLabel';
 export { default as Tooltip } from '@mui/material/Tooltip';
 
 // Surfaces
@@ -105,7 +108,9 @@ export { default as Zoom } from '@mui/material/Zoom';
 
 // Theme (these use named exports)
 export { ThemeProvider } from '@mui/material/styles';
-export type { Theme, ThemeOptions } from '@mui/material/styles';
+export type { Theme } from '@mui/material/styles';
+// ThemeOptions экспортируется из interfaces.ts с расширенными типами
+export type { ThemeOptions } from '../theme/interfaces';
 export { createTheme } from '@mui/material/styles';
 export { useTheme } from '@mui/material/styles';
 export { styled } from '@mui/material/styles';

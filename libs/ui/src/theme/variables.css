@@ -10,24 +10,46 @@
  */
 
 :root {
-  /* Цвета из темы MUI (синхронизируются автоматически через CssVariablesSync) */
-  --mui-palette-primary-main: #00bcd4;
-  --mui-palette-primary-light: #33c9dc;
-  --mui-palette-primary-dark: #008394;
-  --mui-palette-primary-contrast-text: #fff;
+  /* Primary цвета (Indigo) - синхронизируются автоматически */
+  --mui-palette-primary-main: #6366f1;
+  --mui-palette-primary-light: #818cf8;
+  --mui-palette-primary-dark: #4338ca;
+  --mui-palette-primary-contrast-text: #ffffff;
 
-  --mui-palette-secondary-main: #ff3d00;
-  --mui-palette-secondary-light: #ff6333;
-  --mui-palette-secondary-dark: #b22a00;
-  --mui-palette-secondary-contrast-text: #000;
+  /* Secondary цвета (Teal) - синхронизируются автоматически */
+  --mui-palette-secondary-main: #14b8a6;
+  --mui-palette-secondary-light: #2dd4bf;
+  --mui-palette-secondary-dark: #0f766e;
+  --mui-palette-secondary-contrast-text: #ffffff;
+
+  /* Semantic цвета - синхронизируются автоматически */
+  --mui-palette-success-main: #22c55e;
+  --mui-palette-success-light: #4ade80;
+  --mui-palette-success-dark: #15803d;
+  --mui-palette-success-contrast-text: #ffffff;
+
+  --mui-palette-error-main: #ef4444;
+  --mui-palette-error-light: #f87171;
+  --mui-palette-error-dark: #b91c1c;
+  --mui-palette-error-contrast-text: #ffffff;
+
+  --mui-palette-warning-main: #f59e0b;
+  --mui-palette-warning-light: #fbbf24;
+  --mui-palette-warning-dark: #b45309;
+  --mui-palette-warning-contrast-text: #000000;
+
+  --mui-palette-info-main: #3b82f6;
+  --mui-palette-info-light: #60a5fa;
+  --mui-palette-info-dark: #1d4ed8;
+  --mui-palette-info-contrast-text: #ffffff;
 
   /* Фоновые цвета (синхронизируются автоматически) */
-  --mui-palette-background-default: #fff;
-  --mui-palette-background-paper: #fff;
+  --mui-palette-background-default: #f9fafb;
+  --mui-palette-background-paper: #ffffff;
 
   /* Текст (синхронизируется автоматически) */
   --mui-palette-text-primary: rgba(0, 0, 0, 0.87);
-  --mui-palette-text-secondary: rgba(0, 0, 0, 0.6);
+  --mui-palette-text-secondary: rgba(0, 0, 0, 0.60);
   --mui-palette-text-disabled: rgba(0, 0, 0, 0.38);
 
   /* Границы (синхронизируется автоматически) */
@@ -43,4 +65,19 @@
   --spacing-md: calc(var(--spacing-unit) * 2); /* 16px */
   --spacing-lg: calc(var(--spacing-unit) * 3); /* 24px */
   --spacing-xl: calc(var(--spacing-unit) * 4); /* 32px */
+}
+
+/**
+ * Поддержка prefers-reduced-motion для доступности
+ * Отключает анимации для пользователей, которые предпочитают уменьшенное движение
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

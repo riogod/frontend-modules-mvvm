@@ -1,0 +1,236 @@
+.glass-surface {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity 0.26s ease-out;
+}
+
+.glass-surface__filter {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: -1;
+}
+
+.glass-surface__content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+.glass-surface--svg {
+  /* Fallback для Safari и старых браузеров */
+  background: rgba(255, 255, 255, 0);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  /* Используем background-paper из MUI темы с прозрачностью */
+  background: color-mix(
+    in srgb,
+    var(--mui-palette-background-paper, #ffffff) var(--glass-frost, 0%),
+    transparent
+  );
+  backdrop-filter: var(--filter-id, url(#glass-filter))
+    saturate(var(--glass-saturation, 1));
+  box-shadow:
+    0 0 2px 1px rgba(0, 0, 0, 0.15) inset,
+    0px 0px 2px 0px rgba(0, 0, 0, 0.1) inset,
+    0px 4px 16px rgba(17, 17, 26, 0.05),
+    0px 8px 24px rgba(17, 17, 26, 0.05),
+    0px 16px 56px rgba(17, 17, 26, 0.05),
+    0px 4px 16px rgba(17, 17, 26, 0.05) inset,
+    0px 8px 24px rgba(17, 17, 26, 0.05) inset,
+    0px 16px 56px rgba(17, 17, 26, 0.05) inset;
+}
+
+/* Улучшенная поддержка color-mix для современных браузеров */
+@supports (color-mix(in srgb, red 50%, blue)) {
+  .glass-surface--svg {
+    background: color-mix(
+      in srgb,
+      var(--mui-palette-background-paper, #ffffff) var(--glass-frost, 0%),
+      transparent
+    );
+    /* Граница для светлой темы */
+    border: 1px solid
+      color-mix(
+        in srgb,
+        var(--mui-palette-divider, rgba(0, 0, 0, 0.12)) 30%,
+        transparent
+      );
+    box-shadow:
+      0 0 2px 1px
+        color-mix(
+          in oklch,
+          var(--mui-palette-text-primary, rgba(0, 0, 0, 0.87)) 15%,
+          transparent
+        )
+        inset,
+      0px 0px 2px 0px
+        color-mix(
+          in oklch,
+          var(--mui-palette-text-primary, rgba(0, 0, 0, 0.87)) 10%,
+          transparent
+        )
+        inset,
+      0px 4px 16px rgba(17, 17, 26, 0.05),
+      0px 8px 24px rgba(17, 17, 26, 0.05),
+      0px 16px 56px rgba(17, 17, 26, 0.05),
+      0px 4px 16px rgba(17, 17, 26, 0.05) inset,
+      0px 8px 24px rgba(17, 17, 26, 0.05) inset,
+      0px 16px 56px rgba(17, 17, 26, 0.05) inset;
+  }
+}
+
+/* Темная тема для SVG режима */
+@media (prefers-color-scheme: dark) {
+  .glass-surface--svg {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+}
+
+.glass-surface--fallback {
+  /* Fallback для Safari - максимально приближен к Chrome SVG режиму */
+  /* Светлая тема по умолчанию */
+  background: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(20px) saturate(100%) brightness(0.8);
+  -webkit-backdrop-filter: blur(20px) saturate(100%) brightness(0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 0 2px 1px rgba(0, 0, 0, 0.15) inset,
+    0px 0px 2px 0px rgba(0, 0, 0, 0.1) inset,
+    0px 4px 16px rgba(17, 17, 26, 0.05),
+    0px 8px 24px rgba(17, 17, 26, 0.05),
+    0px 16px 56px rgba(17, 17, 26, 0.05),
+    0px 4px 16px rgba(17, 17, 26, 0.05) inset,
+    0px 8px 24px rgba(17, 17, 26, 0.05) inset,
+    0px 16px 56px rgba(17, 17, 26, 0.05) inset;
+}
+
+/* Улучшенная поддержка color-mix для современных браузеров */
+@supports (color-mix(in srgb, red 50%, blue)) {
+  .glass-surface--fallback {
+    /* Используем background-paper из MUI темы с прозрачностью */
+    background: color-mix(
+      in srgb,
+      var(--mui-palette-background-paper, #ffffff) 0%,
+      transparent
+    );
+    /* Граница для светлой темы - темная */
+    border: 1px solid
+      color-mix(
+        in srgb,
+        var(--mui-palette-divider, rgba(0, 0, 0, 0.12)) 30%,
+        transparent
+      );
+    box-shadow:
+      0 0 2px 1px
+        color-mix(
+          in oklch,
+          var(--mui-palette-text-primary, rgba(0, 0, 0, 0.87)) 15%,
+          transparent
+        )
+        inset,
+      0px 0px 2px 0px
+        color-mix(
+          in oklch,
+          var(--mui-palette-text-primary, rgba(0, 0, 0, 0.87)) 10%,
+          transparent
+        )
+        inset,
+      0px 4px 16px rgba(17, 17, 26, 0.05),
+      0px 8px 24px rgba(17, 17, 26, 0.05),
+      0px 16px 56px rgba(17, 17, 26, 0.05),
+      0px 4px 16px rgba(17, 17, 26, 0.05) inset,
+      0px 8px 24px rgba(17, 17, 26, 0.05) inset,
+      0px 16px 56px rgba(17, 17, 26, 0.05) inset;
+  }
+}
+
+/* Поддержка темной темы для Safari fallback */
+@media (prefers-color-scheme: dark) {
+  .glass-surface--fallback {
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(20px) saturate(100%) brightness(0.8);
+    -webkit-backdrop-filter: blur(20px) saturate(100%) brightness(0.8);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 0 2px 1px rgba(255, 255, 255, 0.15) inset,
+      0px 0px 2px 0px rgba(255, 255, 255, 0.1) inset,
+      0px 4px 16px rgba(0, 0, 0, 0.2),
+      0px 8px 24px rgba(0, 0, 0, 0.2),
+      0px 16px 56px rgba(0, 0, 0, 0.2),
+      0px 4px 16px rgba(0, 0, 0, 0.2) inset,
+      0px 8px 24px rgba(0, 0, 0, 0.2) inset,
+      0px 16px 56px rgba(0, 0, 0, 0.2) inset;
+  }
+}
+
+/* Тёмная тема обрабатывается автоматически через CSS переменные MUI для современных браузеров */
+
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-surface--fallback {
+    /* Fallback для браузеров без поддержки backdrop-filter */
+    background: rgba(255, 255, 255, 0.4);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 0 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .glass-surface--fallback::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: inherit;
+    z-index: -1;
+  }
+}
+
+/* Улучшенная поддержка color-mix для браузеров без backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+  @supports (color-mix(in srgb, red 50%, blue)) {
+    .glass-surface--fallback {
+      background: color-mix(
+        in srgb,
+        var(--mui-palette-background-paper, #ffffff) 40%,
+        transparent
+      );
+      box-shadow:
+        inset 0 1px 0 0
+          color-mix(
+            in srgb,
+            var(--mui-palette-background-paper, #ffffff) 50%,
+            transparent
+          ),
+        inset 0 -1px 0 0
+          color-mix(
+            in srgb,
+            var(--mui-palette-background-paper, #ffffff) 30%,
+            transparent
+          );
+    }
+
+    .glass-surface--fallback::before {
+      background: color-mix(
+        in srgb,
+        var(--mui-palette-background-paper, #ffffff) 15%,
+        transparent
+      );
+    }
+  }
+}
+
+.glass-surface:focus-visible {
+  outline: 2px solid var(--mui-palette-primary-main, #6366f1);
+  outline-offset: 2px;
+}

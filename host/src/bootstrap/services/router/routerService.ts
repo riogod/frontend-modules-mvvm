@@ -48,8 +48,8 @@ export class BootstrapRouterService {
       prefix: 'bootstrap.routerService.initRouter',
     });
     this.router = createRouter<RouterDependencies>(this.routes, {
-      allowNotFound: false,
       autoCleanUp: false,
+      queryParamsMode: 'loose',
       defaultRoute: '404',
     });
     log.debug('Router instance created', {
@@ -176,11 +176,17 @@ export class BootstrapRouterService {
 
   /**
    * Строит массив меню для ui из маршрутов роутера
-   * @param routesConfig
+   * @param routesConfig - Маршруты для построения меню
+   * @param lastid - Последний использованный идентификатор
+   * @param parentPath - Путь родительского маршрута (для построения полных путей children)
    */
-  buildRoutesMenu(routesConfig: IRoutes, lastid: number = 0): IMenuItem[] {
+  buildRoutesMenu(
+    routesConfig: IRoutes,
+    lastid: number = 0,
+    parentPath?: string,
+  ): IMenuItem[] {
     log.debug(
-      `Building menu from ${routesConfig.length} routes (lastid: ${lastid})`,
+      `Building menu from ${routesConfig.length} routes (lastid: ${lastid}, parentPath: ${parentPath || 'none'})`,
       {
         prefix: 'bootstrap.routerService.buildRoutesMenu',
       },
@@ -198,6 +204,9 @@ export class BootstrapRouterService {
         continue;
       }
       menuItemsCount++;
+
+      // Строим полный путь с учетом родителя
+      const fullPath = parentPath ? `${parentPath}.${route.name}` : route.name;
 
       const routePath = route.name.split('.');
       routePath.pop();
@@ -220,7 +229,7 @@ export class BootstrapRouterService {
         }
         current.push({
           id: lastid.toString(),
-          path: route.name,
+          path: fullPath,
           text: route.menu.text,
           icon: route.menu.icon,
           sortOrder: route.menu.sortOrder,
@@ -228,9 +237,12 @@ export class BootstrapRouterService {
           pageComponent: route.pageComponent,
           menuAlwaysExpand: route.menu.menuAlwaysExpand,
         });
-        log.debug(`Nested menu item "${route.menu.text}" added`, {
-          prefix: 'bootstrap.routerService.buildRoutesMenu',
-        });
+        log.debug(
+          `Nested menu item "${route.menu.text}" added with path "${fullPath}"`,
+          {
+            prefix: 'bootstrap.routerService.buildRoutesMenu',
+          },
+        );
       } else {
         log.debug(`Processing root route "${route.name}"`, {
           prefix: 'bootstrap.routerService.buildRoutesMenu',
@@ -238,7 +250,7 @@ export class BootstrapRouterService {
         const hasChildren = !!route.children;
         menuConfig.push({
           id: lastid.toString(),
-          path: route.name,
+          path: fullPath,
           text: route.menu.text,
           icon: route.menu.icon,
           sortOrder: route.menu.sortOrder,
@@ -247,16 +259,22 @@ export class BootstrapRouterService {
           menuAlwaysExpand: route.menu.menuAlwaysExpand,
           children:
             route.children &&
-            this.buildRoutesMenu(route.children, ++lastid * 50),
+            this.buildRoutesMenu(route.children, ++lastid * 50, fullPath),
         });
         if (hasChildren) {
-          log.debug(`Root menu item "${route.menu.text}" added with children`, {
-            prefix: 'bootstrap.routerService.buildRoutesMenu',
-          });
+          log.debug(
+            `Root menu item "${route.menu.text}" added with children (path: "${fullPath}")`,
+            {
+              prefix: 'bootstrap.routerService.buildRoutesMenu',
+            },
+          );
         } else {
-          log.debug(`Root menu item "${route.menu.text}" added`, {
-            prefix: 'bootstrap.routerService.buildRoutesMenu',
-          });
+          log.debug(
+            `Root menu item "${route.menu.text}" added (path: "${fullPath}")`,
+            {
+              prefix: 'bootstrap.routerService.buildRoutesMenu',
+            },
+          );
         }
       }
       lastid++;

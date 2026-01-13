@@ -15,6 +15,7 @@ export default defineConfig(
       '@emotion/styled',
       '@mui/material',
       '@mui/icons-material',
+      '@mui/x-data-grid',
       'inversify',
       '@platform/core',
     ],

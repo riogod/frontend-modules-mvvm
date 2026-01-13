@@ -2,8 +2,7 @@ import { type FC, memo, useMemo, useCallback } from 'react';
 import { useRouter } from '@riogz/react-router';
 import { type IMenuItem } from '@platform/core';
 import { useTranslation } from 'react-i18next';
-import FullMenuView from './components/FullMenuView';
-import MobileMenuView from './components/MobileMenuView';
+import SidebarMenuView from './components/SidebarMenuView';
 
 /**
  * Компонент для построения меню из конфигурации роутера.
@@ -13,6 +12,7 @@ const MenuBuilder: FC = () => {
   const { t } = useTranslation();
   const rawMenuList: IMenuItem[] = router.getDependencies().menu as IMenuItem[];
 
+  console.log('rawMenuList', rawMenuList);
   // Мемоизируем отсортированный список, чтобы не создавать новый массив при каждом рендере
   // Создаем стабильный ключ из содержимого для эффективного сравнения содержимого,
   // а не ссылки на массив (так как getDependencies() может возвращать новый массив)
@@ -40,12 +40,7 @@ const MenuBuilder: FC = () => {
     [router],
   );
 
-  return (
-    <>
-      <MobileMenuView menuList={menuList} navigate={navigate} t={t} />
-      <FullMenuView menuList={menuList} navigate={navigate} t={t} />
-    </>
-  );
+  return <SidebarMenuView menuList={menuList} navigate={navigate} t={t} />;
 };
 
 export default memo(MenuBuilder);

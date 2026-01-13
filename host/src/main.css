@@ -1,18 +1,99 @@
-/* Импортируем CSS переменные из @platform/ui */
+/**
+ * Основные стили приложения
+ * Импортируем CSS переменные из @platform/ui для доступа к теме
+ */
 @import '@platform/ui/theme/variables.css';
 
-html,
-body,
-#root {
-  height: 100vh;
-  width: 100vw;
+/**
+ * HTML базовые стили
+ * font-size: 100% - уважает настройки браузера пользователя (accessibility)
+ */
+html {
+  height: 100%;
+  font-size: 100%; /* Уважает настройки браузера для accessibility */
+  /* overscroll-behavior: none; Предотвращает bounce эффект на iOS */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/**
+ * Body стили
+ * background: transparent - фон устанавливается через псевдоэлемент
+ */
+body {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  /* Используем системные шрифты как fallback до загрузки Inter */
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--mui-palette-text-primary);
+}
+
+/**
+ * Фиксированный фон через псевдоэлемент
+ * Использует appBackground из темы (градиенты для light/dark)
+ * Фон не скроллится вместе с контентом
+ */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  /* Используем appBackground из темы (синхронизируется через CssVariablesSync) */
+  background: var(--mui-palette-background-app-background);
+  /* Плавный переход при смене темы, уважает prefers-reduced-motion */
+  transition: background 300ms ease;
+}
+
+/**
+ * Отключаем transitions для пользователей с prefers-reduced-motion
+ * Критично для accessibility (WCAG 2.1)
+ */
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    transition: none;
+  }
+}
+
+/**
+ * Стили для WebKit autofill
+ * Используем цвета из темы вместо жестко заданных значений
+ * transition-delay: 9999s - откладывает autofill стили (управляется через MUI theme)
+ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  /* transition: background-color 9999s ease-in-out 0s; */
-  background-color: rgb(0, 255, 255);
-  color: antiquewhite;
+  /* Автозаполнение управляется через MUI theme (MuiInputBase styleOverrides) */
+  /* Здесь оставляем только базовые стили для совместимости */
+  -webkit-box-shadow: 0 0 0 1000px var(--mui-palette-background-paper) inset;
+  -webkit-text-fill-color: var(--mui-palette-text-primary);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/**
+ * Улучшаем доступность для фокуса
+ * Обеспечиваем видимые focus indicators (WCAG 2.1)
+ */
+*:focus-visible {
+  outline: 2px solid var(--mui-palette-primary-main);
+  outline-offset: 2px;
+}
+
+/**
+ * Улучшаем производительность скроллинга
+ * Используем GPU-ускорение для плавного скролла
+ */
+#root {
+  min-height: 100%;
+  /* Создаем новый stacking context для оптимизации рендеринга */
+  isolation: isolate;
 }

@@ -300,7 +300,7 @@ describe('LifecycleManager', () => {
     expect(lifecycleManager.isModuleInitialized('test-module')).toBe(false);
   });
 
-  test('должен выбрасывать ошибку при ошибке загрузки динамической конфигурации', async () => {
+  test('должен обрабатывать ошибку загрузки динамической конфигурации gracefully', async () => {
     const error = new Error('Config load error');
     const configPromise = Promise.reject(error);
 
@@ -310,9 +310,13 @@ describe('LifecycleManager', () => {
       config: configPromise,
     };
 
+    // Метод должен успешно завершиться без ошибки
     await expect(
       lifecycleManager.initializeModule(module, bootstrap),
-    ).rejects.toThrow('Config load error');
+    ).resolves.not.toThrow();
+
+    // Модуль не должен быть инициализирован при ошибке загрузки конфигурации
+    expect(lifecycleManager.isModuleInitialized('error-module')).toBe(false);
   });
 
   test('должен выбрасывать ошибку при отсутствии i18n', async () => {

@@ -62,3 +62,7 @@ export { default as RadioButtonUncheckedIcon } from '@mui/icons-material/RadioBu
 export { default as CheckCircleIcon } from '@mui/icons-material/CheckCircle';
 export { default as DeleteForeverIcon } from '@mui/icons-material/DeleteForever';
 export { default as AddIcon } from '@mui/icons-material/Add';
+export { default as ExpandLess } from '@mui/icons-material/ExpandLess';
+export { default as ExpandMore } from '@mui/icons-material/ExpandMore';
+export { default as Group } from '@mui/icons-material/Group';
+export { default as ToggleOn } from '@mui/icons-material/ToggleOn';

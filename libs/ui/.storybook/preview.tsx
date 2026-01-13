@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Preview } from '@storybook/react';
-import React, { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { themeLight } from '../src/theme/themeLight';
 import { themeDark } from '../src/theme/themeDark';

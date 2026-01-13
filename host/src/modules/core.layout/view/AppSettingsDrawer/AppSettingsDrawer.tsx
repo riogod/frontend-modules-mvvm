@@ -23,10 +23,12 @@ const AppSettingsDrawer: FC<IProps> = ({ drawerWidth, open, closeHandler }) => {
       sx={{
         width: drawerWidth,
         flexShrink: 0,
+        zIndex: (theme) => theme.zIndex.drawer + 2,
         [`& .MuiDrawer-paper`]: {
           width: drawerWidth,
           boxSizing: 'border-box',
           backgroundColor: (theme) => theme.palette.background.paper,
+          zIndex: (theme) => theme.zIndex.drawer + 2,
         },
       }}
     >
