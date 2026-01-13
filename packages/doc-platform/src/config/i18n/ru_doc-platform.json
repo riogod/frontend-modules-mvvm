@@ -1,0 +1,18 @@
+{
+  "menu": {
+    "doc-platform": "Документация",
+    "architecture": "Архитектура",
+    "getting-started": "Начало работы",
+    "project-structure": "Структура проекта",
+    "bootstrap": "Bootstrap",
+    "modules": "Модули",
+    "libs": "Библиотеки",
+    "mechanics": "Механики",
+    "tools": "Инструменты",
+    "how-to": "How-to",
+    "deployment": "Деплой"
+  },
+  "title": "Документация",
+  "description": "Добро пожаловать в модуль doc-platform"
+}
+

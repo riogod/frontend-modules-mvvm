@@ -13,6 +13,7 @@ export const routes: IRoutes = [
     path: '/app-test',
     menu: {
       text: 'app-test:menu.app-test',
+      sortOrder: 3000,
     },
     browserTitle: 'App Test',
     pageComponent: lazy(() => import('../view/pages/HomePage')),

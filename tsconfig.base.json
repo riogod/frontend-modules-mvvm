@@ -51,6 +51,12 @@
       "@platform/module-app-test/*": [
         "packages/app-test/src/*"
       ],
+      "@platform/module-doc-platform": [
+        "packages/doc-platform/src"
+      ],
+      "@platform/module-doc-platform/*": [
+        "packages/doc-platform/src/*"
+      ],
       "@platform/module-todo": [
         "packages/todo/src"
       ],

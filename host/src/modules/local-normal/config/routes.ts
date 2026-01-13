@@ -11,9 +11,9 @@ export const routes: IRoutes = [
     path: '/local-normal',
     menu: {
       text: 'local-normal:menu.local-normal',
+      sortOrder: 4000,
     },
     browserTitle: 'Local Normal',
     pageComponent: lazy(() => import('../view/pages/HomePage')),
   },
 ];
-
