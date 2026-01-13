@@ -1,5 +1,6 @@
 import { type IRoutes } from '@platform/core';
-import { lazy } from 'react';
+import { ToggleOn } from '@platform/ui';
+import { createElement, lazy } from 'react';
 
 export const DOC_PLATFORM_ROUTES = {
   HOME: 'doc-platform',
@@ -21,6 +22,7 @@ export const routes: IRoutes = [
     path: '/doc-platform',
     menu: {
       text: 'doc-platform:menu.doc-platform',
+      icon: createElement(ToggleOn),
       sortOrder: 10000,
     },
     browserTitle: 'Документация',
