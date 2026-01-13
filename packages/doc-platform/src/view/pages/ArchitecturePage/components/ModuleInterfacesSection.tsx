@@ -1,15 +1,11 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocList, DocNote } from '../../../common';
 
 export const ModuleInterfacesSection: FC = () => (
-  <DocSection
-    title="Интерфейсы модулей"
-    sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}
-  >
-    <Typography variant="body1" paragraph>
+  <DocSection title="Интерфейсы модулей">
+    <p>
       Каждый модуль должен реализовать интерфейс ModuleConfig из @platform/core:
-    </Typography>
+    </p>
     <DocList
       items={[
         'ROUTES — функция, возвращающая массив маршрутов',
@@ -20,10 +16,10 @@ export const ModuleInterfacesSection: FC = () => (
       ]}
     />
     <DocNote type="warning" title="Важно">
-      <Typography variant="body2">
+      <p>
         Прямой импорт реализаций между модулями ЗАПРЕЩЕН. Все взаимодействие
         должно происходить только через DI контейнер.
-      </Typography>
+      </p>
     </DocNote>
   </DocSection>
 );

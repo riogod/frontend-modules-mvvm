@@ -1,12 +1,9 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocTable } from '../../../common';
 
 export const AliasesSection: FC = () => (
-  <DocSection title="Алиасы путей" sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}>
-    <Typography variant="body1" paragraph>
-      Для удобства импортов в проекте настроены алиасы путей:
-    </Typography>
+  <DocSection title="Алиасы путей">
+    <p>Для удобства импортов в проекте настроены алиасы путей:</p>
     <DocTable
       columns={[
         { header: 'Алиас', key: 'alias' },

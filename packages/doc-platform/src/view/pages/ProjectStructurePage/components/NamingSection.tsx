@@ -2,7 +2,7 @@ import { type FC } from 'react';
 import { DocSection, DocTable } from '../../../common';
 
 export const NamingSection: FC = () => (
-  <DocSection title="Соглашения об именовании" sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}>
+  <DocSection title="Соглашения об именовании">
     <DocTable
       columns={[
         { header: 'Тип файла', key: 'type' },

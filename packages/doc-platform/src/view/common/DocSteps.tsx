@@ -1,5 +1,5 @@
 import { type FC, type ReactNode } from 'react';
-import { Box, Typography, Paper } from '@platform/ui';
+import { Box, Typography } from '@platform/ui';
 
 /**
  * Элемент шага в пошаговой инструкции.

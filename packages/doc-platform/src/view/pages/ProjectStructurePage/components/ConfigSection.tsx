@@ -1,23 +1,23 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocFileTree } from '../../../common';
 
 export const ConfigSection: FC = () => (
-  <DocSection title="config/ — Конфигурации" sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}>
-    <Typography variant="body1" paragraph>
-      Директория config/ содержит фабрики конфигураций для инструментов разработки:
-    </Typography>
+  <DocSection title="config/ — Конфигурации">
+    <p>
+      Директория config/ содержит фабрики конфигураций для инструментов
+      разработки:
+    </p>
 
     <DocFileTree
       tree={`config/
-├── vite-config/        # Фабрика конфигураций Vite
-├── eslint-config/      # Фабрика конфигураций ESLint
-└── dev-server/         # Dev-сервер для API-проксирования`}
+ ├── vite-config/        # Фабрика конфигураций Vite
+ ├── eslint-config/      # Фабрика конфигураций ESLint
+ └── dev-server/         # Dev-сервер для API-проксирования`}
     />
 
-    <Typography variant="body2" paragraph sx={(theme) => ({ mt: theme.spacing(2) })}>
-      Каждая фабрика предоставляет функцию для создания конфигурации с учетом типа
-      проекта (host, lib, module).
-    </Typography>
+    <p style={{ marginTop: '16px' }}>
+      Каждая фабрика предоставляет функцию для создания конфигурации с учетом
+      типа проекта (host, lib, module).
+    </p>
   </DocSection>
 );

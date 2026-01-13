@@ -38,7 +38,11 @@ export const DocCodeBlock: FC<DocCodeBlockProps> = ({
   >
     <Typography
       variant="caption"
-      sx={(theme) => ({ color: '#858585', display: 'block', mb: theme.spacing(1) })}
+      sx={(theme) => ({
+        color: '#858585',
+        display: 'block',
+        mb: theme.spacing(1),
+      })}
     >
       {language}
     </Typography>
@@ -47,7 +51,7 @@ export const DocCodeBlock: FC<DocCodeBlockProps> = ({
       component="pre"
       sx={{ color: '#d4d4d4', fontSize: '0.875rem', margin: 0 }}
     >
-      {code}
+      <pre>{code}</pre>
     </Typography>
   </Paper>
 );

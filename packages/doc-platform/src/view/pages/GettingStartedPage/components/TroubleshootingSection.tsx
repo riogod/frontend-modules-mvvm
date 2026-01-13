@@ -1,24 +1,14 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocList, DocCodeBlock, DocCommand } from '../../../common';
 
 export const TroubleshootingSection: FC = () => (
-  <DocSection
-    title="Устранение проблем"
-    sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}
-  >
-    <Typography variant="h6" gutterBottom>
-      Порт уже занят
-    </Typography>
-    <Typography variant="body2" paragraph>
-      Если порт 4200 или 1337 занят другим процессом:
-    </Typography>
-    <Typography variant="body2" fontWeight="bold" gutterBottom>
-      Для Vite (порт 4200):
-    </Typography>
-    <Typography variant="body2" paragraph>
-      Измените порт в host/vite.config.mts:
-    </Typography>
+  <DocSection title="Устранение проблем">
+    <h6>Порт уже занят</h6>
+    <p>Если порт 4200 или 1337 занят другим процессом:</p>
+    <p>
+      <strong>Для Vite (порт 4200):</strong>
+    </p>
+    <p>Измените порт в host/vite.config.mts:</p>
     <DocCodeBlock
       code={`server: {
   port: 4201, // Измените на свободный порт
@@ -26,16 +16,14 @@ export const TroubleshootingSection: FC = () => (
 }`}
       language="typescript"
     />
-    <Typography variant="body2" fontWeight="bold" gutterBottom>
-      Для Dev Server (порт 1337):
-    </Typography>
-    <Typography variant="body2" paragraph>
+    <p>
+      <strong>Для Dev Server (порт 1337):</strong>
+    </p>
+    <p>
       Измените порт в config/dev-server/index.ts (найдите app.listen(1337)).
-    </Typography>
+    </p>
 
-    <Typography variant="h6" gutterBottom sx={(theme) => ({ mt: theme.spacing(2) })}>
-      Модули не загружаются
-    </Typography>
+    <h6 style={{ marginTop: '16px' }}>Модули не загружаются</h6>
     <DocList
       items={[
         'Проверьте, что модули находятся в директории packages/',
@@ -46,9 +34,7 @@ export const TroubleshootingSection: FC = () => (
       ]}
     />
 
-    <Typography variant="h6" gutterBottom sx={(theme) => ({ mt: theme.spacing(2) })}>
-      Ошибки при установке зависимостей
-    </Typography>
+    <h6 style={{ marginTop: '16px' }}>Ошибки при установке зависимостей</h6>
     <DocList
       items={[
         'Убедитесь, что версия Node.js соответствует требованиям (18+)',
@@ -59,13 +45,11 @@ export const TroubleshootingSection: FC = () => (
       ]}
     />
 
-    <Typography variant="h6" gutterBottom sx={(theme) => ({ mt: theme.spacing(2) })}>
-      TypeScript ошибки после установки
-    </Typography>
-    <Typography variant="body2" paragraph>
-      После установки автоматически выполняется sync:tsconfig-paths. Если возникают
-      ошибки:
-    </Typography>
+    <h6 style={{ marginTop: '16px' }}>TypeScript ошибки после установки</h6>
+    <p>
+      После установки автоматически выполняется sync:tsconfig-paths. Если
+      возникают ошибки:
+    </p>
     <DocCommand command="npm run sync:tsconfig-paths" />
   </DocSection>
 );

@@ -13,23 +13,23 @@ export const MvvmPatternSection: FC = () => (
       <DocCodeBlock
         code={`┌─────────────────────────────────────────────┐
 │                     View                    │
-│           (React Components)                │
-│                 ↓ useVM()                    │
+│            (React Components)               │
+│                  ↓ useVM()                  │
 ├─────────────────────────────────────────────┤
-│                  ViewModel                  │
-│        (Proxy to Model, User Actions)      │
-│                 ↓ execute()                 │
+│                   ViewModel                 │
+│         (Proxy to Model, User Actions)      │
+│                  ↓ execute()                │
 ├─────────────────────────────────────────────┤
-│                  Use Case                  │
-│          (Business Logic Only)              │
+│                   Use Case                  │
+│           (Business Logic Only)             │
 │                 ↓ operations                │
 ├─────────────────────────────────────────────┤
-│                   Model                     │
-│           (State Storage Only)              │
-│                 ↓ methods                   │
+│                    Model                    │
+│            (State Storage Only)             │
+│                  ↓ methods                  │
 ├─────────────────────────────────────────────┤
-│                Repository                   │
-│        (Data Source Encapsulation)         │
+│                  Repository                 │
+│         (Data Source Encapsulation)         │
 └─────────────────────────────────────────────┘`}
         language="text"
       />

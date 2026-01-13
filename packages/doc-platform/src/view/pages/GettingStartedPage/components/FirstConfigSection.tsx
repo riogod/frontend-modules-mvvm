@@ -1,25 +1,20 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocSteps, DocNote, DocList } from '../../../common';
 
 export const FirstConfigSection: FC = () => (
-  <DocSection title="Первый запуск" sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}>
-    <Typography variant="h6" gutterBottom>
-      Создание конфигурации
-    </Typography>
-    <Typography variant="body2" paragraph>
-      При первом запуске через npm start вам будет предложено создать конфигурацию для
-      разработки. Следуйте инструкциям:
-    </Typography>
+  <DocSection title="Первый запуск">
+    <h6>Создание конфигурации</h6>
+    <p>
+      При первом запуске через npm start вам будет предложено создать
+      конфигурацию для разработки. Следуйте инструкциям:
+    </p>
 
     <DocSteps
       steps={[
         {
           title: 'Выберите модули',
           content: (
-            <Typography variant="body2">
-              Укажите, какие модули использовать (LOCAL/REMOTE/Пропустить)
-            </Typography>
+            <p>Укажите, какие модули использовать (LOCAL/REMOTE/Пропустить)</p>
           ),
         },
         {
@@ -36,25 +31,21 @@ export const FirstConfigSection: FC = () => (
         },
         {
           title: 'Введите имя конфигурации',
-          content: (
-            <Typography variant="body2">Например, "Development"</Typography>
-          ),
+          content: <p>Например, &quot;Development&quot;</p>,
         },
         {
           title: 'Добавьте описание (опционально)',
-          content: <Typography variant="body2">Необязательный шаг</Typography>,
+          content: <p>Необязательный шаг</p>,
         },
       ]}
     />
 
-    <Typography variant="h6" gutterBottom sx={(theme) => ({ mt: theme.spacing(3) })}>
-      Рекомендуемая первая конфигурация
-    </Typography>
+    <h6 style={{ marginTop: '24px' }}>Рекомендуемая первая конфигурация</h6>
     <DocNote type="info" title="Рекомендация">
-      <Typography variant="body2" paragraph>
+      <p>
         Для начала работы рекомендуется создать конфигурацию со следующими
         настройками:
-      </Typography>
+      </p>
       <DocList
         items={[
           'Модули: Все модули из packages/ установлены как LOCAL',
@@ -63,10 +54,10 @@ export const FirstConfigSection: FC = () => (
           'API URL: Пустой',
         ]}
       />
-      <Typography variant="body2" sx={(theme) => ({ mt: theme.spacing(1) })}>
-        Это позволит работать с приложением без необходимости настройки удаленного
-        API.
-      </Typography>
+      <p style={{ marginTop: '8px' }}>
+        Это позволит работать с приложением без необходимости настройки
+        удаленного API.
+      </p>
     </DocNote>
   </DocSection>
 );

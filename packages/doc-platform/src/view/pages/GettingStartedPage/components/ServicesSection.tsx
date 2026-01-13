@@ -1,15 +1,9 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocTable, DocList } from '../../../common';
 
 export const ServicesSection: FC = () => (
-  <DocSection
-    title="Структура запущенных сервисов"
-    sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}
-  >
-    <Typography variant="body1" paragraph>
-      После успешного запуска у вас будут работать:
-    </Typography>
+  <DocSection title="Структура запущенных сервисов">
+    <p>После успешного запуска у вас будут работать:</p>
 
     <DocTable
       columns={[
@@ -26,17 +20,14 @@ export const ServicesSection: FC = () => (
         {
           service: 'Dev Server',
           port: '1337',
-          purpose: 'Обработка API запросов, MSW моки, проксирование на удаленный сервер',
+          purpose:
+            'Обработка API запросов, MSW моки, проксирование на удаленный сервер',
         },
       ]}
     />
 
-    <Typography variant="h6" gutterBottom sx={(theme) => ({ mt: theme.spacing(2) })}>
-      Проверка работы сервисов
-    </Typography>
-    <Typography variant="body2" paragraph>
-      Откройте в браузере:
-    </Typography>
+    <h6 style={{ marginTop: '16px' }}>Проверка работы сервисов</h6>
+    <p>Откройте в браузере:</p>
     <DocList
       items={[
         'Приложение: http://localhost:4200',

@@ -1,15 +1,9 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocList } from '../../../common';
 
 export const ArchitectureLayersSection: FC = () => (
-  <DocSection
-    title="Слои архитектуры"
-    sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}
-  >
-    <Typography variant="body1" paragraph>
-      Архитектура состоит из пяти основных слоев:
-    </Typography>
+  <DocSection title="Слои архитектуры">
+    <p>Архитектура состоит из пяти основных слоев:</p>
     <DocList
       items={[
         {

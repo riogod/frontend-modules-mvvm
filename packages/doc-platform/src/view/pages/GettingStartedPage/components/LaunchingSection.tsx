@@ -1,32 +1,22 @@
 import { type FC } from 'react';
-import { Typography, Link } from '@platform/ui';
 import { DocSection, DocCommand } from '../../../common';
 
 export const LaunchingSection: FC = () => (
-  <DocSection title="Запуск проекта" sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}>
-    <Typography variant="body1" paragraph>
+  <DocSection title="Запуск проекта">
+    <p>
       MFP предоставляет несколько способов запуска проекта в режиме разработки.
       Выберите подходящий для вашей задачи.
-    </Typography>
+    </p>
 
-    <Typography variant="h6" gutterBottom>
-      Интерактивный лаунчер
-    </Typography>
-    <Typography variant="body2" paragraph>
-      Самый удобный способ для начала работы:
-    </Typography>
+    <h6>Интерактивный лаунчер</h6>
+    <p>Самый удобный способ для начала работы:</p>
     <DocCommand command="npm start" />
-    <Typography variant="body2" paragraph>
-      или
-    </Typography>
+    <p>или</p>
     <DocCommand command="npm run dev" />
 
-    <Typography variant="body2" color="text.secondary">
-      Подробнее см.{' '}
-      <Link href="/doc-platform/tools" underline="hover">
-        Лаунчер
-      </Link>{' '}
-      для детального описания работы с конфигурациями.
-    </Typography>
+    <p style={{ color: 'text.secondary' }}>
+      Подробнее см. <a href="/doc-platform/tools">Лаунчер</a> для детального
+      описания работы с конфигурациями.
+    </p>
   </DocSection>
 );

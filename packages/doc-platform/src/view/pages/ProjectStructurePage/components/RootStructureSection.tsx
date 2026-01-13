@@ -1,9 +1,8 @@
 import { type FC } from 'react';
-import { Typography } from '@platform/ui';
 import { DocSection, DocFileTree } from '../../../common';
 
 export const RootStructureSection: FC = () => (
-  <DocSection title="Корневая структура" sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}>
+  <DocSection title="Корневая структура">
     <DocFileTree
       tree={`frontend-modules-mvvm/
 ├── host/                   # Хост-приложение

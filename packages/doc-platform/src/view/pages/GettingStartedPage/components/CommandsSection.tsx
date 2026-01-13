@@ -1,12 +1,8 @@
 import { type FC } from 'react';
-import { Typography, Link } from '@platform/ui';
 import { DocSection, DocTable } from '../../../common';
 
 export const CommandsSection: FC = () => (
-  <DocSection
-    title="Полезные команды"
-    sx={(theme) => ({ scrollMarginTop: theme.spacing(2) })}
-  >
+  <DocSection title="Полезные команды">
     <DocTable
       columns={[
         { header: 'Команда', key: 'command' },
@@ -40,16 +36,11 @@ export const CommandsSection: FC = () => (
       ]}
     />
 
-    <Typography variant="body2" color="text.secondary" sx={(theme) => ({ mt: theme.spacing(2) })}>
+    <p style={{ color: 'text.secondary', marginTop: '16px' }}>
       Совет: Если вы новичок в проекте, начните с изучения{' '}
-      <Link href="/doc-platform/architecture" underline="hover">
-        Архитектуры
-      </Link>{' '}
-      и{' '}
-      <Link href="/doc-platform/project-structure" underline="hover">
-        Структуры проекта
-      </Link>
-      , чтобы понять, как организован код.
-    </Typography>
+      <a href="/doc-platform/architecture">Архитектуры</a> и{' '}
+      <a href="/doc-platform/project-structure">Структуры проекта</a>, чтобы
+      понять, как организован код.
+    </p>
   </DocSection>
 );
