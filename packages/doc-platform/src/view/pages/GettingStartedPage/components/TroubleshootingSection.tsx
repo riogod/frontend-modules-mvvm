@@ -37,7 +37,7 @@ export const TroubleshootingSection: FC = () => (
     <h6 style={{ marginTop: '16px' }}>Ошибки при установке зависимостей</h6>
     <DocList
       items={[
-        'Убедитесь, что версия Node.js соответствует требованиям (18+)',
+        'Убедитесь, что версия Node.js соответствует требованиям (22.16+)',
         'Очистите кеш npm: npm cache clean --force',
         'Удалите node_modules и package-lock.json, затем выполните npm install заново',
         'Проверьте, что у вас достаточно прав для записи в директорию проекта',
