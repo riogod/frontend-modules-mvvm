@@ -10,9 +10,9 @@
     "mechanics": "Механики",
     "tools": "Инструменты",
     "how-to": "How-to",
-    "deployment": "Деплой"
+    "deployment": "Деплой",
+    "how-it-works": "Как это работает"
   },
   "title": "Документация",
   "description": "Добро пожаловать в модуль doc-platform"
 }
-

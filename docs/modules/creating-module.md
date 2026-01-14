@@ -184,7 +184,7 @@ import { IOC_TOKENS } from './di.tokens';
 import { MyViewModel } from '../viewmodels/my.vm';
 
 export function DI_CONFIG(container: Container): void {
-  container.bind(IOC_TOKENS.VIEW_MODEL).to(MyViewModel).inSingletonScope();
+  container.bind(IOC_TOKENS.VIEW_MODEL).to(MyViewModel);
 }
 ```
 

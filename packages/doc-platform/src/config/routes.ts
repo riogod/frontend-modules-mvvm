@@ -29,6 +29,16 @@ export const routes: IRoutes = [
     pageComponent: lazy(() => import('../view/pages/HomePage')),
     children: [
       {
+        name: 'how-it-works',
+        path: '/how-it-works',
+        menu: {
+          text: 'doc-platform:menu.how-it-works',
+          sortOrder: 0,
+        },
+        browserTitle: 'Как это работает',
+        pageComponent: lazy(() => import('../view/pages/HomePage')),
+      },
+      {
         name: 'architecture',
         path: '/architecture',
         menu: {

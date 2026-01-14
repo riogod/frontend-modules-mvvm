@@ -10,9 +10,9 @@
     "mechanics": "Mechanics",
     "tools": "Tools",
     "how-to": "How-to",
-    "deployment": "Deployment"
+    "deployment": "Deployment",
+    "how-it-works": "How It Works"
   },
   "title": "Documentation",
   "description": "Welcome to doc-platform module"
 }
-
